@@ -5,22 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, Download } from 'lucide-react';
 
-const DeckBuilder = ({ onDeckLoad }) => {
-  const [deckInfo, setDeckInfo] = useState(null);
+const DeckBuilder = ({ onDeckLoad }: { onDeckLoad?: (deckData: any) => void }) => {
+  const [deckInfo, setDeckInfo] = useState<any>(null);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const deckData = JSON.parse(e.target.result);
-          setDeckInfo({
-            name: deckData.name || 'Deck Personalizzato',
-            cards: deckData.cards || [],
-            totalCards: deckData.cards?.length || 0
-          });
-          onDeckLoad && onDeckLoad(deckData);
+          const result = e.target?.result;
+          if (typeof result === 'string') {
+            const deckData = JSON.parse(result);
+            setDeckInfo({
+              name: deckData.name || 'Deck Personalizzato',
+              cards: deckData.cards || [],
+              totalCards: deckData.cards?.length || 0
+            });
+            onDeckLoad && onDeckLoad(deckData);
+          }
         } catch (error) {
           console.error('Errore nel caricamento del deck:', error);
         }
@@ -67,7 +70,7 @@ const DeckBuilder = ({ onDeckLoad }) => {
         
         <div className="flex gap-2">
           <Button
-            onClick={() => document.getElementById('deck-upload').click()}
+            onClick={() => document.getElementById('deck-upload')?.click()}
             className="bg-purple-600 hover:bg-purple-700 text-white flex-1"
           >
             <Upload size={16} />
