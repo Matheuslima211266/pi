@@ -5,15 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Play, Pause, RotateCcw } from 'lucide-react';
 
-const TurnTimer = ({ isActive = false, onTimeUp }) => {
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minuti
+const TurnTimer = ({ isActive = false, onTimeUp, timeRemaining, onTimeChange }) => {
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     let interval;
-    if (isRunning && timeLeft > 0) {
+    if (isRunning && timeRemaining > 0) {
       interval = setInterval(() => {
-        setTimeLeft(prev => {
+        onTimeChange(prev => {
           if (prev <= 1) {
             setIsRunning(false);
             onTimeUp && onTimeUp();
@@ -24,7 +23,7 @@ const TurnTimer = ({ isActive = false, onTimeUp }) => {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft, onTimeUp]);
+  }, [isRunning, timeRemaining, onTimeUp, onTimeChange]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -33,7 +32,7 @@ const TurnTimer = ({ isActive = false, onTimeUp }) => {
   };
 
   const resetTimer = () => {
-    setTimeLeft(180);
+    onTimeChange(180);
     setIsRunning(false);
   };
 
@@ -46,12 +45,12 @@ const TurnTimer = ({ isActive = false, onTimeUp }) => {
         </div>
         
         <div className="text-3xl font-bold text-white">
-          {formatTime(timeLeft)}
+          {formatTime(timeRemaining)}
         </div>
         
         <Badge 
           variant="outline" 
-          className={`${timeLeft < 30 ? 'border-red-400 text-red-400' : 'border-orange-400 text-orange-400'}`}
+          className={`${timeRemaining < 30 ? 'border-red-400 text-red-400' : 'border-orange-400 text-orange-400'}`}
         >
           {isRunning ? 'In corso' : 'Pausa'}
         </Badge>

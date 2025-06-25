@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const DiceAndCoin = () => {
+const DiceAndCoin = ({ onDiceRoll, onCoinFlip }) => {
   const [diceResult, setDiceResult] = useState<number | null>(null);
   const [coinResult, setCoinResult] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
@@ -25,6 +25,11 @@ const DiceAndCoin = () => {
         const finalResult = Math.floor(Math.random() * 6) + 1;
         setDiceResult(finalResult);
         setIsRolling(false);
+        
+        // Send result to chat
+        if (onDiceRoll) {
+          onDiceRoll(finalResult);
+        }
       }
     }, 100);
   };
@@ -44,6 +49,11 @@ const DiceAndCoin = () => {
         const finalResult = Math.random() > 0.5 ? 'Testa' : 'Croce';
         setCoinResult(finalResult);
         setIsFlipping(false);
+        
+        // Send result to chat
+        if (onCoinFlip) {
+          onCoinFlip(finalResult);
+        }
       }
     }, 150);
   };

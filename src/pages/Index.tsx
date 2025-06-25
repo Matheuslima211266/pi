@@ -55,15 +55,15 @@ const Index = () => {
   const syncLockRef = useRef(false);
   const lastSyncTimeRef = useRef(Date.now());
 
-  // Multiplayer sync with improved conflict resolution
+  // Multiplayer sync with comprehensive state management
   useEffect(() => {
     if (gameData?.gameId) {
       const interval = setInterval(() => {
         syncGameState();
-      }, 1000); // Sync every second for better real-time experience
+      }, 500); // More frequent sync for better real-time experience
       return () => clearInterval(interval);
     }
-  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages]);
+  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages, timeRemaining]);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -81,16 +81,17 @@ const Index = () => {
     
     try {
       const gameState = {
-        // Player's own state
+        // Player's complete state
         playerField,
         playerLifePoints,
-        playerHandCount: playerHand.length, // Only send hand count, not actual cards
+        playerHandCount: playerHand.length,
         
-        // Shared game state
+        // Shared synchronized state
         actionLog,
         chatMessages,
         currentPhase,
         isPlayerTurn,
+        timeRemaining,
         
         // Metadata
         lastUpdate: Date.now(),
@@ -99,7 +100,12 @@ const Index = () => {
       };
       
       const stateKey = `yugiduel_state_${gameData.gameId}`;
-      localStorage.setItem(stateKey, JSON.stringify(gameState));
+      const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
+      
+      // Store both player states
+      allStates[gameState.playerId] = gameState;
+      localStorage.setItem(stateKey, JSON.stringify(allStates));
+      
       lastSyncTimeRef.current = Date.now();
       
       console.log('Synced game state:', gameState);
@@ -114,46 +120,42 @@ const Index = () => {
     if (!gameData?.gameId || syncLockRef.current) return;
     
     const stateKey = `yugiduel_state_${gameData.gameId}`;
-    const savedState = localStorage.getItem(stateKey);
+    const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
     
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        
-        // Only load if it's newer than our last sync and from the other player
-        if (state.lastUpdate && 
-            state.lastUpdate > lastSyncTimeRef.current + 500 && // Add small delay to prevent conflicts
-            state.playerId !== (gameData.isHost ? 'host' : 'guest')) {
-          
-          console.log('Loading opponent state:', state);
-          
-          // Update opponent's field (their playerField becomes our enemyField)
-          setEnemyField(state.playerField);
-          setEnemyLifePoints(state.playerLifePoints);
-          
-          // Update shared game state
-          if (state.actionLog && Array.isArray(state.actionLog)) {
-            setActionLog(state.actionLog);
-          }
-          
-          if (state.chatMessages && Array.isArray(state.chatMessages)) {
-            setChatMessages(state.chatMessages);
-          }
-          
-          setCurrentPhase(state.currentPhase || 'draw');
-          setIsPlayerTurn(state.isPlayerTurn);
-          
-          lastSyncTimeRef.current = state.lastUpdate;
-        }
-      } catch (error) {
-        console.error('Load state error:', error);
+    const opponentId = gameData.isHost ? 'guest' : 'host';
+    const opponentState = allStates[opponentId];
+    
+    if (opponentState && 
+        opponentState.lastUpdate && 
+        opponentState.lastUpdate > lastSyncTimeRef.current + 200) {
+      
+      console.log('Loading opponent state:', opponentState);
+      
+      // Update opponent's field
+      setEnemyField(opponentState.playerField);
+      setEnemyLifePoints(opponentState.playerLifePoints);
+      
+      // Update shared synchronized state
+      if (opponentState.actionLog && Array.isArray(opponentState.actionLog)) {
+        setActionLog(opponentState.actionLog);
       }
+      
+      if (opponentState.chatMessages && Array.isArray(opponentState.chatMessages)) {
+        setChatMessages(opponentState.chatMessages);
+      }
+      
+      // Sync game state
+      setCurrentPhase(opponentState.currentPhase || 'draw');
+      setIsPlayerTurn(opponentState.isPlayerTurn);
+      setTimeRemaining(opponentState.timeRemaining || 60);
+      
+      lastSyncTimeRef.current = opponentState.lastUpdate;
     }
   };
 
   useEffect(() => {
     if (gameData?.gameId) {
-      const interval = setInterval(loadGameState, 800); // Load slightly more frequently
+      const interval = setInterval(loadGameState, 400);
       return () => clearInterval(interval);
     }
   }, [gameData]);
@@ -225,7 +227,13 @@ const Index = () => {
       return newField;
     });
 
-    addToActionLog(`${gameData.playerName} placed ${card.name} in ${zoneName}`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: `placed ${card.name} in ${zoneName}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
     
     // Force sync after placement
     setTimeout(() => syncGameState(), 100);
@@ -251,7 +259,13 @@ const Index = () => {
         });
       }
       
-      addToActionLog(`${gameData.playerName} ${card.faceDown ? 'set' : 'flipped'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`);
+      const newAction = {
+        id: Date.now(),
+        player: gameData.playerName,
+        action: `${card.faceDown ? 'set' : 'flipped'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
       setTimeout(() => syncGameState(), 100);
       return;
     }
@@ -328,7 +342,13 @@ const Index = () => {
       });
     }
 
-    addToActionLog(`${gameData.playerName} moved ${card.name} from ${fromZone} to ${toZone}`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: `moved ${card.name} from ${fromZone} to ${toZone}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
     
     // Force sync after movement
     setTimeout(() => syncGameState(), 100);
@@ -339,9 +359,22 @@ const Index = () => {
       const drawnCard = playerField.deck[0];
       setPlayerHand(prevHand => [...prevHand, drawnCard]);
       setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
-      addToActionLog(`${gameData.playerName} drew a card`);
+      
+      const newAction = {
+        id: Date.now(),
+        player: gameData.playerName,
+        action: 'drew a card',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
     } else {
-      addToActionLog(`${gameData.playerName}'s deck is empty!`);
+      const newAction = {
+        id: Date.now(),
+        player: gameData.playerName,
+        action: 'deck is empty!',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
     }
   };
 
@@ -351,14 +384,26 @@ const Index = () => {
 
   const handlePhaseChange = (phase) => {
     setCurrentPhase(phase);
-    addToActionLog(`${gameData.playerName} changed phase to ${phase}`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: `changed phase to ${phase}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
   };
 
   const handleEndTurn = () => {
     setIsPlayerTurn(!isPlayerTurn);
     setCurrentPhase('draw');
     setTimeRemaining(60);
-    addToActionLog(`${gameData.playerName} ended turn`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: 'ended turn',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
   };
 
   const handleLifePointsChange = (amount, isEnemy) => {
@@ -366,29 +411,14 @@ const Index = () => {
       setEnemyLifePoints(amount);
     } else {
       setPlayerLifePoints(amount);
-      addToActionLog(`${gameData.playerName} changed life points to ${amount}`);
+      const newAction = {
+        id: Date.now(),
+        player: gameData.playerName,
+        action: `changed life points to ${amount}`,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
     }
-  };
-
-  const addToActionLog = (action) => {
-    const newAction = {
-      id: Date.now(),
-      player: gameData?.playerName || 'Player',
-      action: action,
-      timestamp: new Date().toLocaleTimeString()
-    };
-    setActionLog(prev => [...prev, newAction]);
-  };
-
-  const addToChatLog = (message, cardName = null, isFaceDown = false) => {
-    const displayName = (isFaceDown && cardName) ? 'Carta coperta' : cardName;
-    const fullMessage = displayName ? `${message}: ${displayName}` : message;
-    const newMessage = {
-      id: Date.now(),
-      player: gameData?.playerName || 'Player',
-      message: fullMessage
-    };
-    setChatMessages(prev => [...prev, newMessage]);
   };
 
   const handleSendMessage = (message) => {
@@ -400,12 +430,42 @@ const Index = () => {
     setChatMessages(prev => [...prev, newMessage]);
   };
 
+  const handleDiceRoll = (result) => {
+    const newMessage = {
+      id: Date.now(),
+      player: gameData?.playerName || 'Player',
+      message: `🎲 Rolled dice: ${result}`
+    };
+    setChatMessages(prev => [...prev, newMessage]);
+  };
+
+  const handleCoinFlip = (result) => {
+    const newMessage = {
+      id: Date.now(),
+      player: gameData?.playerName || 'Player',
+      message: `🪙 Flipped coin: ${result}`
+    };
+    setChatMessages(prev => [...prev, newMessage]);
+  };
+
   const handleAttack = (attackingCard, targetCard) => {
-    addToActionLog(`${gameData.playerName}: ${attackingCard.name} attacks ${targetCard ? targetCard.name : 'directly'}`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: `${attackingCard.name} attacks ${targetCard ? targetCard.name : 'directly'}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
   };
 
   const handleTimeUp = () => {
-    addToActionLog(`${gameData.playerName}'s time up! Turn ended automatically`);
+    const newAction = {
+      id: Date.now(),
+      player: gameData.playerName,
+      action: 'time up! Turn ended automatically',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
     handleEndTurn();
   };
 
@@ -458,7 +518,10 @@ const Index = () => {
             {/* Bottom Controls */}
             <div className="grid grid-cols-2 gap-4">
               <ActionLog actions={actionLog} />
-              <DiceAndCoin />
+              <DiceAndCoin 
+                onDiceRoll={handleDiceRoll}
+                onCoinFlip={handleCoinFlip}
+              />
             </div>
           </div>
           
@@ -492,6 +555,8 @@ const Index = () => {
             <TurnTimer 
               isActive={isPlayerTurn}
               onTimeUp={handleTimeUp}
+              timeRemaining={timeRemaining}
+              onTimeChange={setTimeRemaining}
             />
             
             {/* Chat */}
