@@ -2,26 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Shield, Zap, Heart, User, Bot } from 'lucide-react';
+import { RotateCcw, User, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GameBoard from '@/components/GameBoard';
-import CardComponent from '@/components/CardComponent';
 import PlayerHand from '@/components/PlayerHand';
-import GameZones from '@/components/GameZones';
+import LifePointsControl from '@/components/LifePointsControl';
+import GamePhases from '@/components/GamePhases';
+import DiceAndCoin from '@/components/DiceAndCoin';
+import Calculator from '@/components/Calculator';
 import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
   const [gameState, setGameState] = useState({
     playerHP: 8000,
     enemyHP: 8000,
-    playerMana: 5,
-    enemyMana: 5,
-    maxMana: 10,
     turn: 1,
     currentPlayer: 'player',
-    phase: 'main', // draw, main, battle, end
+    phase: 'draw',
   });
 
   const [playerHand, setPlayerHand] = useState([]);
@@ -29,7 +27,7 @@ const Index = () => {
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [playerField, setPlayerField] = useState({
     monsters: [],
-    spellsTraps: [], // Zona combinata per magie e trappole
+    spellsTraps: [],
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
@@ -37,7 +35,7 @@ const Index = () => {
   });
   const [enemyField, setEnemyField] = useState({
     monsters: [],
-    spellsTraps: [], // Zona combinata per magie e trappole
+    spellsTraps: [],
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
@@ -47,7 +45,6 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Inizializza il gioco
     initializeGame();
   }, []);
 
@@ -57,12 +54,12 @@ const Index = () => {
     // Crea un mazzo completo con tutte le carte dal JSON (ogni carta una volta)
     const playerDeck = [...allCards].map((card, index) => ({
       ...card,
-      id: `player_${card.id}_${index}` // ID unico per ogni istanza
+      id: `player_${card.id}_${index}`
     }));
     
     const enemyDeck = [...allCards].map((card, index) => ({
       ...card,
-      id: `enemy_${card.id}_${index}` // ID unico per ogni istanza
+      id: `enemy_${card.id}_${index}`
     }));
     
     // Mescola i mazzi
@@ -86,20 +83,29 @@ const Index = () => {
     setSelectedCardFromHand(card);
   };
 
+  const handlePhaseChange = (newPhase: string) => {
+    setGameState(prev => ({
+      ...prev,
+      phase: newPhase
+    }));
+
+    toast({
+      title: `Fase ${newPhase}`,
+      description: `Ora sei nella fase ${newPhase}`,
+    });
+  };
+
   const endTurn = () => {
     const newPlayer = gameState.currentPlayer === 'player' ? 'enemy' : 'player';
     const newTurn = newPlayer === 'player' ? gameState.turn + 1 : gameState.turn;
     
-    // Reset carta selezionata quando cambia turno
     setSelectedCardFromHand(null);
     
     setGameState(prev => ({
       ...prev,
       currentPlayer: newPlayer,
       turn: newTurn,
-      phase: 'draw',
-      playerMana: Math.min(prev.maxMana, prev.playerMana + (newPlayer === 'player' ? 1 : 0)),
-      enemyMana: Math.min(prev.maxMana, prev.enemyMana + (newPlayer === 'enemy' ? 1 : 0))
+      phase: 'draw'
     }));
 
     toast({
@@ -109,18 +115,8 @@ const Index = () => {
   };
 
   const placeCard = (card, zoneName, slotIndex, faceDown = false) => {
-    if (gameState.currentPlayer !== 'player') return;
+    // Rimossa la restrizione del turno - ora puoi sempre posizionare carte
     
-    const cardCost = card.cost || card.star || 1;
-    if (gameState.playerMana < cardCost) {
-      toast({
-        title: "Mana insufficiente!",
-        description: `Serve ${cardCost} mana per giocare questa carta.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Rimuovi la carta dalla mano
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
     
@@ -146,12 +142,6 @@ const Index = () => {
       
       return newField;
     });
-
-    // Consuma mana
-    setGameState(prev => ({
-      ...prev,
-      playerMana: prev.playerMana - cardCost
-    }));
 
     toast({
       title: "Carta Posizionata!",
@@ -235,6 +225,31 @@ const Index = () => {
     }
   };
 
+  const resetField = () => {
+    setPlayerField({
+      monsters: [],
+      spellsTraps: [],
+      graveyard: [],
+      banished: [],
+      banishedFaceDown: [],
+      fieldSpell: []
+    });
+    setEnemyField({
+      monsters: [],
+      spellsTraps: [],
+      graveyard: [],
+      banished: [],
+      banishedFaceDown: [],
+      fieldSpell: []
+    });
+    setSelectedCardFromHand(null);
+    
+    toast({
+      title: "Campo Azzerato!",
+      description: "Tutte le carte sono state rimosse dal campo di battaglia.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
@@ -250,59 +265,49 @@ const Index = () => {
           </div>
           
           <Button 
-            onClick={endTurn}
-            className="bg-gold-600 hover:bg-gold-700 text-black font-semibold px-6 py-3"
-            disabled={gameState.currentPlayer !== 'player'}
+            onClick={resetField}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3"
           >
-            Termina Turno
+            <RotateCcw size={16} />
+            Reset Campo
           </Button>
         </div>
 
-        {/* Statistiche giocatori */}
-        <div className="grid grid-cols-2 gap-8 mb-6">
-          {/* Giocatore */}
-          <Card className="bg-blue-900/50 border-blue-400 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <User className="text-blue-400" size={24} />
-              <h3 className="text-xl font-semibold">Giocatore</h3>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Heart className="text-red-400" size={16} />
-                <span>Punti Vita: {gameState.playerHP}/8000</span>
-              </div>
-              <Progress value={(gameState.playerHP / 8000) * 100} className="h-2" />
-              
-              <div className="flex items-center gap-2">
-                <Zap className="text-blue-400" size={16} />
-                <span>Mana: {gameState.playerMana}/{gameState.maxMana}</span>
-              </div>
-              <Progress value={(gameState.playerMana / gameState.maxMana) * 100} className="h-2" />
-            </div>
-          </Card>
+        {/* Controlli principali */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+          {/* Life Points Controls */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            <LifePointsControl
+              playerName="Giocatore"
+              lifePoints={gameState.playerHP}
+              onLifePointsChange={(newValue) => setGameState(prev => ({ ...prev, playerHP: newValue }))}
+              color="blue"
+            />
+            <LifePointsControl
+              playerName="Avversario"
+              lifePoints={gameState.enemyHP}
+              onLifePointsChange={(newValue) => setGameState(prev => ({ ...prev, enemyHP: newValue }))}
+              color="red"
+            />
+          </div>
 
-          {/* Avversario */}
-          <Card className="bg-red-900/50 border-red-400 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Bot className="text-red-400" size={24} />
-              <h3 className="text-xl font-semibold">Avversario</h3>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Heart className="text-red-400" size={16} />
-                <span>Punti Vita: {gameState.enemyHP}/8000</span>
-              </div>
-              <Progress value={(gameState.enemyHP / 8000) * 100} className="h-2" />
-              
-              <div className="flex items-center gap-2">
-                <Zap className="text-purple-400" size={16} />
-                <span>Mana: {gameState.enemyMana}/{gameState.maxMana}</span>
-              </div>
-              <Progress value={(gameState.enemyMana / gameState.maxMana) * 100} className="h-2" />
-            </div>
-          </Card>
+          {/* Game Phases */}
+          <GamePhases
+            currentPhase={gameState.phase}
+            onPhaseChange={handlePhaseChange}
+            onEndTurn={endTurn}
+            isPlayerTurn={gameState.currentPlayer === 'player'}
+          />
+
+          {/* Tools */}
+          <div className="space-y-4">
+            <DiceAndCoin />
+          </div>
+        </div>
+
+        {/* Calculator - posizionato a parte */}
+        <div className="mb-6 max-w-sm mx-auto lg:max-w-none lg:mx-0">
+          <Calculator />
         </div>
 
         {/* Campo di battaglia */}
@@ -318,8 +323,8 @@ const Index = () => {
         <PlayerHand 
           cards={playerHand}
           onPlayCard={handleCardSelection}
-          currentMana={gameState.playerMana}
-          isPlayerTurn={gameState.currentPlayer === 'player'}
+          currentMana={999} // Mana illimitato per azioni libere
+          isPlayerTurn={true} // Sempre true per azioni libere
         />
       </div>
     </div>
