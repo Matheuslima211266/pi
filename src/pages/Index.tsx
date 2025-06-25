@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +16,10 @@ import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameData, setGameData] = useState(null);
   const [playerDeckData, setPlayerDeckData] = useState(null);
   const [playerLifePoints, setPlayerLifePoints] = useState(8000);
   const [enemyLifePoints, setEnemyLifePoints] = useState(8000);
-  const [currentMana, setCurrentMana] = useState(5);
   const [playerHand, setPlayerHand] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
   const [enemyDeck, setEnemyDeck] = useState([]);
@@ -53,8 +53,75 @@ const Index = () => {
     { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
   ]);
 
-  const handleGameStart = (gameData) => {
-    console.log('Game started with data:', gameData);
+  // Multiplayer sync
+  useEffect(() => {
+    if (gameData?.gameId) {
+      const interval = setInterval(() => {
+        syncGameState();
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [gameData]);
+
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const syncGameState = () => {
+    if (!gameData?.gameId) return;
+    
+    const gameState = {
+      playerField,
+      enemyField,
+      playerHand: gameData.isHost ? playerHand : [],
+      actionLog,
+      chatMessages,
+      currentPhase,
+      isPlayerTurn,
+      playerLifePoints,
+      enemyLifePoints,
+      lastUpdate: Date.now()
+    };
+    
+    localStorage.setItem(`yugiduel_state_${gameData.gameId}`, JSON.stringify(gameState));
+  };
+
+  const loadGameState = () => {
+    if (!gameData?.gameId) return;
+    
+    const savedState = localStorage.getItem(`yugiduel_state_${gameData.gameId}`);
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      if (state.lastUpdate && Date.now() - state.lastUpdate < 5000) {
+        if (!gameData.isHost) {
+          setEnemyField(state.playerField);
+          setPlayerField(state.enemyField);
+        }
+        setActionLog(state.actionLog || []);
+        setChatMessages(state.chatMessages || []);
+        setCurrentPhase(state.currentPhase || 'draw');
+        setIsPlayerTurn(state.isPlayerTurn);
+        setPlayerLifePoints(gameData.isHost ? state.playerLifePoints : state.enemyLifePoints);
+        setEnemyLifePoints(gameData.isHost ? state.enemyLifePoints : state.playerLifePoints);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (gameData?.gameId) {
+      const interval = setInterval(loadGameState, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [gameData]);
+
+  const handleGameStart = (newGameData) => {
+    console.log('Game started with data:', newGameData);
+    setGameData(newGameData);
     setGameStarted(true);
     initializeGame();
   };
@@ -69,18 +136,22 @@ const Index = () => {
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    setPlayerDeck(mainDeckCards.slice(0, 20));
-    setEnemyDeck(mainDeckCards.slice(20, 40));
-    setPlayerHand(mainDeckCards.slice(0, 5));
+    // Shuffle the deck randomly
+    const shuffledMainDeck = shuffleArray(mainDeckCards);
+    const shuffledHand = shuffleArray(shuffledMainDeck.slice(0, 5));
+
+    setPlayerDeck(shuffledMainDeck.slice(0, 20));
+    setEnemyDeck(shuffledMainDeck.slice(20, 40));
+    setPlayerHand(shuffledHand);
     setPlayerField(prev => ({ 
       ...prev, 
       extraDeck: extraDeckCards,
-      deck: mainDeckCards.slice(5, 20)
+      deck: shuffledMainDeck.slice(5, 20)
     }));
     setEnemyField(prev => ({ 
       ...prev, 
       extraDeck: extraDeckCards,
-      deck: mainDeckCards.slice(20, 40)
+      deck: shuffledMainDeck.slice(20, 40)
     }));
   };
 
@@ -200,12 +271,7 @@ const Index = () => {
         } else if (toZone === 'deck_bottom') {
           newField.deck = [...prev.deck, card];
         } else if (toZone === 'deck_shuffle') {
-          newField.deck = [...prev.deck, card];
-          // Shuffle the deck
-          for (let i = newField.deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newField.deck[i], newField.deck[j]] = [newField.deck[j], newField.deck[i]];
-          }
+          newField.deck = shuffleArray([...prev.deck, card]);
         }
 
         return newField;
@@ -307,7 +373,6 @@ const Index = () => {
             <PlayerHand 
               cards={playerHand}
               onPlayCard={setSelectedCardFromHand}
-              currentMana={currentMana}
               isPlayerTurn={true}
               onCardPreview={setPreviewCard}
               onCardMove={handleCardMove}

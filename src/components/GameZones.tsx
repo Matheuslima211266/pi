@@ -139,7 +139,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   };
 
   const handleCardClick = (card) => {
-    if (!isEnemy && card) {
+    if (card) {
       const effectKey = `${card.id}-${card.name}`;
       const newActivatedEffects = new Set(activatedEffects);
       
@@ -150,6 +150,11 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       }
       
       setActivatedEffects(newActivatedEffects);
+      
+      // Always show preview when clicking on field cards
+      if (onCardPreview) {
+        onCardPreview(card);
+      }
       
       if (onCardClick) {
         onCardClick(card);
@@ -258,7 +263,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       return (
         <div 
           key={index} 
-          className={`w-24 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
+          className={`w-32 h-44 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
             ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
             ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}
             ${className}`}
@@ -268,7 +273,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             renderFieldCardWithContextMenu(card, zoneName, index)
           ) : (
             <div className="text-gray-600 text-center">
-              {React.cloneElement(icon, { size: 24 })}
+              {React.cloneElement(icon, { size: 32 })}
             </div>
           )}
         </div>
@@ -276,17 +281,17 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     });
 
     return (
-      <div className="mb-3">
-        <div className="flex items-center gap-1 mb-2">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-3">
           {icon}
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-sm">
             {zoneName}
           </Badge>
-          <span className="text-xs text-gray-400">
+          <span className="text-sm text-gray-400">
             {cards.filter(c => c !== null).length}/{maxCards}
           </span>
         </div>
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-3 justify-center">
           {slots}
         </div>
       </div>
@@ -298,8 +303,8 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     const isHighlighted = selectedCardFromHand && !card && !isEnemy;
     
     return (
-      <div className="mb-2">
-        <div className="flex items-center gap-1 mb-1">
+      <div className="mb-3">
+        <div className="flex items-center gap-1 mb-2">
           {icon}
           <Badge variant="outline" className="text-xs">
             {title}
@@ -310,7 +315,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         </div>
         <div className="flex justify-center">
           <div 
-            className={`w-24 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
+            className={`w-28 h-40 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
               ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
               ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}`}
             onClick={(e) => handleSlotClick(zoneName, 0, e)}
@@ -425,16 +430,16 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       
       {/* Field Spell - Zona singola */}
       <div className="flex justify-center">
-        <div className="w-24">
+        <div className="w-28">
           {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={16} />, 'Field')}
         </div>
       </div>
       
       {/* Zona Mostri - Più grande */}
-      {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={16} />, 5)}
+      {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={20} />, 5)}
       
       {/* Zona Magie/Trappole - Più grande */}
-      {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={16} />, 5)}
+      {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={20} />, 5)}
 
       {/* Menu di piazzamento universale */}
       {placementMenu && (

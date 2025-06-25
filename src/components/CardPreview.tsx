@@ -68,10 +68,17 @@ const CardPreview = ({ card, onClose }) => {
           </div>
 
           {/* Tipo e Attributo */}
-          <div className="flex justify-between items-center text-sm">
-            <Badge variant="outline">
-              {card.card_type}
-            </Badge>
+          <div className="flex justify-between items-center text-sm gap-2">
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="outline">
+                {card.card_type}
+              </Badge>
+              {card.type && card.type !== card.card_type && (
+                <Badge variant="outline">
+                  {card.type}
+                </Badge>
+              )}
+            </div>
             {card.attribute && (
               <Badge variant="outline">
                 {card.attribute}

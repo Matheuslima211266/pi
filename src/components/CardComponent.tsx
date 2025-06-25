@@ -43,7 +43,7 @@ const CardComponent = ({
       <Card 
         className={`
           bg-gradient-to-br from-blue-800 to-purple-800 border-2 border-blue-400
-          ${isSmall ? 'w-20 h-28' : 'w-40 h-56'} 
+          ${isSmall ? 'w-28 h-40' : 'w-40 h-56'} 
           ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
           transition-all duration-300 relative overflow-hidden
         `}
@@ -64,7 +64,7 @@ const CardComponent = ({
     <Card 
       className={`
         ${getAttributeColor(card.attribute)} 
-        ${isSmall ? 'w-20 h-28' : 'w-40 h-56'} 
+        ${isSmall ? 'w-28 h-40' : 'w-40 h-56'} 
         ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
         ${canAttack ? 'ring-2 ring-red-400 animate-pulse' : ''}
         ${isInHand ? 'hover:-translate-y-2' : ''}
@@ -77,7 +77,7 @@ const CardComponent = ({
       <div className="relative p-2 h-full flex flex-col">
         {/* Header con nome e costo */}
         <div className="flex justify-between items-start mb-1">
-          <h4 className={`font-semibold ${isSmall ? 'text-xs' : 'text-sm'} leading-tight`}>
+          <h4 className={`font-semibold ${isSmall ? 'text-xs' : 'text-sm'} leading-tight flex-1 pr-1`}>
             {card.name}
           </h4>
           {showCost && card.cost && (
@@ -87,8 +87,17 @@ const CardComponent = ({
           )}
         </div>
 
+        {/* Tipo di carta */}
+        {(card.type || card.card_type) && (
+          <div className="mb-1">
+            <Badge variant="outline" className={`text-xs ${isSmall ? 'px-1 py-0' : 'px-2 py-1'}`}>
+              {card.type || card.card_type}
+            </Badge>
+          </div>
+        )}
+
         {/* Immagine dalla URL */}
-        <div className={`${isSmall ? 'h-8' : 'h-20'} bg-gray-800 rounded mb-1 flex items-center justify-center overflow-hidden`}>
+        <div className={`${isSmall ? 'h-12' : 'h-16'} bg-gray-800 rounded mb-1 flex items-center justify-center overflow-hidden`}>
           {card.art_link && card.art_link !== "NO ICON" ? (
             <img 
               src={card.art_link} 
@@ -147,8 +156,8 @@ const CardComponent = ({
 
         {/* Effetto per carte non mostro (solo se non è small) */}
         {!isMonster && !isSmall && (
-          <p className="text-xs text-gray-300 mt-1 line-clamp-3">
-            {card.effect}
+          <p className="text-xs text-gray-300 mt-1 line-clamp-2">
+            {card.effect || card.desc}
           </p>
         )}
       </div>

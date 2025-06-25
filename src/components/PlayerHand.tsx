@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { Hand, ArrowUp, Skull, Ban, BookOpen, Eye, Star, Zap, Sword, Shield } from 'lucide-react';
 
-const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn, onCardPreview, onCardMove }) => {
+const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove }) => {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const handleCardClick = (card) => {
