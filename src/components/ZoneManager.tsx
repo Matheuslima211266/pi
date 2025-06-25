@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ const ZoneManager = ({
   isExpanded, 
   onToggleExpand,
   maxDisplayCards = 20,
-  onDrawCard // Add this new prop
+  onDrawCard = null // Make this optional
 }) => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');

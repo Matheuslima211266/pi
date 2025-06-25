@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
@@ -8,7 +7,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, C
 import { Sword, Zap, Shield, Home, Skull, Ban, EyeOff, BookOpen, Star, Layers, ArrowUp, Shuffle, Eye } from 'lucide-react';
 import ZoneManager from './ZoneManager';
 
-const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromHand, onCardMove, onCardPreview }) => {
+const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromHand, onCardMove, onCardPreview, onDrawCard }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
   const [expandedZone, setExpandedZone] = useState(null);
   const [placementMenu, setPlacementMenu] = useState(null);
@@ -360,6 +359,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             onCardPreview={onCardPreview}
             isExpanded={expandedZone === 'deck'}
             onToggleExpand={() => handleZoneToggle('deck')}
+            onDrawCard={onDrawCard}
           />
         )}
         
@@ -370,6 +370,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'graveyard'}
           onToggleExpand={() => handleZoneToggle('graveyard')}
+          onDrawCard={onDrawCard}
         />
         
         <ZoneManager
@@ -379,6 +380,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'banished'}
           onToggleExpand={() => handleZoneToggle('banished')}
+          onDrawCard={onDrawCard}
         />
         
         <ZoneManager
@@ -388,6 +390,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'banishedFaceDown'}
           onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
+          onDrawCard={onDrawCard}
         />
         
         {/* Extra Deck */}
@@ -398,6 +401,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'extraDeck'}
           onToggleExpand={() => handleZoneToggle('extraDeck')}
+          onDrawCard={onDrawCard}
         />
       </div>
       
