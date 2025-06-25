@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,16 +52,18 @@ const Index = () => {
   const [chatMessages, setChatMessages] = useState([
     { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
   ]);
+  const syncLockRef = useRef(false);
+  const lastSyncTimeRef = useRef(Date.now());
 
-  // Multiplayer sync
+  // Multiplayer sync with conflict resolution
   useEffect(() => {
     if (gameData?.gameId) {
       const interval = setInterval(() => {
         syncGameState();
-      }, 1000);
+      }, 2000); // Reduced frequency to prevent conflicts
       return () => clearInterval(interval);
     }
-  }, [gameData]);
+  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn]);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -73,48 +75,82 @@ const Index = () => {
   };
 
   const syncGameState = () => {
-    if (!gameData?.gameId) return;
+    if (!gameData?.gameId || syncLockRef.current) return;
     
-    const gameState = {
-      playerField,
-      enemyField,
-      playerHand: gameData.isHost ? playerHand : [],
-      actionLog,
-      chatMessages,
-      currentPhase,
-      isPlayerTurn,
-      playerLifePoints,
-      enemyLifePoints,
-      lastUpdate: Date.now()
-    };
+    syncLockRef.current = true;
     
-    localStorage.setItem(`yugiduel_state_${gameData.gameId}`, JSON.stringify(gameState));
+    try {
+      const gameState = {
+        playerField,
+        enemyField,
+        playerHand: gameData.isHost ? playerHand : [],
+        actionLog,
+        chatMessages,
+        currentPhase,
+        isPlayerTurn,
+        playerLifePoints,
+        enemyLifePoints,
+        lastUpdate: Date.now(),
+        playerId: gameData.isHost ? 'host' : 'guest'
+      };
+      
+      const stateKey = `yugiduel_state_${gameData.gameId}`;
+      localStorage.setItem(stateKey, JSON.stringify(gameState));
+      lastSyncTimeRef.current = Date.now();
+    } catch (error) {
+      console.error('Sync error:', error);
+    } finally {
+      syncLockRef.current = false;
+    }
   };
 
   const loadGameState = () => {
-    if (!gameData?.gameId) return;
+    if (!gameData?.gameId || syncLockRef.current) return;
     
-    const savedState = localStorage.getItem(`yugiduel_state_${gameData.gameId}`);
+    const stateKey = `yugiduel_state_${gameData.gameId}`;
+    const savedState = localStorage.getItem(stateKey);
+    
     if (savedState) {
-      const state = JSON.parse(savedState);
-      if (state.lastUpdate && Date.now() - state.lastUpdate < 5000) {
-        if (!gameData.isHost) {
-          setEnemyField(state.playerField);
-          setPlayerField(state.enemyField);
+      try {
+        const state = JSON.parse(savedState);
+        
+        // Only load if it's newer than our last sync and from the other player
+        if (state.lastUpdate && 
+            state.lastUpdate > lastSyncTimeRef.current &&
+            state.playerId !== (gameData.isHost ? 'host' : 'guest')) {
+          
+          // Only update opponent's field, not our own
+          if (gameData.isHost) {
+            // Host sees guest's field as enemy field
+            if (state.playerId === 'guest') {
+              setEnemyField(state.playerField);
+              setEnemyLifePoints(state.playerLifePoints);
+            }
+          } else {
+            // Guest sees host's field as enemy field
+            if (state.playerId === 'host') {
+              setEnemyField(state.playerField);
+              setEnemyLifePoints(state.playerLifePoints);
+            }
+          }
+          
+          // Sync shared game state
+          setActionLog(state.actionLog || []);
+          setChatMessages(state.chatMessages || []);
+          setCurrentPhase(state.currentPhase || 'draw');
+          setIsPlayerTurn(state.isPlayerTurn);
+          
+          lastSyncTimeRef.current = state.lastUpdate;
         }
-        setActionLog(state.actionLog || []);
-        setChatMessages(state.chatMessages || []);
-        setCurrentPhase(state.currentPhase || 'draw');
-        setIsPlayerTurn(state.isPlayerTurn);
-        setPlayerLifePoints(gameData.isHost ? state.playerLifePoints : state.enemyLifePoints);
-        setEnemyLifePoints(gameData.isHost ? state.enemyLifePoints : state.playerLifePoints);
+      } catch (error) {
+        console.error('Load state error:', error);
       }
     }
   };
 
   useEffect(() => {
     if (gameData?.gameId) {
-      const interval = setInterval(loadGameState, 1000);
+      const interval = setInterval(loadGameState, 1500);
       return () => clearInterval(interval);
     }
   }, [gameData]);
@@ -123,6 +159,13 @@ const Index = () => {
     console.log('Game started with data:', newGameData);
     setGameData(newGameData);
     setGameStarted(true);
+    
+    // Clear any existing sync data
+    if (newGameData.gameId) {
+      const stateKey = `yugiduel_state_${newGameData.gameId}`;
+      localStorage.removeItem(stateKey);
+    }
+    
     initializeGame();
   };
 
@@ -180,6 +223,9 @@ const Index = () => {
     });
 
     addToActionLog(`Placed ${card.name} in ${zoneName}`);
+    
+    // Force sync after placement
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
@@ -203,6 +249,7 @@ const Index = () => {
       }
       
       addToActionLog(`${card.faceDown ? 'Set' : 'Flip'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`);
+      setTimeout(() => syncGameState(), 100);
       return;
     }
 
@@ -279,6 +326,9 @@ const Index = () => {
     }
 
     addToActionLog(`Moved ${card.name} from ${fromZone} to ${toZone}`);
+    
+    // Force sync after movement
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDrawCard = () => {
@@ -354,6 +404,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
+        {/* Game ID Display */}
+        {gameData?.gameId && (
+          <div className="mb-4 text-center">
+            <div className="inline-flex items-center gap-2 bg-gold-600 text-black px-4 py-2 rounded-lg font-semibold">
+              <span>Game ID: {gameData.gameId}</span>
+              {gameData.isHost && <span className="text-xs">(Host)</span>}
+            </div>
+          </div>
+        )}
+        
         <div className="flex gap-4">
           {/* Main game area - Left side */}
           <div className="flex-1 space-y-4">

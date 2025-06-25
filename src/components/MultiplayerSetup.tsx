@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +17,15 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
   const [linkCopied, setLinkCopied] = useState(false);
   const [isHost, setIsHost] = useState(false);
 
+  // Check for game ID in URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameFromUrl = urlParams.get('game');
+    if (gameFromUrl) {
+      setGameId(gameFromUrl);
+    }
+  }, []);
+
   const createGame = () => {
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setGameId(newGameId);
@@ -27,7 +35,8 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
     const gameData = {
       gameId: newGameId,
       host: playerName,
-      created: Date.now()
+      created: Date.now(),
+      isHost: true
     };
     localStorage.setItem(`yugiduel_${newGameId}`, JSON.stringify(gameData));
   };
@@ -37,9 +46,27 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
       const storedGame = localStorage.getItem(`yugiduel_${gameId}`);
       if (storedGame) {
         const gameData = JSON.parse(storedGame);
-        onGameStart({ ...gameData, player: playerName, joined: true });
+        onGameStart({ 
+          gameId: gameId,
+          playerName: playerName, 
+          isHost: false,
+          deckLoaded: true 
+        });
       } else {
-        alert('Game not found! Make sure the game ID is correct.');
+        // Create a dummy game entry for the guest
+        const gameData = {
+          gameId: gameId,
+          guest: playerName,
+          joined: Date.now(),
+          isHost: false
+        };
+        localStorage.setItem(`yugiduel_${gameId}`, JSON.stringify(gameData));
+        onGameStart({ 
+          gameId: gameId,
+          playerName: playerName, 
+          isHost: false,
+          deckLoaded: true 
+        });
       }
     }
   };
@@ -162,8 +189,9 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
             <div className="space-y-3">
               <div className="text-center">
                 <Badge className="bg-gold-600 text-black text-lg px-4 py-2">
-                  Game ID: {gameId}
+                  {gameId}
                 </Badge>
+                <p className="text-xs text-gray-400 mt-1">Game ID</p>
               </div>
               
               {isHost && (
@@ -178,7 +206,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
                   </Button>
                   
                   <div className="bg-slate-700 p-3 rounded text-center">
-                    <p className="text-xs text-gray-300 mb-2">Share this with your friend:</p>
+                    <p className="text-xs text-gray-300 mb-2">Share this link:</p>
                     <div className="bg-slate-600 p-2 rounded text-xs text-white break-all">
                       {window.location.origin}?game={gameId}
                     </div>
