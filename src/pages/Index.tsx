@@ -31,14 +31,15 @@ const Index = () => {
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [previewCard, setPreviewCard] = useState(null);
   
-  // Properly initialize all field zones as arrays
+  // Properly initialize all field zones as arrays including deck
   const [playerField, setPlayerField] = useState({
     monsters: [],
     spellsTraps: [],
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
-    fieldSpell: []
+    fieldSpell: [],
+    deck: []
   });
   const [enemyField, setEnemyField] = useState({
     monsters: [],
@@ -46,7 +47,8 @@ const Index = () => {
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
-    fieldSpell: []
+    fieldSpell: [],
+    deck: []
   });
 
   const { toast } = useToast();
@@ -77,8 +79,22 @@ const Index = () => {
     const playerStartingHand = shuffledPlayerDeck.slice(0, 5);
     const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
     
+    // Il resto delle carte va nel deck
+    const remainingPlayerDeck = shuffledPlayerDeck.slice(5);
+    const remainingEnemyDeck = shuffledEnemyDeck.slice(5);
+    
     setPlayerHand(playerStartingHand);
     setEnemyHand(enemyStartingHand);
+    
+    // Inizializza i deck nei field
+    setPlayerField(prev => ({
+      ...prev,
+      deck: remainingPlayerDeck
+    }));
+    setEnemyField(prev => ({
+      ...prev,
+      deck: remainingEnemyDeck
+    }));
     
     toast({
       title: "Duello Iniziato!",
@@ -139,7 +155,7 @@ const Index = () => {
     });
   };
 
-  const placeCard = (card, zoneName, slotIndex, faceDown = false) => {
+  const placeCard = (card, zoneName, slotIndex, faceDown = false, position = 'attack') => {
     // Rimuovi la carta dalla mano
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
     
@@ -151,7 +167,7 @@ const Index = () => {
       const newField = { ...prev };
       const cardWithPosition = { 
         ...card, 
-        position: 'attack', 
+        position: position, 
         faceDown: faceDown 
       };
       
@@ -159,6 +175,9 @@ const Index = () => {
         const newZone = [...(prev[zoneName] || [])];
         newZone[slotIndex] = cardWithPosition;
         newField[zoneName] = newZone;
+      } else if (zoneName === 'fieldSpell') {
+        // Field spell: ce ne può essere solo una, sostituisce quella esistente
+        newField[zoneName] = [cardWithPosition];
       } else {
         // Ensure the zone exists and is an array before spreading
         const currentZone = prev[zoneName] || [];
@@ -168,11 +187,12 @@ const Index = () => {
       return newField;
     });
     
-    logAction('Giocatore', `Posiziona ${card.name} ${faceDown ? 'coperta' : 'scoperta'} in zona ${zoneName}`);
+    const positionText = faceDown ? 'coperta' : `scoperta in posizione ${position}`;
+    logAction('Giocatore', `Posiziona ${card.name} ${positionText} in zona ${zoneName}`);
 
     toast({
       title: "Carta Posizionata!",
-      description: `${card.name} è stata posizionata ${faceDown ? 'coperta' : 'scoperta'} in zona ${zoneName}!`,
+      description: `${card.name} è stata posizionata ${positionText} in zona ${zoneName}!`,
     });
   };
 
@@ -265,7 +285,8 @@ const Index = () => {
       graveyard: [],
       banished: [],
       banishedFaceDown: [],
-      fieldSpell: []
+      fieldSpell: [],
+      deck: []
     });
     setEnemyField({
       monsters: [],
@@ -273,7 +294,8 @@ const Index = () => {
       graveyard: [],
       banished: [],
       banishedFaceDown: [],
-      fieldSpell: []
+      fieldSpell: [],
+      deck: []
     });
     setSelectedCardFromHand(null);
     setPreviewCard(null);

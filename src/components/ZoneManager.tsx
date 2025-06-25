@@ -84,6 +84,7 @@ const ZoneManager = ({
       case 'banished': return '🚫';
       case 'banishedFaceDown': return '👁️‍🗨️';
       case 'deck': return '📚';
+      case 'fieldSpell': return '🏛️';
       default: return '📦';
     }
   };
@@ -94,6 +95,7 @@ const ZoneManager = ({
       case 'banished': return 'border-red-400 bg-red-900/20';
       case 'banishedFaceDown': return 'border-purple-400 bg-purple-900/20';
       case 'deck': return 'border-blue-400 bg-blue-900/20';
+      case 'fieldSpell': return 'border-purple-400 bg-purple-900/20';
       default: return 'border-gray-400 bg-gray-900/20';
     }
   };
@@ -196,9 +198,15 @@ const ZoneManager = ({
         
         <div className="flex gap-1">
           {/* Stack representation */}
-          <div className="w-12 h-16 bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center">
-            <span className="text-xs font-bold text-white">DECK</span>
-          </div>
+          {zoneName === 'deck' ? (
+            <div className="w-12 h-16 bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center">
+              <span className="text-xs font-bold text-white">DECK</span>
+            </div>
+          ) : (
+            <div className={`w-12 h-16 ${getZoneColor()} rounded border-2 flex items-center justify-center`}>
+              <span className="text-lg">{getZoneIcon()}</span>
+            </div>
+          )}
           
           {/* Top card preview */}
           {topCard && (
@@ -208,6 +216,7 @@ const ZoneManager = ({
                 isSmall={true}
                 showCost={false}
                 onClick={() => onCardPreview(topCard)}
+                isFaceDown={zoneName === 'deck' || zoneName === 'banishedFaceDown'}
               />
             </div>
           )}
