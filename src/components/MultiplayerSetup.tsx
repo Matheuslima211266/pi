@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Share2, Upload, Users, Copy, Check } from 'lucide-react';
+import { Share2, Upload, Users, Copy, Check, Link } from 'lucide-react';
 
 interface MultiplayerSetupProps {
   onGameStart: (gameData: any) => void;
@@ -167,14 +167,23 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
               </div>
               
               {isHost && (
-                <Button
-                  onClick={copyGameLink}
-                  variant="outline"
-                  className="w-full border-gold-400 text-gold-400"
-                >
-                  {linkCopied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {linkCopied ? 'Link Copied!' : 'Copy Game Link'}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    onClick={copyGameLink}
+                    variant="outline"
+                    className="w-full border-gold-400 text-gold-400"
+                  >
+                    {linkCopied ? <Check className="w-4 h-4 mr-2" /> : <Link className="w-4 h-4 mr-2" />}
+                    {linkCopied ? 'Link Copied!' : 'Copy Game Link'}
+                  </Button>
+                  
+                  <div className="bg-slate-700 p-3 rounded text-center">
+                    <p className="text-xs text-gray-300 mb-2">Share this with your friend:</p>
+                    <div className="bg-slate-600 p-2 rounded text-xs text-white break-all">
+                      {window.location.origin}?game={gameId}
+                    </div>
+                  </div>
+                </div>
               )}
 
               <Button

@@ -30,6 +30,7 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn, onCardPrevie
   };
 
   const handleCardMovement = (card, destination) => {
+    console.log(`Moving card ${card.name} from hand to ${destination}`);
     if (onCardMove) {
       onCardMove(card, 'hand', destination);
     }
@@ -47,7 +48,7 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn, onCardPrevie
               <CardComponent
                 card={card}
                 onClick={handleCardClick}
-                isPlayable={isPlayerTurn && currentMana >= (card.cost || card.star || 1)}
+                isPlayable={isPlayerTurn}
                 isInHand={true}
                 showCost={true}
               />
@@ -64,26 +65,6 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn, onCardPrevie
             <Eye className="mr-2 h-4 w-4" />
             View Card Details
           </ContextMenuItem>
-          
-          <ContextMenuSub>
-            <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
-              <Sword className="mr-2 h-4 w-4" />
-              Summon/Activate
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent className="bg-gray-800 border-gray-600">
-              <ContextMenuItem onClick={() => handleCardMovement(card, 'monsters')} className="text-white hover:bg-gray-700">
-                Summon to Monster Zone
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCardMovement(card, 'spellsTraps')} className="text-white hover:bg-gray-700">
-                <Zap className="mr-2 h-4 w-4" />
-                Activate in S/T Zone
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCardMovement(card, 'fieldSpell')} className="text-white hover:bg-gray-700">
-                <Shield className="mr-2 h-4 w-4" />
-                Field Spell Zone
-              </ContextMenuItem>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
           
           <ContextMenuItem onClick={() => handleCardMovement(card, 'graveyard')} className="text-white hover:bg-gray-700">
             <Skull className="mr-2 h-4 w-4" />
