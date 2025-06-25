@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,25 +51,15 @@ const Index = () => {
   ]);
 
   React.useEffect(() => {
-    // Load cards from JSON
     const allCards = sampleCardsData.cards;
-
-    // Filter cards into main deck and extra deck based on extra_deck field
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Initialize player and enemy decks
     setPlayerDeck(mainDeckCards.slice(0, 20));
     setEnemyDeck(mainDeckCards.slice(20, 40));
-
-    // Initialize player hand
     setPlayerHand(mainDeckCards.slice(0, 5));
-
-    // Initialize player and enemy extra decks
     setPlayerField(prev => ({ ...prev, extraDeck: extraDeckCards }));
     setEnemyField(prev => ({ ...prev, extraDeck: extraDeckCards }));
-
-    // Initialize player and enemy decks in field
     setPlayerField(prev => ({ ...prev, deck: mainDeckCards.slice(0, 20) }));
     setEnemyField(prev => ({ ...prev, deck: mainDeckCards.slice(20, 40) }));
   }, []);
@@ -99,14 +88,12 @@ const Index = () => {
       return newField;
     });
 
-    // Add to action log
     addToActionLog(`Placed ${card.name} in ${zoneName}`);
   };
 
   const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
     console.log(`Moving card ${card.name} from ${fromZone} to ${toZone}`);
     
-    // Special handling for flip in place
     if (toZone === 'flip_in_place') {
       if (fromZone === 'monsters') {
         setPlayerField(prev => {
@@ -124,12 +111,10 @@ const Index = () => {
         });
       }
       
-      // Add to action log
       addToActionLog(`${card.faceDown ? 'Set' : 'Flip'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`);
       return;
     }
 
-    // Remove card from source zone
     setPlayerField(prev => {
       const newField = { ...prev };
 
@@ -159,7 +144,6 @@ const Index = () => {
       return newField;
     });
 
-    // Add card to destination zone
     setPlayerField(prev => {
       const newField = { ...prev };
 
@@ -194,7 +178,6 @@ const Index = () => {
       return newField;
     });
 
-    // Add to action log
     addToActionLog(`Moved ${card.name} from ${fromZone} to ${toZone}`);
   };
 
@@ -203,7 +186,7 @@ const Index = () => {
       const drawnCard = playerDeck[0];
       setPlayerHand(prevHand => [...prevHand, drawnCard]);
       setPlayerDeck(prevDeck => prevDeck.slice(1));
-      setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) })); // Update deck in field
+      setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
       addToActionLog(`Drew ${drawnCard.name}`);
     } else {
       addToActionLog('Deck is empty!');
@@ -222,7 +205,8 @@ const Index = () => {
   const handleEndTurn = () => {
     setIsPlayerTurn(!isPlayerTurn);
     setCurrentPhase('draw');
-    addToActionLog('Turn ended');
+    setTimeRemaining(60);
+    addToActionLog(`Turn ended - ${!isPlayerTurn ? 'Your' : "Opponent's"} turn`);
   };
 
   const handleLifePointsChange = (amount, isEnemy) => {
@@ -251,7 +235,6 @@ const Index = () => {
   };
 
   const handleAttack = (attackingCard, targetCard) => {
-    // Basic attack logic - can be expanded later
     addToActionLog(`${attackingCard.name} attacks ${targetCard ? targetCard.name : 'directly'}`);
   };
 
@@ -283,7 +266,7 @@ const Index = () => {
               cards={playerHand}
               onPlayCard={setSelectedCardFromHand}
               currentMana={currentMana}
-              isPlayerTurn={isPlayerTurn}
+              isPlayerTurn={true}
               onCardPreview={setPreviewCard}
               onCardMove={handleCardMove}
             />
