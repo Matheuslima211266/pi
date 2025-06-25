@@ -11,11 +11,14 @@ const Index = () => {
   const { syncGameState } = useMultiplayerSync(gameState);
   const handlers = useGameHandlers(gameState, syncGameState);
 
-  if (!gameState.gameStarted) {
+  // Se il gioco non è ancora iniziato o non tutti i giocatori sono pronti
+  if (!gameState.gameStarted || !gameState.bothPlayersReady) {
     return (
       <MultiplayerSetup 
         onGameStart={handlers.handleGameStart}
         onDeckLoad={handlers.handleDeckLoad}
+        onPlayerReady={handlers.handlePlayerReady}
+        gameState={gameState}
       />
     );
   }

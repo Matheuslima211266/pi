@@ -14,13 +14,17 @@ export const useMultiplayerSync = (gameState) => {
     actionLog,
     chatMessages,
     timeRemaining,
+    playerReady,
+    bothPlayersReady,
     setEnemyField,
     setEnemyLifePoints,
+    setPlayerLifePoints,
     setActionLog,
     setChatMessages,
     setCurrentPhase,
     setIsPlayerTurn,
-    setTimeRemaining
+    setTimeRemaining,
+    setBothPlayersReady
   } = gameState;
 
   const syncLockRef = useRef(false);
@@ -32,6 +36,7 @@ export const useMultiplayerSync = (gameState) => {
     syncLockRef.current = true;
     
     try {
+      const playerId = gameData.isHost ? 'host' : 'guest';
       const gameStateData = {
         playerField,
         playerLifePoints,
@@ -41,20 +46,29 @@ export const useMultiplayerSync = (gameState) => {
         currentPhase,
         isPlayerTurn,
         timeRemaining,
+        playerReady,
         lastUpdate: Date.now(),
-        playerId: gameData.isHost ? 'host' : 'guest',
+        playerId,
         playerName: gameData.playerName
       };
+      
+      console.log('Syncing game state:', gameStateData);
       
       const stateKey = `yugiduel_state_${gameData.gameId}`;
       const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
       
-      allStates[gameStateData.playerId] = gameStateData;
+      allStates[playerId] = gameStateData;
       localStorage.setItem(stateKey, JSON.stringify(allStates));
       
-      lastSyncTimeRef.current = Date.now();
+      // Controlla se entrambi i giocatori sono pronti
+      const opponentId = gameData.isHost ? 'guest' : 'host';
+      const opponentState = allStates[opponentId];
       
-      console.log('Synced game state:', gameStateData);
+      if (opponentState && opponentState.playerReady && playerReady) {
+        setBothPlayersReady(true);
+      }
+      
+      lastSyncTimeRef.current = Date.now();
     } catch (error) {
       console.error('Sync error:', error);
     } finally {
@@ -65,51 +79,92 @@ export const useMultiplayerSync = (gameState) => {
   const loadGameState = () => {
     if (!gameData?.gameId || syncLockRef.current) return;
     
-    const stateKey = `yugiduel_state_${gameData.gameId}`;
-    const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
-    
-    const opponentId = gameData.isHost ? 'guest' : 'host';
-    const opponentState = allStates[opponentId];
-    
-    if (opponentState && 
-        opponentState.lastUpdate && 
-        opponentState.lastUpdate > lastSyncTimeRef.current + 200) {
+    try {
+      const stateKey = `yugiduel_state_${gameData.gameId}`;
+      const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
       
-      console.log('Loading opponent state:', opponentState);
+      const opponentId = gameData.isHost ? 'guest' : 'host';
+      const opponentState = allStates[opponentId];
       
-      setEnemyField(opponentState.playerField);
-      setEnemyLifePoints(opponentState.playerLifePoints);
-      
-      if (opponentState.actionLog && Array.isArray(opponentState.actionLog)) {
-        setActionLog(opponentState.actionLog);
+      if (opponentState && 
+          opponentState.lastUpdate && 
+          opponentState.lastUpdate > lastSyncTimeRef.current + 100) {
+        
+        console.log('Loading opponent state:', opponentState);
+        
+        // Sincronizza campo avversario
+        if (opponentState.playerField) {
+          setEnemyField(opponentState.playerField);
+        }
+        
+        // Sincronizza life points
+        if (typeof opponentState.playerLifePoints === 'number') {
+          setEnemyLifePoints(opponentState.playerLifePoints);
+        }
+        
+        // Sincronizza action log (merge senza duplicati)
+        if (opponentState.actionLog && Array.isArray(opponentState.actionLog)) {
+          setActionLog(prev => {
+            const merged = [...prev];
+            opponentState.actionLog.forEach(action => {
+              if (!merged.find(a => a.id === action.id)) {
+                merged.push(action);
+              }
+            });
+            return merged.sort((a, b) => a.id - b.id);
+          });
+        }
+        
+        // Sincronizza chat messages (merge senza duplicati)
+        if (opponentState.chatMessages && Array.isArray(opponentState.chatMessages)) {
+          setChatMessages(prev => {
+            const merged = [...prev];
+            opponentState.chatMessages.forEach(msg => {
+              if (!merged.find(m => m.id === msg.id)) {
+                merged.push(msg);
+              }
+            });
+            return merged.sort((a, b) => a.id - b.id);
+          });
+        }
+        
+        // Sincronizza fase e turno
+        if (opponentState.currentPhase) {
+          setCurrentPhase(opponentState.currentPhase);
+        }
+        if (typeof opponentState.isPlayerTurn === 'boolean') {
+          setIsPlayerTurn(opponentState.isPlayerTurn);
+        }
+        if (typeof opponentState.timeRemaining === 'number') {
+          setTimeRemaining(opponentState.timeRemaining);
+        }
+        
+        // Controlla se entrambi i giocatori sono pronti
+        if (opponentState.playerReady && playerReady) {
+          setBothPlayersReady(true);
+        }
+        
+        lastSyncTimeRef.current = opponentState.lastUpdate;
       }
-      
-      if (opponentState.chatMessages && Array.isArray(opponentState.chatMessages)) {
-        setChatMessages(opponentState.chatMessages);
-      }
-      
-      setCurrentPhase(opponentState.currentPhase || 'draw');
-      setIsPlayerTurn(opponentState.isPlayerTurn);
-      setTimeRemaining(opponentState.timeRemaining || 60);
-      
-      lastSyncTimeRef.current = opponentState.lastUpdate;
+    } catch (error) {
+      console.error('Load state error:', error);
     }
   };
 
-  // Sync effect
+  // Sync effect - più frequente
   useEffect(() => {
     if (gameData?.gameId) {
       const interval = setInterval(() => {
         syncGameState();
-      }, 500);
+      }, 300);
       return () => clearInterval(interval);
     }
-  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages, timeRemaining]);
+  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages, timeRemaining, playerReady]);
 
-  // Load effect
+  // Load effect - più frequente
   useEffect(() => {
     if (gameData?.gameId) {
-      const interval = setInterval(loadGameState, 400);
+      const interval = setInterval(loadGameState, 200);
       return () => clearInterval(interval);
     }
   }, [gameData]);

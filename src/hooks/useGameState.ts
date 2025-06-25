@@ -40,6 +40,8 @@ export const useGameState = () => {
   const [chatMessages, setChatMessages] = useState([
     { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
   ]);
+  const [bothPlayersReady, setBothPlayersReady] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -50,12 +52,28 @@ export const useGameState = () => {
     return shuffled;
   };
 
+  // Funzione per generare ID unici per le carte
+  const generateUniqueCardId = (baseId, playerId) => {
+    return `${playerId}_${baseId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const initializeGame = () => {
     const allCards = playerDeckData?.cards || sampleCardsData.cards;
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    const shuffledMainDeck = shuffleArray([...mainDeckCards]);
+    // Genera ID unici per ogni carta
+    const uniqueMainDeckCards = mainDeckCards.map(card => ({
+      ...card,
+      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
+    }));
+    
+    const uniqueExtraDeckCards = extraDeckCards.map(card => ({
+      ...card,
+      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
+    }));
+
+    const shuffledMainDeck = shuffleArray([...uniqueMainDeckCards]);
     const shuffledHand = shuffleArray([...shuffledMainDeck.slice(0, 5)]);
 
     setPlayerDeck(shuffledMainDeck.slice(0, 20));
@@ -63,12 +81,12 @@ export const useGameState = () => {
     setPlayerHand(shuffledHand);
     setPlayerField(prev => ({ 
       ...prev, 
-      extraDeck: extraDeckCards,
+      extraDeck: uniqueExtraDeckCards,
       deck: shuffledMainDeck.slice(5, 20)
     }));
     setEnemyField(prev => ({ 
       ...prev, 
-      extraDeck: extraDeckCards,
+      extraDeck: uniqueExtraDeckCards,
       deck: shuffledMainDeck.slice(20, 40)
     }));
   };
@@ -92,9 +110,12 @@ export const useGameState = () => {
     timeRemaining, setTimeRemaining,
     actionLog, setActionLog,
     chatMessages, setChatMessages,
+    bothPlayersReady, setBothPlayersReady,
+    playerReady, setPlayerReady,
     
     // Functions
     shuffleArray,
-    initializeGame
+    initializeGame,
+    generateUniqueCardId
   };
 };

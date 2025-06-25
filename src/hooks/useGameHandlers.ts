@@ -1,4 +1,3 @@
-
 export const useGameHandlers = (gameState, syncGameState) => {
   const {
     gameData,
@@ -17,8 +16,10 @@ export const useGameHandlers = (gameState, syncGameState) => {
     setChatMessages,
     setPlayerLifePoints,
     setEnemyLifePoints,
+    setPlayerReady,
     shuffleArray,
-    initializeGame
+    initializeGame,
+    generateUniqueCardId
   } = gameState;
 
   const handleGameStart = (newGameData) => {
@@ -32,6 +33,27 @@ export const useGameHandlers = (gameState, syncGameState) => {
     }
     
     initializeGame();
+  };
+
+  const handlePlayerReady = () => {
+    setPlayerReady(true);
+    
+    const newAction = {
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
+      action: 'is ready to duel!',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
+    
+    const readyMessage = {
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
+      message: '✅ Ready to duel!'
+    };
+    setChatMessages(prev => [...prev, readyMessage]);
+    
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDeckLoad = (deckData) => {
@@ -62,8 +84,8 @@ export const useGameHandlers = (gameState, syncGameState) => {
     });
 
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: `placed ${card.name} in ${zoneName}`,
       timestamp: new Date().toLocaleTimeString()
     };
@@ -93,8 +115,8 @@ export const useGameHandlers = (gameState, syncGameState) => {
       }
       
       const newAction = {
-        id: Date.now(),
-        player: gameData.playerName,
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
         action: `${card.faceDown ? 'set' : 'flipped'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`,
         timestamp: new Date().toLocaleTimeString()
       };
@@ -176,8 +198,8 @@ export const useGameHandlers = (gameState, syncGameState) => {
     }
 
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: `moved ${card.name} from ${fromZone} to ${toZone}`,
       timestamp: new Date().toLocaleTimeString()
     };
@@ -193,20 +215,22 @@ export const useGameHandlers = (gameState, syncGameState) => {
       setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
       
       const newAction = {
-        id: Date.now(),
-        player: gameData.playerName,
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
         action: 'drew a card',
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
+      setTimeout(() => syncGameState(), 100);
     } else {
       const newAction = {
-        id: Date.now(),
-        player: gameData.playerName,
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
         action: 'deck is empty!',
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
+      setTimeout(() => syncGameState(), 100);
     }
   };
 
@@ -217,12 +241,13 @@ export const useGameHandlers = (gameState, syncGameState) => {
   const handlePhaseChange = (phase) => {
     setCurrentPhase(phase);
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: `changed phase to ${phase}`,
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleEndTurn = () => {
@@ -230,70 +255,77 @@ export const useGameHandlers = (gameState, syncGameState) => {
     setCurrentPhase('draw');
     setTimeRemaining(60);
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: 'ended turn',
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleLifePointsChange = (amount, isEnemy) => {
     if (isEnemy) {
-      setEnemyLifePoints(amount);
+      // Non permettiamo di cambiare direttamente i life points dell'avversario
+      return;
     } else {
       setPlayerLifePoints(amount);
       const newAction = {
-        id: Date.now(),
-        player: gameData.playerName,
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
         action: `changed life points to ${amount}`,
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
+      setTimeout(() => syncGameState(), 100);
     }
   };
 
   const handleSendMessage = (message) => {
     const newMessage = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       player: gameData?.playerName || 'Player',
       message: message
     };
     setChatMessages(prev => [...prev, newMessage]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDiceRoll = (result) => {
     const newMessage = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       player: gameData?.playerName || 'Player',
       message: `🎲 Rolled dice: ${result}`
     };
     setChatMessages(prev => [...prev, newMessage]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleCoinFlip = (result) => {
     const newMessage = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       player: gameData?.playerName || 'Player',
       message: `🪙 Flipped coin: ${result}`
     };
     setChatMessages(prev => [...prev, newMessage]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleAttack = (attackingCard, targetCard) => {
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: `${attackingCard.name} attacks ${targetCard ? targetCard.name : 'directly'}`,
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
+    setTimeout(() => syncGameState(), 100);
   };
 
   const handleTimeUp = () => {
     const newAction = {
-      id: Date.now(),
-      player: gameData.playerName,
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
       action: 'time up! Turn ended automatically',
       timestamp: new Date().toLocaleTimeString()
     };
@@ -303,6 +335,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
 
   return {
     handleGameStart,
+    handlePlayerReady,
     handleDeckLoad,
     handleCardPlace,
     handleCardMove,

@@ -1,16 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Share2, Upload, Users, Copy, Check, Link } from 'lucide-react';
+import { Share2, Upload, Users, Copy, Check, Link, Play } from 'lucide-react';
 
 interface MultiplayerSetupProps {
   onGameStart: (gameData: any) => void;
   onDeckLoad: (deckData: any) => void;
+  onPlayerReady?: () => void;
+  gameState?: any;
 }
 
-const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) => {
+const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }: MultiplayerSetupProps) => {
   const [gameId, setGameId] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [deckLoaded, setDeckLoaded] = useState(false);
@@ -109,6 +112,62 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
       });
     }
   };
+
+  // Se il gioco è già iniziato ma non tutti i giocatori sono pronti
+  if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
+          <div className="text-center space-y-6">
+            <div>
+              <Users className="w-12 h-12 text-gold-400 mx-auto mb-2" />
+              <h1 className="text-2xl font-bold text-white">Waiting for Players</h1>
+              <p className="text-gray-400">Get ready to duel!</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-center">
+                <Badge className="bg-gold-600 text-black text-lg px-4 py-2">
+                  {gameState?.gameData?.gameId}
+                </Badge>
+                <p className="text-xs text-gray-400 mt-1">Game ID</p>
+              </div>
+
+              <div className="bg-slate-700 p-4 rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">You ({gameState?.gameData?.playerName})</span>
+                  <span className={`text-sm ${gameState?.playerReady ? 'text-green-400' : 'text-gray-400'}`}>
+                    {gameState?.playerReady ? '✅ Ready' : '⏳ Not Ready'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">Opponent</span>
+                  <span className="text-sm text-gray-400">⏳ Waiting...</span>
+                </div>
+              </div>
+
+              {!gameState?.playerReady && (
+                <Button
+                  onClick={onPlayerReady}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  I'm Ready!
+                </Button>
+              )}
+
+              {gameState?.playerReady && (
+                <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
+                  <p className="text-green-400 font-semibold">You are ready!</p>
+                  <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -219,7 +278,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
                 className="w-full bg-green-600 hover:bg-green-700"
                 disabled={!playerName || !deckLoaded}
               >
-                Start Duel
+                Enter Game Lobby
               </Button>
             </div>
           )}
@@ -229,7 +288,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad }: MultiplayerSetupProps) =>
             {!playerName && 'Enter your name to continue'}
             {playerName && !deckLoaded && 'Upload your deck to continue'}
             {playerName && deckLoaded && !gameId && 'Create or join a game'}
-            {playerName && deckLoaded && gameId && 'Ready to duel!'}
+            {playerName && deckLoaded && gameId && 'Ready to enter lobby!'}
           </div>
         </div>
       </Card>
