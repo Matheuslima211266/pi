@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { Search, Sort, Shuffle, Eye, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, ArrowDown, Shuffle, Eye, X, ArrowUp } from 'lucide-react';
 import CardComponent from './CardComponent';
 
 const ZoneManager = ({ 
@@ -116,7 +116,7 @@ const ZoneManager = ({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={() => handleCardAction('preview', card)}>
+        <ContextMenuItem onClick={() => handleCardAction('preview', card, 'preview')}>
           <Eye className="mr-2 h-4 w-4" />
           View Card Details
         </ContextMenuItem>
