@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const Index = () => {
 
   const [playerHand, setPlayerHand] = useState([]);
   const [enemyHand, setEnemyHand] = useState([]);
+  const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [playerField, setPlayerField] = useState({
     monsters: [],
     spellsTraps: [], // Zona combinata per magie e trappole
@@ -50,25 +52,46 @@ const Index = () => {
   }, []);
 
   const initializeGame = () => {
-    const cards = sampleCardsData.cards;
+    const allCards = sampleCardsData.cards;
     
-    // Mescola le carte e distribuisce le mani iniziali
-    const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
-    const playerStartingHand = shuffledCards.slice(0, 5);
-    const enemyStartingHand = shuffledCards.slice(5, 10);
+    // Crea un mazzo completo con tutte le carte dal JSON (ogni carta una volta)
+    const playerDeck = [...allCards].map((card, index) => ({
+      ...card,
+      id: `player_${card.id}_${index}` // ID unico per ogni istanza
+    }));
+    
+    const enemyDeck = [...allCards].map((card, index) => ({
+      ...card,
+      id: `enemy_${card.id}_${index}` // ID unico per ogni istanza
+    }));
+    
+    // Mescola i mazzi
+    const shuffledPlayerDeck = playerDeck.sort(() => Math.random() - 0.5);
+    const shuffledEnemyDeck = enemyDeck.sort(() => Math.random() - 0.5);
+    
+    // Distribuisce le mani iniziali (5 carte)
+    const playerStartingHand = shuffledPlayerDeck.slice(0, 5);
+    const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
     
     setPlayerHand(playerStartingHand);
     setEnemyHand(enemyStartingHand);
     
     toast({
       title: "Duello Iniziato!",
-      description: "Che il migliore vinca! Buona fortuna, duellante.",
+      description: `Mazzo caricato con ${allCards.length} carte diverse. Che il migliore vinca!`,
     });
+  };
+
+  const handleCardSelection = (card) => {
+    setSelectedCardFromHand(card);
   };
 
   const endTurn = () => {
     const newPlayer = gameState.currentPlayer === 'player' ? 'enemy' : 'player';
     const newTurn = newPlayer === 'player' ? gameState.turn + 1 : gameState.turn;
+    
+    // Reset carta selezionata quando cambia turno
+    setSelectedCardFromHand(null);
     
     setGameState(prev => ({
       ...prev,
@@ -100,6 +123,9 @@ const Index = () => {
 
     // Rimuovi la carta dalla mano
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
+    
+    // Reset carta selezionata
+    setSelectedCardFromHand(null);
     
     // Aggiungi la carta al campo nella posizione specificata
     setPlayerField(prev => {
@@ -285,12 +311,13 @@ const Index = () => {
           enemyField={enemyField}
           onAttack={attackWithMonster}
           onCardPlace={placeCard}
+          selectedCardFromHand={selectedCardFromHand}
         />
 
         {/* Mano del giocatore */}
         <PlayerHand 
           cards={playerHand}
-          onPlayCard={placeCard}
+          onPlayCard={handleCardSelection}
           currentMana={gameState.playerMana}
           isPlayerTurn={gameState.currentPlayer === 'player'}
         />

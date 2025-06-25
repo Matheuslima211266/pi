@@ -15,6 +15,10 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
       setSelectedCard(null);
     } else {
       setSelectedCard(card);
+      // Passa la carta selezionata al componente padre
+      if (onPlayCard) {
+        onPlayCard(card);
+      }
     }
   };
 
@@ -30,7 +34,7 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
       
       <div className="flex gap-2 overflow-x-auto pb-2">
         {cards.map((card, index) => (
-          <div key={card.id} className="flex-shrink-0">
+          <div key={card.id} className="flex-shrink-0 relative">
             <CardComponent
               card={card}
               onClick={handleCardClick}
