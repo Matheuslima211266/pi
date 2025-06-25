@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { Search, ArrowDown, Shuffle, Eye, X, ArrowUp } from 'lucide-react';
+import { Search, ArrowDown, Shuffle, Eye, X, ArrowUp, Skull, Ban, BookOpen, Star, Zap, Sword } from 'lucide-react';
 import CardComponent from './CardComponent';
 
 const ZoneManager = ({ 
@@ -16,7 +16,7 @@ const ZoneManager = ({
   isExpanded, 
   onToggleExpand,
   maxDisplayCards = 20,
-  onDrawCard = null // Make this optional
+  onDrawCard = null
 }) => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +85,7 @@ const ZoneManager = ({
       case 'banished': return '🚫';
       case 'banishedFaceDown': return '👁️‍🗨️';
       case 'deck': return '📚';
+      case 'extraDeck': return '⭐';
       case 'fieldSpell': return '🏛️';
       default: return '📦';
     }
@@ -96,6 +97,7 @@ const ZoneManager = ({
       case 'banished': return 'border-red-400 bg-red-900/20';
       case 'banishedFaceDown': return 'border-purple-400 bg-purple-900/20';
       case 'deck': return 'border-blue-400 bg-blue-900/20';
+      case 'extraDeck': return 'border-yellow-400 bg-yellow-900/20';
       case 'fieldSpell': return 'border-purple-400 bg-purple-900/20';
       default: return 'border-gray-400 bg-gray-900/20';
     }
@@ -118,63 +120,78 @@ const ZoneManager = ({
           )}
         </div>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={() => handleCardAction('preview', card, 'preview')}>
+      <ContextMenuContent className="w-48 bg-gray-800 border-gray-600 z-50">
+        <ContextMenuItem onClick={() => onCardPreview(card)} className="text-white hover:bg-gray-700">
           <Eye className="mr-2 h-4 w-4" />
           View Card Details
         </ContextMenuItem>
         
+        <ContextMenuItem onClick={() => handleCardAction('move', card, 'hand')} className="text-white hover:bg-gray-700">
+          <ArrowUp className="mr-2 h-4 w-4" />
+          Add to Hand
+        </ContextMenuItem>
+
         <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <ArrowUp className="mr-2 h-4 w-4" />
-            Move to Hand/Field
+          <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+            <Sword className="mr-2 h-4 w-4" />
+            Summon/Activate
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'hand')}>
-              Add to Hand
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'monsters')}>
+          <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'monsters')} className="text-white hover:bg-gray-700">
               Special Summon (ATK)
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'spellsTraps')}>
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'spellsTraps')} className="text-white hover:bg-gray-700">
+              <Zap className="mr-2 h-4 w-4" />
               Activate on Field
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'fieldSpell')} className="text-white hover:bg-gray-700">
+              Field Spell Zone
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        <ContextMenuItem onClick={() => handleCardAction('move', card, 'graveyard')} className="text-white hover:bg-gray-700">
+          <Skull className="mr-2 h-4 w-4" />
+          Send to Graveyard
+        </ContextMenuItem>
+
+        <ContextMenuSub>
+          <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+            <Ban className="mr-2 h-4 w-4" />
+            Banish Card
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'banished')} className="text-white hover:bg-gray-700">
+              Banish Face-up
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'banishedFaceDown')} className="text-white hover:bg-gray-700">
+              Banish Face-down
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
 
         <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <Shuffle className="mr-2 h-4 w-4" />
+          <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+            <BookOpen className="mr-2 h-4 w-4" />
             Return to Deck
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_top')}>
+          <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_top')} className="text-white hover:bg-gray-700">
               Top of Deck
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_bottom')}>
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_bottom')} className="text-white hover:bg-gray-700">
               Bottom of Deck
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_shuffle')}>
+            <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_shuffle')} className="text-white hover:bg-gray-700">
               Shuffle into Deck
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
 
-        {zoneName !== 'banished' && zoneName !== 'banishedFaceDown' && (
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              Banish Card
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              <ContextMenuItem onClick={() => handleCardAction('move', card, 'banished')}>
-                Banish Face-up
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCardAction('move', card, 'banishedFaceDown')}>
-                Banish Face-down
-              </ContextMenuItem>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-        )}
+        <ContextMenuItem onClick={() => handleCardAction('move', card, 'extraDeck')} className="text-white hover:bg-gray-700">
+          <Star className="mr-2 h-4 w-4" />
+          Add to Extra Deck
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -307,6 +324,9 @@ const ZoneManager = ({
             <span className="text-sm">{selectedCards.length} cards selected:</span>
             <Button size="sm" onClick={() => handleCardAction('move', null, 'hand')}>
               Add All to Hand
+            </Button>
+            <Button size="sm" onClick={() => handleCardAction('move', null, 'graveyard')}>
+              Send All to Graveyard
             </Button>
             <Button size="sm" onClick={() => handleCardAction('move', null, 'banished')}>
               Banish All

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -335,6 +336,23 @@ const Index = () => {
   const handleCardMovement = (card, fromZone, toDestination) => {
     console.log(`Moving card ${card.name} from ${fromZone} to ${toDestination}`);
     
+    // Gestione speciale per temp_remove (usato per il flip delle carte)
+    if (toDestination === 'temp_remove') {
+      // Rimuovi temporaneamente la carta per il flip
+      if (fromZone === 'monsters') {
+        setPlayerField(prev => ({
+          ...prev,
+          monsters: prev.monsters.map(c => c && c.id === card.id ? null : c)
+        }));
+      } else if (fromZone === 'spellsTraps') {
+        setPlayerField(prev => ({
+          ...prev,
+          spellsTraps: prev.spellsTraps.map(c => c && c.id === card.id ? null : c)
+        }));
+      }
+      return;
+    }
+
     // Remove card from source zone
     if (fromZone === 'hand') {
       setPlayerHand(prev => prev.filter(c => c.id !== card.id));
@@ -353,6 +371,8 @@ const Index = () => {
         ...prev,
         fieldSpell: prev.fieldSpell.filter(c => c.id !== card.id)
       }));
+    } else if (fromZone === 'temp_remove') {
+      // Non fare nulla, la carta è già stata rimossa temporaneamente
     } else {
       setPlayerField(prev => ({
         ...prev,
@@ -365,26 +385,35 @@ const Index = () => {
       setPlayerHand(prev => [...prev, card]);
     } else if (toDestination === 'monsters') {
       setPlayerField(prev => {
-        const newMonsters = [...prev.monsters];
+        const newMonsters = [...(prev.monsters || [])];
+        // Trova il primo slot vuoto
         const emptySlot = newMonsters.findIndex(slot => !slot);
         if (emptySlot !== -1) {
           newMonsters[emptySlot] = { ...card, position: 'attack', faceDown: false };
         } else {
+          // Se non ci sono slot vuoti, aggiungi alla fine (estendi l'array)
           newMonsters.push({ ...card, position: 'attack', faceDown: false });
         }
         return { ...prev, monsters: newMonsters };
       });
     } else if (toDestination === 'spellsTraps') {
       setPlayerField(prev => {
-        const newSpellsTraps = [...prev.spellsTraps];
+        const newSpellsTraps = [...(prev.spellsTraps || [])];
+        // Trova il primo slot vuoto
         const emptySlot = newSpellsTraps.findIndex(slot => !slot);
         if (emptySlot !== -1) {
           newSpellsTraps[emptySlot] = { ...card, faceDown: false };
         } else {
+          // Se non ci sono slot vuoti, aggiungi alla fine
           newSpellsTraps.push({ ...card, faceDown: false });
         }
         return { ...prev, spellsTraps: newSpellsTraps };
       });
+    } else if (toDestination === 'fieldSpell') {
+      setPlayerField(prev => ({
+        ...prev,
+        fieldSpell: [card]
+      }));
     } else if (toDestination === 'deck_top') {
       setPlayerField(prev => ({
         ...prev,
@@ -422,11 +451,6 @@ const Index = () => {
       setPlayerField(prev => ({
         ...prev,
         extraDeck: [...prev.extraDeck, card]
-      }));
-    } else if (toDestination === 'fieldSpell') {
-      setPlayerField(prev => ({
-        ...prev,
-        fieldSpell: [card]
       }));
     } else {
       // Generic zone handling

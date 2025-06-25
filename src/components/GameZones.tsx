@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
@@ -113,9 +114,17 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       case 'toDeckShuffle':
         onCardMove && onCardMove(card, sourceZone, 'deck_shuffle');
         break;
+      case 'toExtraDeck':
+        onCardMove && onCardMove(card, sourceZone, 'extraDeck');
+        break;
       case 'flipCard':
-        const newCard = { ...card, faceDown: !card.faceDown };
-        onCardMove && onCardMove(newCard, sourceZone, sourceZone);
+        // Fix per il bug face-down: creo una nuova carta con lo stato flippato
+        const flippedCard = { ...card, faceDown: !card.faceDown };
+        // Prima rimuovo la carta originale, poi aggiungo quella flippata
+        onCardMove && onCardMove(card, sourceZone, 'temp_remove');
+        setTimeout(() => {
+          onCardMove && onCardMove(flippedCard, 'temp_remove', sourceZone);
+        }, 50);
         break;
     }
   };
@@ -216,6 +225,11 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
+
+          <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toExtraDeck', 'extraDeck')} className="text-white hover:bg-gray-700">
+            <Star className="mr-2 h-4 w-4" />
+            Add to Extra Deck
+          </ContextMenuItem>
 
           {(zoneName === 'spellsTraps' || zoneName === 'monsters') && (
             <ContextMenuItem onClick={() => handleFieldCardAction(card, 'flipCard', 'flip')} className="text-white hover:bg-gray-700">
