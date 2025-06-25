@@ -15,6 +15,7 @@ const GameBoard = ({ playerField, enemyField, onAttack }) => {
               field={enemyField}
               isEnemy={true}
               onCardClick={(card) => console.log('Enemy card clicked:', card)}
+              onAttack={onAttack}
             />
           </div>
           
