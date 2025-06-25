@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,10 @@ import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
 import DiceAndCoin from '@/components/DiceAndCoin';
 import Calculator from '@/components/Calculator';
+import ChatBox from '@/components/ChatBox';
+import ActionLog from '@/components/ActionLog';
+import DeckBuilder from '@/components/DeckBuilder';
+import TurnTimer from '@/components/TurnTimer';
 import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
@@ -79,6 +82,18 @@ const Index = () => {
     });
   };
 
+  const [actionLog, setActionLog] = useState([]);
+
+  const logAction = (player, action) => {
+    const newAction = {
+      id: Date.now(),
+      player,
+      action,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
+  };
+
   const handleCardSelection = (card) => {
     setSelectedCardFromHand(card);
   };
@@ -89,6 +104,7 @@ const Index = () => {
       phase: newPhase
     }));
 
+    logAction('Giocatore', `Cambia fase a ${newPhase}`);
     toast({
       title: `Fase ${newPhase}`,
       description: `Ora sei nella fase ${newPhase}`,
@@ -108,6 +124,7 @@ const Index = () => {
       phase: 'draw'
     }));
 
+    logAction(gameState.currentPlayer === 'player' ? 'Giocatore' : 'Avversario', 'Fine turno');
     toast({
       title: `Turno ${newTurn}`,
       description: `È il turno di ${newPlayer === 'player' ? 'Giocatore' : 'Avversario'}`,
@@ -142,6 +159,8 @@ const Index = () => {
       
       return newField;
     });
+    
+    logAction('Giocatore', `Posiziona ${card.name} ${faceDown ? 'coperta' : 'scoperta'} in zona ${zoneName}`);
 
     toast({
       title: "Carta Posizionata!",
@@ -223,6 +242,12 @@ const Index = () => {
         });
       }
     }
+    
+    if (!targetCard) {
+      logAction('Giocatore', `${attackingCard.name} attacca direttamente per ${attackingCard.atk} danni`);
+    } else {
+      logAction('Giocatore', `${attackingCard.name} attacca ${targetCard.name}`);
+    }
   };
 
   const resetField = () => {
@@ -244,10 +269,32 @@ const Index = () => {
     });
     setSelectedCardFromHand(null);
     
+    logAction('Sistema', 'Campo azzerato');
+    
     toast({
       title: "Campo Azzerato!",
       description: "Tutte le carte sono state rimosse dal campo di battaglia.",
     });
+  };
+
+  const handleDeckLoad = (deckData) => {
+    if (deckData.cards) {
+      const playerDeck = deckData.cards.map((card, index) => ({
+        ...card,
+        id: `player_${card.id}_${index}`
+      }));
+      
+      const shuffledDeck = playerDeck.sort(() => Math.random() - 0.5);
+      const startingHand = shuffledDeck.slice(0, 5);
+      
+      setPlayerHand(startingHand);
+      logAction('Sistema', `Deck "${deckData.name}" caricato con ${deckData.cards.length} carte`);
+      
+      toast({
+        title: "Deck Caricato!",
+        description: `Deck "${deckData.name}" caricato con successo!`,
+      });
+    }
   };
 
   return (
@@ -273,41 +320,62 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* Controlli principali */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-          {/* Life Points Controls */}
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+        {/* Layout principale riorganizzato */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+          {/* Colonna sinistra - Life Points Giocatore */}
+          <div className="lg:col-span-3">
             <LifePointsControl
               playerName="Giocatore"
               lifePoints={gameState.playerHP}
-              onLifePointsChange={(newValue) => setGameState(prev => ({ ...prev, playerHP: newValue }))}
+              onLifePointsChange={(newValue) => {
+                setGameState(prev => ({ ...prev, playerHP: newValue }));
+                logAction('Giocatore', `Life Points: ${newValue}`);
+              }}
               color="blue"
             />
+          </div>
+
+          {/* Colonna centrale - Fasi di gioco, Dadi e Moneta, Timer */}
+          <div className="lg:col-span-6 space-y-4">
+            <GamePhases
+              currentPhase={gameState.phase}
+              onPhaseChange={handlePhaseChange}
+              onEndTurn={endTurn}
+              isPlayerTurn={true}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <DiceAndCoin />
+              <TurnTimer 
+                isActive={gameState.currentPlayer === 'player'}
+                onTimeUp={() => {
+                  logAction('Sistema', 'Tempo scaduto');
+                  endTurn();
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Colonna destra - Life Points Avversario */}
+          <div className="lg:col-span-3">
             <LifePointsControl
               playerName="Avversario"
               lifePoints={gameState.enemyHP}
-              onLifePointsChange={(newValue) => setGameState(prev => ({ ...prev, enemyHP: newValue }))}
+              onLifePointsChange={(newValue) => {
+                setGameState(prev => ({ ...prev, enemyHP: newValue }));
+                logAction('Avversario', `Life Points: ${newValue}`);
+              }}
               color="red"
             />
           </div>
-
-          {/* Game Phases */}
-          <GamePhases
-            currentPhase={gameState.phase}
-            onPhaseChange={handlePhaseChange}
-            onEndTurn={endTurn}
-            isPlayerTurn={gameState.currentPlayer === 'player'}
-          />
-
-          {/* Tools */}
-          <div className="space-y-4">
-            <DiceAndCoin />
-          </div>
         </div>
 
-        {/* Calculator - posizionato a parte */}
-        <div className="mb-6 max-w-sm mx-auto lg:max-w-none lg:mx-0">
+        {/* Strumenti e informazioni */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
           <Calculator />
+          <ChatBox />
+          <ActionLog actions={actionLog} />
+          <DeckBuilder onDeckLoad={handleDeckLoad} />
         </div>
 
         {/* Campo di battaglia */}
@@ -323,8 +391,8 @@ const Index = () => {
         <PlayerHand 
           cards={playerHand}
           onPlayCard={handleCardSelection}
-          currentMana={999} // Mana illimitato per azioni libere
-          isPlayerTurn={true} // Sempre true per azioni libere
+          currentMana={999}
+          isPlayerTurn={true}
         />
       </div>
     </div>
