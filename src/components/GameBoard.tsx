@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
 import GameZones from './GameZones';
 
-const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCardFromHand, onCardPreview }) => {
+const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCardFromHand, onCardPreview, onCardMove }) => {
   return (
     <div className="mb-8">
       <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-gold-400 p-6">
@@ -17,6 +17,8 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
               onCardClick={onCardPreview}
               onCardPlace={onCardPlace}
               selectedCardFromHand={null}
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
             />
           </div>
           
@@ -34,6 +36,8 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
             onCardClick={onCardPreview}
             onCardPlace={onCardPlace}
             selectedCardFromHand={selectedCardFromHand}
+            onCardMove={onCardMove}
+            onCardPreview={onCardPreview}
           />
         </div>
       </Card>

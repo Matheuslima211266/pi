@@ -5,13 +5,14 @@ import CardComponent from './CardComponent';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sword, Zap, Shield, Home, Skull, Ban, EyeOff } from 'lucide-react';
+import ZoneManager from './ZoneManager';
 
-const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromHand }) => {
+const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromHand, onCardMove, onCardPreview }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
+  const [expandedZone, setExpandedZone] = useState(null);
 
   const handleSlotClick = (zoneName, slotIndex) => {
     if (selectedCardFromHand && !isEnemy) {
-      // Chiedi se posizionare coperta o scoperta
       const faceDown = window.confirm("Vuoi posizionare la carta coperta? (OK = Coperta, Annulla = Scoperta)");
       onCardPlace && onCardPlace(selectedCardFromHand, zoneName, slotIndex, faceDown);
     }
@@ -19,7 +20,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
 
   const handleCardClick = (card) => {
     if (!isEnemy && card) {
-      // Attiva/disattiva l'effetto della carta
       const effectKey = `${card.id}-${card.name}`;
       const newActivatedEffects = new Set(activatedEffects);
       
@@ -41,6 +41,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     if (!card) return false;
     const effectKey = `${card.id}-${card.name}`;
     return activatedEffects.has(effectKey);
+  };
+
+  const handleZoneToggle = (zoneName) => {
+    setExpandedZone(expandedZone === zoneName ? null : zoneName);
   };
 
   const renderZone = (cards, zoneName, icon, maxCards = 5, className = "") => {
@@ -97,59 +101,45 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     );
   };
 
-  const renderSingleZone = (cards, zoneName, icon, className = "") => {
-    const card = cards.length > 0 ? cards[cards.length - 1] : null;
-    const isHighlighted = selectedCardFromHand && !card && !isEnemy;
-    
-    return (
-      <div className="mb-2">
-        <div className="flex items-center gap-1 mb-1">
-          {icon}
-          <Badge variant="outline" className="text-xs">
-            {zoneName}
-          </Badge>
-          <span className="text-xs text-gray-400">
-            {cards.length}
-          </span>
-        </div>
-        <div 
-          className={`w-16 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
-            ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
-            ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}
-            ${className}`}
-          onClick={() => handleSlotClick(zoneName, 0)}
-        >
-          {card ? (
-            <div className="relative">
-              <CardComponent
-                card={card}
-                onClick={() => handleCardClick(card)}
-                isSmall={true}
-                showCost={false}
-                isFaceDown={card.faceDown}
-              />
-              {isEffectActivated(card) && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
-              )}
-            </div>
-          ) : (
-            <div className="text-gray-600 text-center">
-              {React.cloneElement(icon, { size: 16 })}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-3">
-      {/* Prima riga: Zone speciali */}
+      {/* Prima riga: Zone speciali con ZoneManager */}
       <div className="grid grid-cols-4 gap-2 justify-items-center">
-        {renderSingleZone(field.graveyard || [], 'Cimitero', <Skull className="text-gray-400" size={14} />)}
-        {renderSingleZone(field.banished || [], 'Banish', <Ban className="text-red-400" size={14} />)}
-        {renderSingleZone(field.banishedFaceDown || [], 'Banish FD', <EyeOff className="text-purple-400" size={14} />)}
-        {renderSingleZone(field.fieldSpell || [], 'Terreno', <Home className="text-green-400" size={14} />)}
+        <ZoneManager
+          cards={field.graveyard || []}
+          zoneName="graveyard"
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          isExpanded={expandedZone === 'graveyard'}
+          onToggleExpand={() => handleZoneToggle('graveyard')}
+        />
+        
+        <ZoneManager
+          cards={field.banished || []}
+          zoneName="banished"
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          isExpanded={expandedZone === 'banished'}
+          onToggleExpand={() => handleZoneToggle('banished')}
+        />
+        
+        <ZoneManager
+          cards={field.banishedFaceDown || []}
+          zoneName="banishedFaceDown"
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          isExpanded={expandedZone === 'banishedFaceDown'}
+          onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
+        />
+        
+        <ZoneManager
+          cards={field.fieldSpell || []}
+          zoneName="fieldSpell"
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          isExpanded={expandedZone === 'fieldSpell'}
+          onToggleExpand={() => handleZoneToggle('fieldSpell')}
+        />
       </div>
       
       {/* Zona Mostri */}

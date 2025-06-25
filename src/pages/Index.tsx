@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -307,6 +306,63 @@ const Index = () => {
     }
   };
 
+  const handleCardMovement = (card, fromZone, toDestination) => {
+    // Remove card from source zone
+    if (fromZone === 'graveyard') {
+      setPlayerField(prev => ({
+        ...prev,
+        graveyard: prev.graveyard.filter(c => c.id !== card.id)
+      }));
+    } else if (fromZone === 'banished') {
+      setPlayerField(prev => ({
+        ...prev,
+        banished: prev.banished.filter(c => c.id !== card.id)
+      }));
+    } else if (fromZone === 'banishedFaceDown') {
+      setPlayerField(prev => ({
+        ...prev,
+        banishedFaceDown: prev.banishedFaceDown.filter(c => c.id !== card.id)
+      }));
+    }
+
+    // Add card to destination
+    if (toDestination === 'hand') {
+      setPlayerHand(prev => [...prev, card]);
+    } else if (toDestination === 'monsters') {
+      setPlayerField(prev => ({
+        ...prev,
+        monsters: [...prev.monsters, { ...card, position: 'attack', faceDown: false }]
+      }));
+    } else if (toDestination === 'spellsTraps') {
+      setPlayerField(prev => ({
+        ...prev,
+        spellsTraps: [...prev.spellsTraps, { ...card, faceDown: false }]
+      }));
+    } else if (toDestination === 'graveyard') {
+      setPlayerField(prev => ({
+        ...prev,
+        graveyard: [...prev.graveyard, card]
+      }));
+    } else if (toDestination === 'banished') {
+      setPlayerField(prev => ({
+        ...prev,
+        banished: [...prev.banished, card]
+      }));
+    } else if (toDestination === 'banishedFaceDown') {
+      setPlayerField(prev => ({
+        ...prev,
+        banishedFaceDown: [...prev.banishedFaceDown, { ...card, faceDown: true }]
+      }));
+    }
+
+    logAction('Giocatore', `Moved ${card.name} from ${fromZone} to ${toDestination}`);
+    
+    toast({
+      title: "Card Moved!",
+      description: `${card.name} moved from ${fromZone} to ${toDestination}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
@@ -402,6 +458,7 @@ const Index = () => {
           onCardPlace={placeCard}
           selectedCardFromHand={selectedCardFromHand}
           onCardPreview={handleCardPreview}
+          onCardMove={handleCardMovement}
         />
 
         {/* Mano del giocatore */}
