@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import ChatBox from '@/components/ChatBox';
 import ActionLog from '@/components/ActionLog';
 import DeckBuilder from '@/components/DeckBuilder';
 import TurnTimer from '@/components/TurnTimer';
+import CardPreview from '@/components/CardPreview';
 import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
@@ -28,6 +30,9 @@ const Index = () => {
   const [playerHand, setPlayerHand] = useState([]);
   const [enemyHand, setEnemyHand] = useState([]);
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
+  const [previewCard, setPreviewCard] = useState(null);
+  
+  // Properly initialize all field zones as arrays
   const [playerField, setPlayerField] = useState({
     monsters: [],
     spellsTraps: [],
@@ -98,6 +103,10 @@ const Index = () => {
     setSelectedCardFromHand(card);
   };
 
+  const handleCardPreview = (card) => {
+    setPreviewCard(card);
+  };
+
   const handlePhaseChange = (newPhase: string) => {
     setGameState(prev => ({
       ...prev,
@@ -132,8 +141,6 @@ const Index = () => {
   };
 
   const placeCard = (card, zoneName, slotIndex, faceDown = false) => {
-    // Rimossa la restrizione del turno - ora puoi sempre posizionare carte
-    
     // Rimuovi la carta dalla mano
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
     
@@ -150,11 +157,13 @@ const Index = () => {
       };
       
       if (zoneName === 'monsters' || zoneName === 'spellsTraps') {
-        const newZone = [...prev[zoneName]];
+        const newZone = [...(prev[zoneName] || [])];
         newZone[slotIndex] = cardWithPosition;
         newField[zoneName] = newZone;
       } else {
-        newField[zoneName] = [...prev[zoneName], cardWithPosition];
+        // Ensure the zone exists and is an array before spreading
+        const currentZone = prev[zoneName] || [];
+        newField[zoneName] = [...currentZone, cardWithPosition];
       }
       
       return newField;
@@ -268,6 +277,7 @@ const Index = () => {
       fieldSpell: []
     });
     setSelectedCardFromHand(null);
+    setPreviewCard(null);
     
     logAction('Sistema', 'Campo azzerato');
     
@@ -300,6 +310,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
+        {/* Card Preview */}
+        <CardPreview 
+          card={previewCard} 
+          onClose={() => setPreviewCard(null)} 
+        />
+
         {/* Header del gioco */}
         <div className="flex justify-between items-center mb-6">
           <div className="text-center">
@@ -385,6 +401,7 @@ const Index = () => {
           onAttack={attackWithMonster}
           onCardPlace={placeCard}
           selectedCardFromHand={selectedCardFromHand}
+          onCardPreview={handleCardPreview}
         />
 
         {/* Mano del giocatore */}
@@ -393,6 +410,7 @@ const Index = () => {
           onPlayCard={handleCardSelection}
           currentMana={999}
           isPlayerTurn={true}
+          onCardPreview={handleCardPreview}
         />
       </div>
     </div>

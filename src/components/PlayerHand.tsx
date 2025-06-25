@@ -5,7 +5,7 @@ import CardComponent from './CardComponent';
 import { Badge } from '@/components/ui/badge';
 import { Hand } from 'lucide-react';
 
-const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
+const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn, onCardPreview }) => {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const handleCardClick = (card) => {
@@ -22,6 +22,12 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
     }
   };
 
+  const handleCardPreview = (card) => {
+    if (onCardPreview) {
+      onCardPreview(card);
+    }
+  };
+
   return (
     <Card className="bg-slate-800/70 border-blue-400 p-4">
       <div className="flex items-center gap-2 mb-4">
@@ -35,13 +41,18 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
       <div className="flex gap-2 overflow-x-auto pb-2">
         {cards.map((card, index) => (
           <div key={card.id} className="flex-shrink-0 relative">
-            <CardComponent
-              card={card}
-              onClick={handleCardClick}
-              isPlayable={isPlayerTurn && currentMana >= (card.cost || card.star || 1)}
-              isInHand={true}
-              showCost={true}
-            />
+            <div
+              onDoubleClick={() => handleCardPreview(card)}
+              className="cursor-pointer"
+            >
+              <CardComponent
+                card={card}
+                onClick={handleCardClick}
+                isPlayable={isPlayerTurn && currentMana >= (card.cost || card.star || 1)}
+                isInHand={true}
+                showCost={true}
+              />
+            </div>
             {selectedCard?.id === card.id && (
               <div className="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                 ✓
@@ -62,6 +73,9 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
           <div className="flex items-center justify-between">
             <span className="text-sm">Carta selezionata: <strong>{selectedCard.name}</strong></span>
             <span className="text-xs text-gray-300">Clicca su una zona del campo per posizionarla</span>
+          </div>
+          <div className="text-xs text-gray-400 mt-1">
+            Doppio-click per vedere la carta in grande
           </div>
         </div>
       )}
