@@ -11,9 +11,12 @@ import ChatBox from '@/components/ChatBox';
 import ActionLog from '@/components/ActionLog';
 import DiceAndCoin from '@/components/DiceAndCoin';
 import TurnTimer from '@/components/TurnTimer';
+import MultiplayerSetup from '@/components/MultiplayerSetup';
 import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
+  const [gameStarted, setGameStarted] = useState(false);
+  const [playerDeckData, setPlayerDeckData] = useState(null);
   const [playerLifePoints, setPlayerLifePoints] = useState(8000);
   const [enemyLifePoints, setEnemyLifePoints] = useState(8000);
   const [currentMana, setCurrentMana] = useState(5);
@@ -50,19 +53,36 @@ const Index = () => {
     { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
   ]);
 
-  React.useEffect(() => {
-    const allCards = sampleCardsData.cards;
+  const handleGameStart = (gameData) => {
+    console.log('Game started with data:', gameData);
+    setGameStarted(true);
+    initializeGame();
+  };
+
+  const handleDeckLoad = (deckData) => {
+    console.log('Deck loaded:', deckData);
+    setPlayerDeckData(deckData);
+  };
+
+  const initializeGame = () => {
+    const allCards = playerDeckData?.cards || sampleCardsData.cards;
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
     setPlayerDeck(mainDeckCards.slice(0, 20));
     setEnemyDeck(mainDeckCards.slice(20, 40));
     setPlayerHand(mainDeckCards.slice(0, 5));
-    setPlayerField(prev => ({ ...prev, extraDeck: extraDeckCards }));
-    setEnemyField(prev => ({ ...prev, extraDeck: extraDeckCards }));
-    setPlayerField(prev => ({ ...prev, deck: mainDeckCards.slice(0, 20) }));
-    setEnemyField(prev => ({ ...prev, deck: mainDeckCards.slice(20, 40) }));
-  }, []);
+    setPlayerField(prev => ({ 
+      ...prev, 
+      extraDeck: extraDeckCards,
+      deck: mainDeckCards.slice(5, 20)
+    }));
+    setEnemyField(prev => ({ 
+      ...prev, 
+      extraDeck: extraDeckCards,
+      deck: mainDeckCards.slice(20, 40)
+    }));
+  };
 
   const handleCardPlace = (card, zoneName, slotIndex, isFaceDown = false, position = null) => {
     console.log(`Placing card ${card.name} in ${zoneName} at index ${slotIndex}`);
@@ -115,77 +135,90 @@ const Index = () => {
       return;
     }
 
-    setPlayerField(prev => {
-      const newField = { ...prev };
+    // Remove from source zone
+    if (fromZone === 'hand') {
+      setPlayerHand(hand => hand.filter(c => c.id !== card.id));
+    } else {
+      setPlayerField(prev => {
+        const newField = { ...prev };
 
-      if (fromZone === 'hand') {
-        setPlayerHand(hand => hand.filter(c => c.id !== card.id));
+        if (fromZone === 'monsters') {
+          newField.monsters = [...prev.monsters];
+          const sourceIndex = prev.monsters.findIndex(m => m && m.id === card.id);
+          if (sourceIndex !== -1) newField.monsters[sourceIndex] = null;
+        } else if (fromZone === 'spellsTraps') {
+          newField.spellsTraps = [...prev.spellsTraps];
+          const sourceIndex = prev.spellsTraps.findIndex(s => s && s.id === card.id);
+          if (sourceIndex !== -1) newField.spellsTraps[sourceIndex] = null;
+        } else if (fromZone === 'fieldSpell') {
+          newField.fieldSpell = [];
+        } else if (fromZone === 'graveyard') {
+          newField.graveyard = prev.graveyard.filter(c => c.id !== card.id);
+        } else if (fromZone === 'banished') {
+          newField.banished = prev.banished.filter(c => c.id !== card.id);
+        } else if (fromZone === 'banishedFaceDown') {
+          newField.banishedFaceDown = prev.banishedFaceDown.filter(c => c.id !== card.id);
+        } else if (fromZone === 'extraDeck') {
+          newField.extraDeck = prev.extraDeck.filter(c => c.id !== card.id);
+        } else if (fromZone === 'deck') {
+          newField.deck = prev.deck.filter(c => c.id !== card.id);
+        }
+
         return newField;
-      } else if (fromZone === 'monsters') {
-        newField.monsters = [...prev.monsters];
-        newField.monsters[slotIndex] = null;
-      } else if (fromZone === 'spellsTraps') {
-        newField.spellsTraps = [...prev.spellsTraps];
-        newField.spellsTraps[slotIndex] = null;
-      } else if (fromZone === 'fieldSpell') {
-        newField.fieldSpell = [];
-      } else if (fromZone === 'graveyard') {
-        newField.graveyard = prev.graveyard.filter(c => c.id !== card.id);
-      } else if (fromZone === 'banished') {
-        newField.banished = prev.banished.filter(c => c.id !== card.id);
-      } else if (fromZone === 'banishedFaceDown') {
-        newField.banishedFaceDown = prev.banishedFaceDown.filter(c => c.id !== card.id);
-      } else if (fromZone === 'extraDeck') {
-        newField.extraDeck = prev.extraDeck.filter(c => c.id !== card.id);
-      } else if (fromZone === 'deck') {
-        newField.deck = prev.deck.filter(c => c.id !== card.id);
-      }
+      });
+    }
 
-      return newField;
-    });
+    // Add to destination zone
+    if (toZone === 'hand') {
+      setPlayerHand(hand => [...hand, card]);
+    } else {
+      setPlayerField(prev => {
+        const newField = { ...prev };
 
-    setPlayerField(prev => {
-      const newField = { ...prev };
+        if (toZone === 'monsters') {
+          newField.monsters = [...prev.monsters];
+          if (slotIndex !== null) {
+            newField.monsters[slotIndex] = card;
+          }
+        } else if (toZone === 'spellsTraps') {
+          newField.spellsTraps = [...prev.spellsTraps];
+          if (slotIndex !== null) {
+            newField.spellsTraps[slotIndex] = card;
+          }
+        } else if (toZone === 'fieldSpell') {
+          newField.fieldSpell = [card];
+        } else if (toZone === 'graveyard') {
+          newField.graveyard = [...prev.graveyard, card];
+        } else if (toZone === 'banished') {
+          newField.banished = [...prev.banished, card];
+        } else if (toZone === 'banishedFaceDown') {
+          newField.banishedFaceDown = [...prev.banishedFaceDown, card];
+        } else if (toZone === 'extraDeck') {
+          newField.extraDeck = [...prev.extraDeck, card];
+        } else if (toZone === 'deck_top') {
+          newField.deck = [card, ...prev.deck];
+        } else if (toZone === 'deck_bottom') {
+          newField.deck = [...prev.deck, card];
+        } else if (toZone === 'deck_shuffle') {
+          newField.deck = [...prev.deck, card];
+          // Shuffle the deck
+          for (let i = newField.deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newField.deck[i], newField.deck[j]] = [newField.deck[j], newField.deck[i]];
+          }
+        }
 
-      if (toZone === 'hand') {
-        setPlayerHand(hand => [...hand, card]);
-      } else if (toZone === 'monsters') {
-        newField.monsters = [...prev.monsters];
-        newField.monsters[slotIndex] = card;
-      } else if (toZone === 'spellsTraps') {
-        newField.spellsTraps = [...prev.spellsTraps];
-        newField.spellsTraps[slotIndex] = card;
-      } else if (toZone === 'fieldSpell') {
-        newField.fieldSpell = [card];
-      } else if (toZone === 'graveyard') {
-        newField.graveyard = [...prev.graveyard, card];
-      } else if (toZone === 'banished') {
-        newField.banished = [...prev.banished, card];
-      } else if (toZone === 'banishedFaceDown') {
-        newField.banishedFaceDown = [...prev.banishedFaceDown, card];
-      } else if (toZone === 'extraDeck') {
-        newField.extraDeck = [...prev.extraDeck, card];
-      } else if (toZone === 'deck_top') {
-        newField.deck = [card, ...prev.deck];
-      } else if (toZone === 'deck_bottom') {
-        newField.deck = [...prev.deck, card];
-      } else if (toZone === 'deck_shuffle') {
-        newField.deck = [...prev.deck];
-        newField.deck.push(card);
-        newField.deck.sort(() => Math.random() - 0.5);
-      }
-
-      return newField;
-    });
+        return newField;
+      });
+    }
 
     addToActionLog(`Moved ${card.name} from ${fromZone} to ${toZone}`);
   };
 
   const handleDrawCard = () => {
-    if (playerDeck.length > 0) {
-      const drawnCard = playerDeck[0];
+    if (playerField.deck.length > 0) {
+      const drawnCard = playerField.deck[0];
       setPlayerHand(prevHand => [...prevHand, drawnCard]);
-      setPlayerDeck(prevDeck => prevDeck.slice(1));
       setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
       addToActionLog(`Drew ${drawnCard.name}`);
     } else {
@@ -243,6 +276,15 @@ const Index = () => {
     handleEndTurn();
   };
 
+  if (!gameStarted) {
+    return (
+      <MultiplayerSetup 
+        onGameStart={handleGameStart}
+        onDeckLoad={handleDeckLoad}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
@@ -272,13 +314,9 @@ const Index = () => {
             />
             
             {/* Bottom Controls */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <ActionLog actions={actionLog} />
               <DiceAndCoin />
-              <TurnTimer 
-                isActive={isPlayerTurn}
-                onTimeUp={handleTimeUp}
-              />
             </div>
           </div>
           
@@ -306,6 +344,12 @@ const Index = () => {
               lifePoints={playerLifePoints}
               onLifePointsChange={setPlayerLifePoints}
               color="blue"
+            />
+            
+            {/* Timer */}
+            <TurnTimer 
+              isActive={isPlayerTurn}
+              onTimeUp={handleTimeUp}
             />
             
             {/* Chat */}
