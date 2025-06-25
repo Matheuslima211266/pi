@@ -40,8 +40,6 @@ const Index = () => {
     banishedFaceDown: [],
     fieldSpell: [],
     extraDeck: [],
-    pendulumLeft: [],
-    pendulumRight: [],
     deck: []
   });
   const [enemyField, setEnemyField] = useState({
@@ -52,8 +50,6 @@ const Index = () => {
     banishedFaceDown: [],
     fieldSpell: [],
     extraDeck: [],
-    pendulumLeft: [],
-    pendulumRight: [],
     deck: []
   });
 
@@ -181,7 +177,7 @@ const Index = () => {
         const newZone = [...(prev[zoneName] || [])];
         newZone[slotIndex] = cardWithPosition;
         newField[zoneName] = newZone;
-      } else if (zoneName === 'fieldSpell' || zoneName === 'pendulumLeft' || zoneName === 'pendulumRight') {
+      } else if (zoneName === 'fieldSpell') {
         // Single slot zones: sostituisce quella esistente
         newField[zoneName] = [cardWithPosition];
       } else {
@@ -293,8 +289,6 @@ const Index = () => {
       banishedFaceDown: [],
       fieldSpell: [],
       extraDeck: [],
-      pendulumLeft: [],
-      pendulumRight: [],
       deck: []
     });
     setEnemyField({
@@ -305,8 +299,6 @@ const Index = () => {
       banishedFaceDown: [],
       fieldSpell: [],
       extraDeck: [],
-      pendulumLeft: [],
-      pendulumRight: [],
       deck: []
     });
     setSelectedCardFromHand(null);
@@ -341,9 +333,26 @@ const Index = () => {
   };
 
   const handleCardMovement = (card, fromZone, toDestination) => {
+    console.log(`Moving card ${card.name} from ${fromZone} to ${toDestination}`);
+    
     // Remove card from source zone
     if (fromZone === 'hand') {
       setPlayerHand(prev => prev.filter(c => c.id !== card.id));
+    } else if (fromZone === 'monsters') {
+      setPlayerField(prev => ({
+        ...prev,
+        monsters: prev.monsters.filter(c => c.id !== card.id)
+      }));
+    } else if (fromZone === 'spellsTraps') {
+      setPlayerField(prev => ({
+        ...prev,
+        spellsTraps: prev.spellsTraps.filter(c => c.id !== card.id)
+      }));
+    } else if (fromZone === 'fieldSpell') {
+      setPlayerField(prev => ({
+        ...prev,
+        fieldSpell: prev.fieldSpell.filter(c => c.id !== card.id)
+      }));
     } else {
       setPlayerField(prev => ({
         ...prev,
@@ -355,15 +364,27 @@ const Index = () => {
     if (toDestination === 'hand') {
       setPlayerHand(prev => [...prev, card]);
     } else if (toDestination === 'monsters') {
-      setPlayerField(prev => ({
-        ...prev,
-        monsters: [...prev.monsters, { ...card, position: 'attack', faceDown: false }]
-      }));
+      setPlayerField(prev => {
+        const newMonsters = [...prev.monsters];
+        const emptySlot = newMonsters.findIndex(slot => !slot);
+        if (emptySlot !== -1) {
+          newMonsters[emptySlot] = { ...card, position: 'attack', faceDown: false };
+        } else {
+          newMonsters.push({ ...card, position: 'attack', faceDown: false });
+        }
+        return { ...prev, monsters: newMonsters };
+      });
     } else if (toDestination === 'spellsTraps') {
-      setPlayerField(prev => ({
-        ...prev,
-        spellsTraps: [...prev.spellsTraps, { ...card, faceDown: false }]
-      }));
+      setPlayerField(prev => {
+        const newSpellsTraps = [...prev.spellsTraps];
+        const emptySlot = newSpellsTraps.findIndex(slot => !slot);
+        if (emptySlot !== -1) {
+          newSpellsTraps[emptySlot] = { ...card, faceDown: false };
+        } else {
+          newSpellsTraps.push({ ...card, faceDown: false });
+        }
+        return { ...prev, spellsTraps: newSpellsTraps };
+      });
     } else if (toDestination === 'deck_top') {
       setPlayerField(prev => ({
         ...prev,
@@ -387,6 +408,26 @@ const Index = () => {
         ...prev,
         banishedFaceDown: [...prev.banishedFaceDown, { ...card, faceDown: true }]
       }));
+    } else if (toDestination === 'graveyard') {
+      setPlayerField(prev => ({
+        ...prev,
+        graveyard: [...prev.graveyard, card]
+      }));
+    } else if (toDestination === 'banished') {
+      setPlayerField(prev => ({
+        ...prev,
+        banished: [...prev.banished, card]
+      }));
+    } else if (toDestination === 'extraDeck') {
+      setPlayerField(prev => ({
+        ...prev,
+        extraDeck: [...prev.extraDeck, card]
+      }));
+    } else if (toDestination === 'fieldSpell') {
+      setPlayerField(prev => ({
+        ...prev,
+        fieldSpell: [card]
+      }));
     } else {
       // Generic zone handling
       setPlayerField(prev => ({
@@ -400,6 +441,35 @@ const Index = () => {
     toast({
       title: "Card Moved!",
       description: `${card.name} moved from ${fromZone} to ${toDestination}`,
+    });
+  };
+
+  const drawCard = () => {
+    setPlayerField(prev => {
+      if (prev.deck.length === 0) {
+        toast({
+          title: "Deck Empty!",
+          description: "No cards left to draw",
+          variant: "destructive"
+        });
+        return prev;
+      }
+
+      const topCard = prev.deck[0];
+      const newDeck = prev.deck.slice(1);
+      
+      setPlayerHand(prevHand => [...prevHand, topCard]);
+      
+      logAction('Giocatore', `Drew ${topCard.name} from deck`);
+      toast({
+        title: "Card Drawn!",
+        description: `Drew ${topCard.name}`,
+      });
+
+      return {
+        ...prev,
+        deck: newDeck
+      };
     });
   };
 
@@ -499,6 +569,7 @@ const Index = () => {
           selectedCardFromHand={selectedCardFromHand}
           onCardPreview={handleCardPreview}
           onCardMove={handleCardMovement}
+          onDrawCard={drawCard}
         />
 
         {/* Mano del giocatore */}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,8 @@ const ZoneManager = ({
   onCardPreview, 
   isExpanded, 
   onToggleExpand,
-  maxDisplayCards = 20
+  maxDisplayCards = 20,
+  onDrawCard // Add this new prop
 }) => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,12 +178,17 @@ const ZoneManager = ({
     </ContextMenu>
   );
 
+  const handleDrawCard = () => {
+    if (zoneName === 'deck' && cards.length > 0 && onDrawCard) {
+      onDrawCard();
+    }
+  };
+
   // Compact view
   if (!isExpanded) {
     const topCard = cards[cards.length - 1];
     return (
-      <div className={`${getZoneColor()} border-2 rounded-lg p-2 cursor-pointer transition-all hover:scale-105`}
-           onClick={onToggleExpand}>
+      <div className={`${getZoneColor()} border-2 rounded-lg p-2 cursor-pointer transition-all hover:scale-105`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1">
             <span className="text-lg">{getZoneIcon()}</span>
@@ -199,18 +204,25 @@ const ZoneManager = ({
         <div className="flex gap-1">
           {/* Stack representation */}
           {zoneName === 'deck' ? (
-            <div className="w-12 h-16 bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center">
-              <span className="text-xs font-bold text-white">DECK</span>
+            <div 
+              className="w-12 h-16 bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center cursor-pointer hover:bg-blue-700"
+              onClick={handleDrawCard}
+              title="Click to draw a card"
+            >
+              <span className="text-xs font-bold text-white">DRAW</span>
             </div>
           ) : (
-            <div className={`w-12 h-16 ${getZoneColor()} rounded border-2 flex items-center justify-center`}>
+            <div 
+              className={`w-12 h-16 ${getZoneColor()} rounded border-2 flex items-center justify-center`}
+              onClick={onToggleExpand}
+            >
               <span className="text-lg">{getZoneIcon()}</span>
             </div>
           )}
           
           {/* Top card preview */}
           {topCard && (
-            <div className="w-12 h-16">
+            <div className="w-12 h-16" onClick={onToggleExpand}>
               <CardComponent
                 card={topCard}
                 isSmall={true}
@@ -221,6 +233,20 @@ const ZoneManager = ({
             </div>
           )}
         </div>
+
+        {/* Draw button for deck */}
+        {zoneName === 'deck' && onDrawCard && (
+          <div className="mt-2">
+            <Button 
+              size="sm" 
+              onClick={handleDrawCard}
+              className="w-full text-xs"
+              disabled={cards.length === 0}
+            >
+              Draw Card ({cards.length})
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
