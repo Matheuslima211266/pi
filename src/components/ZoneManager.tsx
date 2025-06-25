@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,8 @@ const ZoneManager = ({
   isExpanded, 
   onToggleExpand,
   maxDisplayCards = 20,
-  onDrawCard = null
+  onDrawCard = null,
+  isHidden = false
 }) => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +112,7 @@ const ZoneManager = ({
             onClick={(c) => handleCardClick(c, { ctrlKey: false })}
             isSmall={true}
             showCost={false}
+            isFaceDown={zoneName === 'extraDeck' && isHidden}
           />
           {selectedCards.includes(card.id) && (
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full flex items-center justify-center">
@@ -205,6 +206,8 @@ const ZoneManager = ({
   // Compact view
   if (!isExpanded) {
     const topCard = cards[cards.length - 1];
+    const shouldShowFaceDown = zoneName === 'deck' || zoneName === 'extraDeck' || zoneName === 'banishedFaceDown';
+    
     return (
       <div className={`${getZoneColor()} border-2 rounded-lg p-2 cursor-pointer transition-all hover:scale-105`}>
         <div className="flex items-center justify-between mb-2">
@@ -245,8 +248,8 @@ const ZoneManager = ({
                 card={topCard}
                 isSmall={true}
                 showCost={false}
-                onClick={() => onCardPreview(topCard)}
-                isFaceDown={zoneName === 'deck' || zoneName === 'banishedFaceDown'}
+                onClick={() => !shouldShowFaceDown && onCardPreview(topCard)}
+                isFaceDown={shouldShowFaceDown || isHidden}
               />
             </div>
           )}
@@ -347,7 +350,90 @@ const ZoneManager = ({
               }`}
               onClick={(e) => handleCardClick(card, e)}
             >
-              {renderContextMenu(card)}
+              <ContextMenu>
+                <ContextMenuTrigger>
+                  <CardComponent
+                    card={card}
+                    onClick={(c) => handleCardClick(c, { ctrlKey: false })}
+                    isSmall={true}
+                    showCost={false}
+                    isFaceDown={zoneName === 'extraDeck' && isHidden}
+                  />
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-48 bg-gray-800 border-gray-600 z-50">
+                  <ContextMenuItem onClick={() => onCardPreview(card)} className="text-white hover:bg-gray-700">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Card Details
+                  </ContextMenuItem>
+                  
+                  <ContextMenuItem onClick={() => handleCardAction('move', card, 'hand')} className="text-white hover:bg-gray-700">
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                    Add to Hand
+                  </ContextMenuItem>
+
+                  <ContextMenuSub>
+                    <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+                      <Sword className="mr-2 h-4 w-4" />
+                      Summon/Activate
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'monsters')} className="text-white hover:bg-gray-700">
+                        Special Summon (ATK)
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'spellsTraps')} className="text-white hover:bg-gray-700">
+                        <Zap className="mr-2 h-4 w-4" />
+                        Activate on Field
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'fieldSpell')} className="text-white hover:bg-gray-700">
+                        Field Spell Zone
+                      </ContextMenuItem>
+                    </ContextMenuSubContent>
+                  </ContextMenuSub>
+
+                  <ContextMenuItem onClick={() => handleCardAction('move', card, 'graveyard')} className="text-white hover:bg-gray-700">
+                    <Skull className="mr-2 h-4 w-4" />
+                    Send to Graveyard
+                  </ContextMenuItem>
+
+                  <ContextMenuSub>
+                    <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+                      <Ban className="mr-2 h-4 w-4" />
+                      Banish Card
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'banished')} className="text-white hover:bg-gray-700">
+                        Banish Face-up
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'banishedFaceDown')} className="text-white hover:bg-gray-700">
+                        Banish Face-down
+                      </ContextMenuItem>
+                    </ContextMenuSubContent>
+                  </ContextMenuSub>
+
+                  <ContextMenuSub>
+                    <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Return to Deck
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_top')} className="text-white hover:bg-gray-700">
+                        Top of Deck
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_bottom')} className="text-white hover:bg-gray-700">
+                        Bottom of Deck
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCardAction('move', card, 'deck_shuffle')} className="text-white hover:bg-gray-700">
+                        Shuffle into Deck
+                      </ContextMenuItem>
+                    </ContextMenuSubContent>
+                  </ContextMenuSub>
+
+                  <ContextMenuItem onClick={() => handleCardAction('move', card, 'extraDeck')} className="text-white hover:bg-gray-700">
+                    <Star className="mr-2 h-4 w-4" />
+                    Add to Extra Deck
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             </div>
           ))}
         </div>

@@ -1,610 +1,326 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, User, Bot } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import GameBoard from '@/components/GameBoard';
 import PlayerHand from '@/components/PlayerHand';
+import GameBoard from '@/components/GameBoard';
+import CardPreview from '@/components/CardPreview';
 import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
-import DiceAndCoin from '@/components/DiceAndCoin';
-import Calculator from '@/components/Calculator';
 import ChatBox from '@/components/ChatBox';
 import ActionLog from '@/components/ActionLog';
-import DeckBuilder from '@/components/DeckBuilder';
+import DiceAndCoin from '@/components/DiceAndCoin';
 import TurnTimer from '@/components/TurnTimer';
-import CardPreview from '@/components/CardPreview';
 import sampleCardsData from '@/data/sampleCards.json';
 
 const Index = () => {
-  const [gameState, setGameState] = useState({
-    playerHP: 8000,
-    enemyHP: 8000,
-    turn: 1,
-    currentPlayer: 'player',
-    phase: 'draw',
-  });
-
+  const [playerLifePoints, setPlayerLifePoints] = useState(8000);
+  const [enemyLifePoints, setEnemyLifePoints] = useState(8000);
+  const [currentMana, setCurrentMana] = useState(5);
   const [playerHand, setPlayerHand] = useState([]);
-  const [enemyHand, setEnemyHand] = useState([]);
-  const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
-  const [previewCard, setPreviewCard] = useState(null);
-  
-  // Properly initialize all field zones including new ones
+  const [playerDeck, setPlayerDeck] = useState([]);
+  const [enemyDeck, setEnemyDeck] = useState([]);
   const [playerField, setPlayerField] = useState({
-    monsters: [],
-    spellsTraps: [],
+    monsters: Array(5).fill(null),
+    spellsTraps: Array(5).fill(null),
+    fieldSpell: [],
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
-    fieldSpell: [],
     extraDeck: [],
-    deck: []
+    deck: [],
   });
   const [enemyField, setEnemyField] = useState({
-    monsters: [],
-    spellsTraps: [],
+    monsters: Array(5).fill(null),
+    spellsTraps: Array(5).fill(null),
+    fieldSpell: [],
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
-    fieldSpell: [],
     extraDeck: [],
-    deck: []
+    deck: [],
   });
+  const [previewCard, setPreviewCard] = useState(null);
+  const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
+  const [currentPhase, setCurrentPhase] = useState('draw');
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [timeRemaining, setTimeRemaining] = useState(60);
+  const [actionLog, setActionLog] = useState([]);
+  const [chatMessages, setChatMessages] = useState([
+    { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
+  ]);
 
-  const { toast } = useToast();
+  React.useEffect(() => {
+    // Load cards from JSON
+    const allCards = sampleCardsData.cards;
 
-  useEffect(() => {
-    initializeGame();
+    // Filter cards into main deck and extra deck
+    const mainDeckCards = allCards.filter(card => !card.extra_deck);
+    const extraDeckCards = allCards.filter(card => card.extra_deck);
+
+    // Initialize player and enemy decks
+    setPlayerDeck(mainDeckCards.slice(0, 20));
+    setEnemyDeck(mainDeckCards.slice(20, 40));
+
+    // Initialize player hand
+    setPlayerHand(mainDeckCards.slice(0, 5));
+
+    // Initialize player and enemy extra decks
+    setPlayerField(prev => ({ ...prev, extraDeck: extraDeckCards }));
+    setEnemyField(prev => ({ ...prev, extraDeck: extraDeckCards }));
+
+    // Initialize player and enemy decks in field
+    setPlayerField(prev => ({ ...prev, deck: mainDeckCards.slice(0, 20) }));
+    setEnemyField(prev => ({ ...prev, deck: mainDeckCards.slice(20, 40) }));
   }, []);
 
-  const initializeGame = () => {
-    const allCards = sampleCardsData.cards;
-    
-    // Crea un mazzo completo con tutte le carte dal JSON (ogni carta una volta)
-    const playerDeck = [...allCards].map((card, index) => ({
-      ...card,
-      id: `player_${card.id}_${index}`
-    }));
-    
-    const enemyDeck = [...allCards].map((card, index) => ({
-      ...card,
-      id: `enemy_${card.id}_${index}`
-    }));
-    
-    // Mescola i mazzi
-    const shuffledPlayerDeck = playerDeck.sort(() => Math.random() - 0.5);
-    const shuffledEnemyDeck = enemyDeck.sort(() => Math.random() - 0.5);
-    
-    // Distribuisce le mani iniziali (5 carte)
-    const playerStartingHand = shuffledPlayerDeck.slice(0, 5);
-    const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
-    
-    // Il resto delle carte va nel deck
-    const remainingPlayerDeck = shuffledPlayerDeck.slice(5);
-    const remainingEnemyDeck = shuffledEnemyDeck.slice(5);
-    
-    setPlayerHand(playerStartingHand);
-    setEnemyHand(enemyStartingHand);
-    
-    // Inizializza i deck nei field
-    setPlayerField(prev => ({
-      ...prev,
-      deck: remainingPlayerDeck
-    }));
-    setEnemyField(prev => ({
-      ...prev,
-      deck: remainingEnemyDeck
-    }));
-    
-    toast({
-      title: "Duello Iniziato!",
-      description: `Mazzo caricato con ${allCards.length} carte diverse. Che il migliore vinca!`,
-    });
-  };
+  const handleCardPlace = (card, zoneName, slotIndex, isFaceDown = false, position = null) => {
+    console.log(`Placing card ${card.name} in ${zoneName} at index ${slotIndex}`);
 
-  const [actionLog, setActionLog] = useState([]);
-
-  const logAction = (player, action) => {
-    const newAction = {
-      id: Date.now(),
-      player,
-      action,
-      timestamp: new Date().toLocaleTimeString()
-    };
-    setActionLog(prev => [...prev, newAction]);
-  };
-
-  const handleCardSelection = (card) => {
-    setSelectedCardFromHand(card);
-  };
-
-  const handleCardPreview = (card) => {
-    setPreviewCard(card);
-  };
-
-  const handlePhaseChange = (newPhase: string) => {
-    setGameState(prev => ({
-      ...prev,
-      phase: newPhase
-    }));
-
-    logAction('Giocatore', `Cambia fase a ${newPhase}`);
-    toast({
-      title: `Fase ${newPhase}`,
-      description: `Ora sei nella fase ${newPhase}`,
-    });
-  };
-
-  const endTurn = () => {
-    const newPlayer = gameState.currentPlayer === 'player' ? 'enemy' : 'player';
-    const newTurn = newPlayer === 'player' ? gameState.turn + 1 : gameState.turn;
-    
-    setSelectedCardFromHand(null);
-    
-    setGameState(prev => ({
-      ...prev,
-      currentPlayer: newPlayer,
-      turn: newTurn,
-      phase: 'draw'
-    }));
-
-    logAction(gameState.currentPlayer === 'player' ? 'Giocatore' : 'Avversario', 'Fine turno');
-    toast({
-      title: `Turno ${newTurn}`,
-      description: `È il turno di ${newPlayer === 'player' ? 'Giocatore' : 'Avversario'}`,
-    });
-  };
-
-  const placeCard = (card, zoneName, slotIndex, faceDown = false, position = 'attack') => {
-    // Rimuovi la carta dalla mano
+    // Remove card from hand
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
-    
-    // Reset carta selezionata
     setSelectedCardFromHand(null);
-    
-    // Aggiungi la carta al campo nella posizione specificata
+
+    // Place card in the specified zone
     setPlayerField(prev => {
       const newField = { ...prev };
-      const cardWithPosition = { 
-        ...card, 
-        position: position, 
-        faceDown: faceDown 
-      };
-      
-      if (zoneName === 'monsters' || zoneName === 'spellsTraps') {
-        const newZone = [...(prev[zoneName] || [])];
-        newZone[slotIndex] = cardWithPosition;
-        newField[zoneName] = newZone;
+
+      if (zoneName === 'monsters') {
+        newField.monsters = [...prev.monsters];
+        newField.monsters[slotIndex] = { ...card, faceDown: isFaceDown, position: position };
+      } else if (zoneName === 'spellsTraps') {
+        newField.spellsTraps = [...prev.spellsTraps];
+        newField.spellsTraps[slotIndex] = { ...card, faceDown: isFaceDown };
       } else if (zoneName === 'fieldSpell') {
-        // Single slot zones: sostituisce quella esistente
-        newField[zoneName] = [cardWithPosition];
-      } else {
-        // Ensure the zone exists and is an array before spreading
-        const currentZone = prev[zoneName] || [];
-        newField[zoneName] = [...currentZone, cardWithPosition];
+        newField.fieldSpell = [{ ...card, faceDown: isFaceDown }];
       }
-      
+
       return newField;
     });
-    
-    const positionText = faceDown ? 'coperta' : `scoperta in posizione ${position}`;
-    logAction('Giocatore', `Posiziona ${card.name} ${positionText} in zona ${zoneName}`);
 
-    toast({
-      title: "Carta Posizionata!",
-      description: `${card.name} è stata posizionata ${positionText} in zona ${zoneName}!`,
-    });
+    // Add to action log
+    addToActionLog(`Placed ${card.name} in ${zoneName}`);
   };
 
-  const attackWithMonster = (attackingCard, targetCard = null) => {
-    if (!targetCard) {
-      // Attacco diretto
-      const damage = attackingCard.atk;
-      setGameState(prev => ({
-        ...prev,
-        enemyHP: Math.max(0, prev.enemyHP - damage)
-      }));
-      
-      toast({
-        title: "Attacco Diretto!",
-        description: `${attackingCard.name} infligge ${damage} danni!`,
-      });
-    } else {
-      // Battaglia tra mostri
-      const attackerPower = attackingCard.atk;
-      const defenderPower = targetCard.def;
-      
-      if (attackerPower > defenderPower) {
-        // Rimuovi il mostro difensore e mandalo al cimitero
-        setEnemyField(prev => ({
-          ...prev,
-          monsters: prev.monsters.filter(m => m.id !== targetCard.id),
-          graveyard: [...prev.graveyard, targetCard]
-        }));
-        
-        const damage = attackerPower - defenderPower;
-        setGameState(prev => ({
-          ...prev,
-          enemyHP: Math.max(0, prev.enemyHP - damage)
-        }));
-        
-        toast({
-          title: "Mostro Distrutto!",
-          description: `${targetCard.name} è stato distrutto! ${damage} danni inflitti.`,
-        });
-      } else if (attackerPower < defenderPower) {
-        // Rimuovi il mostro attaccante e mandalo al cimitero
-        setPlayerField(prev => ({
-          ...prev,
-          monsters: prev.monsters.filter(m => m.id !== attackingCard.id),
-          graveyard: [...prev.graveyard, attackingCard]
-        }));
-        
-        const damage = defenderPower - attackerPower;
-        setGameState(prev => ({
-          ...prev,
-          playerHP: Math.max(0, prev.playerHP - damage)
-        }));
-        
-        toast({
-          title: "Attacco Fallito!",
-          description: `${attackingCard.name} è stato distrutto! Subisci ${damage} danni.`,
-          variant: "destructive"
-        });
-      } else {
-        // Pareggio - entrambi i mostri vengono distrutti e vanno al cimitero
-        setPlayerField(prev => ({
-          ...prev,
-          monsters: prev.monsters.filter(m => m.id !== attackingCard.id),
-          graveyard: [...prev.graveyard, attackingCard]
-        }));
-        setEnemyField(prev => ({
-          ...prev,
-          monsters: prev.monsters.filter(m => m.id !== targetCard.id),
-          graveyard: [...prev.graveyard, targetCard]
-        }));
-        
-        toast({
-          title: "Battaglia Pari!",
-          description: "Entrambi i mostri sono stati distrutti!",
-        });
-      }
-    }
+  const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
+    console.log(`Moving card ${card.name} from ${fromZone} to ${toZone}`);
     
-    if (!targetCard) {
-      logAction('Giocatore', `${attackingCard.name} attacca direttamente per ${attackingCard.atk} danni`);
-    } else {
-      logAction('Giocatore', `${attackingCard.name} attacca ${targetCard.name}`);
-    }
-  };
-
-  const resetField = () => {
-    setPlayerField({
-      monsters: [],
-      spellsTraps: [],
-      graveyard: [],
-      banished: [],
-      banishedFaceDown: [],
-      fieldSpell: [],
-      extraDeck: [],
-      deck: []
-    });
-    setEnemyField({
-      monsters: [],
-      spellsTraps: [],
-      graveyard: [],
-      banished: [],
-      banishedFaceDown: [],
-      fieldSpell: [],
-      extraDeck: [],
-      deck: []
-    });
-    setSelectedCardFromHand(null);
-    setPreviewCard(null);
-    
-    logAction('Sistema', 'Campo azzerato');
-    
-    toast({
-      title: "Campo Azzerato!",
-      description: "Tutte le carte sono state rimosse dal campo di battaglia.",
-    });
-  };
-
-  const handleDeckLoad = (deckData) => {
-    if (deckData.cards) {
-      const playerDeck = deckData.cards.map((card, index) => ({
-        ...card,
-        id: `player_${card.id}_${index}`
-      }));
-      
-      const shuffledDeck = playerDeck.sort(() => Math.random() - 0.5);
-      const startingHand = shuffledDeck.slice(0, 5);
-      
-      setPlayerHand(startingHand);
-      logAction('Sistema', `Deck "${deckData.name}" caricato con ${deckData.cards.length} carte`);
-      
-      toast({
-        title: "Deck Caricato!",
-        description: `Deck "${deckData.name}" caricato con successo!`,
-      });
-    }
-  };
-
-  const handleCardMovement = (card, fromZone, toDestination) => {
-    console.log(`Moving card ${card.name} from ${fromZone} to ${toDestination}`);
-    
-    // Gestione speciale per temp_remove (usato per il flip delle carte)
-    if (toDestination === 'temp_remove') {
-      // Rimuovi temporaneamente la carta per il flip
+    // Special handling for flip in place
+    if (toZone === 'flip_in_place') {
       if (fromZone === 'monsters') {
-        setPlayerField(prev => ({
-          ...prev,
-          monsters: prev.monsters.map(c => c && c.id === card.id ? null : c)
-        }));
+        setPlayerField(prev => {
+          const newField = { ...prev };
+          newField.monsters = [...prev.monsters];
+          newField.monsters[slotIndex] = card;
+          return newField;
+        });
       } else if (fromZone === 'spellsTraps') {
-        setPlayerField(prev => ({
-          ...prev,
-          spellsTraps: prev.spellsTraps.map(c => c && c.id === card.id ? null : c)
-        }));
+        setPlayerField(prev => {
+          const newField = { ...prev };
+          newField.spellsTraps = [...prev.spellsTraps];
+          newField.spellsTraps[slotIndex] = card;
+          return newField;
+        });
       }
+      
+      // Add to action log
+      addToActionLog(`${card.faceDown ? 'Set' : 'Flip'} ${card.name} ${card.faceDown ? 'face-down' : 'face-up'}`);
       return;
     }
 
     // Remove card from source zone
-    if (fromZone === 'hand') {
-      setPlayerHand(prev => prev.filter(c => c.id !== card.id));
-    } else if (fromZone === 'monsters') {
-      setPlayerField(prev => ({
-        ...prev,
-        monsters: prev.monsters.map(c => c && c.id === card.id ? null : c)
-      }));
-    } else if (fromZone === 'spellsTraps') {
-      setPlayerField(prev => ({
-        ...prev,
-        spellsTraps: prev.spellsTraps.map(c => c && c.id === card.id ? null : c)
-      }));
-    } else if (fromZone === 'fieldSpell') {
-      setPlayerField(prev => ({
-        ...prev,
-        fieldSpell: prev.fieldSpell.filter(c => c.id !== card.id)
-      }));
-    } else if (fromZone === 'temp_remove') {
-      // Non fare nulla, la carta è già stata rimossa temporaneamente
-    } else {
-      setPlayerField(prev => ({
-        ...prev,
-        [fromZone]: prev[fromZone]?.filter(c => c.id !== card.id) || []
-      }));
-    }
-
-    // Add card to destination
-    if (toDestination === 'hand') {
-      setPlayerHand(prev => [...prev, card]);
-    } else if (toDestination === 'monsters') {
-      setPlayerField(prev => {
-        const newMonsters = [...(prev.monsters || [])];
-        // Trova il primo slot vuoto
-        const emptySlot = newMonsters.findIndex(slot => !slot);
-        if (emptySlot !== -1) {
-          newMonsters[emptySlot] = { ...card, position: 'attack', faceDown: false };
-        } else {
-          // Se non ci sono slot vuoti, aggiungi alla fine (estendi l'array)
-          newMonsters.push({ ...card, position: 'attack', faceDown: false });
-        }
-        return { ...prev, monsters: newMonsters };
-      });
-    } else if (toDestination === 'spellsTraps') {
-      setPlayerField(prev => {
-        const newSpellsTraps = [...(prev.spellsTraps || [])];
-        // Trova il primo slot vuoto
-        const emptySlot = newSpellsTraps.findIndex(slot => !slot);
-        if (emptySlot !== -1) {
-          newSpellsTraps[emptySlot] = { ...card, faceDown: false };
-        } else {
-          // Se non ci sono slot vuoti, aggiungi alla fine
-          newSpellsTraps.push({ ...card, faceDown: false });
-        }
-        return { ...prev, spellsTraps: newSpellsTraps };
-      });
-    } else if (toDestination === 'fieldSpell') {
-      setPlayerField(prev => ({
-        ...prev,
-        fieldSpell: [card]
-      }));
-    } else if (toDestination === 'deck_top') {
-      setPlayerField(prev => ({
-        ...prev,
-        deck: [card, ...prev.deck]
-      }));
-    } else if (toDestination === 'deck_bottom') {
-      setPlayerField(prev => ({
-        ...prev,
-        deck: [...prev.deck, card]
-      }));
-    } else if (toDestination === 'deck_shuffle') {
-      setPlayerField(prev => {
-        const newDeck = [...prev.deck, card];
-        return {
-          ...prev,
-          deck: newDeck.sort(() => Math.random() - 0.5)
-        };
-      });
-    } else if (toDestination === 'banishedFaceDown') {
-      setPlayerField(prev => ({
-        ...prev,
-        banishedFaceDown: [...prev.banishedFaceDown, { ...card, faceDown: true }]
-      }));
-    } else if (toDestination === 'graveyard') {
-      setPlayerField(prev => ({
-        ...prev,
-        graveyard: [...prev.graveyard, card]
-      }));
-    } else if (toDestination === 'banished') {
-      setPlayerField(prev => ({
-        ...prev,
-        banished: [...prev.banished, card]
-      }));
-    } else if (toDestination === 'extraDeck') {
-      setPlayerField(prev => ({
-        ...prev,
-        extraDeck: [...prev.extraDeck, card]
-      }));
-    } else {
-      // Generic zone handling
-      setPlayerField(prev => ({
-        ...prev,
-        [toDestination]: [...(prev[toDestination] || []), card]
-      }));
-    }
-
-    logAction('Giocatore', `Moved ${card.name} from ${fromZone} to ${toDestination}`);
-    
-    toast({
-      title: "Card Moved!",
-      description: `${card.name} moved from ${fromZone} to ${toDestination}`,
-    });
-  };
-
-  const drawCard = () => {
     setPlayerField(prev => {
-      if (prev.deck.length === 0) {
-        toast({
-          title: "Deck Empty!",
-          description: "No cards left to draw",
-          variant: "destructive"
-        });
-        return prev;
+      const newField = { ...prev };
+
+      if (fromZone === 'hand') {
+        setPlayerHand(hand => hand.filter(c => c.id !== card.id));
+        return newField;
+      } else if (fromZone === 'monsters') {
+        newField.monsters = [...prev.monsters];
+        newField.monsters[slotIndex] = null;
+      } else if (fromZone === 'spellsTraps') {
+        newField.spellsTraps = [...prev.spellsTraps];
+        newField.spellsTraps[slotIndex] = null;
+      } else if (fromZone === 'fieldSpell') {
+        newField.fieldSpell = [];
+      } else if (fromZone === 'graveyard') {
+        newField.graveyard = prev.graveyard.filter(c => c.id !== card.id);
+      } else if (fromZone === 'banished') {
+        newField.banished = prev.banished.filter(c => c.id !== card.id);
+      } else if (fromZone === 'banishedFaceDown') {
+        newField.banishedFaceDown = prev.banishedFaceDown.filter(c => c.id !== card.id);
+      } else if (fromZone === 'extraDeck') {
+        newField.extraDeck = prev.extraDeck.filter(c => c.id !== card.id);
+      } else if (fromZone === 'deck') {
+        newField.deck = prev.deck.filter(c => c.id !== card.id);
       }
 
-      const topCard = prev.deck[0];
-      const newDeck = prev.deck.slice(1);
-      
-      setPlayerHand(prevHand => [...prevHand, topCard]);
-      
-      logAction('Giocatore', `Drew ${topCard.name} from deck`);
-      toast({
-        title: "Card Drawn!",
-        description: `Drew ${topCard.name}`,
-      });
-
-      return {
-        ...prev,
-        deck: newDeck
-      };
+      return newField;
     });
+
+    // Add card to destination zone
+    setPlayerField(prev => {
+      const newField = { ...prev };
+
+      if (toZone === 'hand') {
+        setPlayerHand(hand => [...hand, card]);
+      } else if (toZone === 'monsters') {
+        newField.monsters = [...prev.monsters];
+        newField.monsters[slotIndex] = card;
+      } else if (toZone === 'spellsTraps') {
+        newField.spellsTraps = [...prev.spellsTraps];
+        newField.spellsTraps[slotIndex] = card;
+      } else if (toZone === 'fieldSpell') {
+        newField.fieldSpell = [card];
+      } else if (toZone === 'graveyard') {
+        newField.graveyard = [...prev.graveyard, card];
+      } else if (toZone === 'banished') {
+        newField.banished = [...prev.banished, card];
+      } else if (toZone === 'banishedFaceDown') {
+        newField.banishedFaceDown = [...prev.banishedFaceDown, card];
+      } else if (toZone === 'extraDeck') {
+        newField.extraDeck = [...prev.extraDeck, card];
+      } else if (toZone === 'deck_top') {
+        newField.deck = [card, ...prev.deck];
+      } else if (toZone === 'deck_bottom') {
+        newField.deck = [...prev.deck, card];
+      } else if (toZone === 'deck_shuffle') {
+        newField.deck = [...prev.deck];
+        newField.deck.push(card);
+        newField.deck.sort(() => Math.random() - 0.5);
+      }
+
+      return newField;
+    });
+
+    // Add to action log
+    addToActionLog(`Moved ${card.name} from ${fromZone} to ${toZone}`);
+  };
+
+  const handleDrawCard = () => {
+    if (playerDeck.length > 0) {
+      const drawnCard = playerDeck[0];
+      setPlayerHand(prevHand => [...prevHand, drawnCard]);
+      setPlayerDeck(prevDeck => prevDeck.slice(1));
+      setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) })); // Update deck in field
+      addToActionLog(`Drew ${drawnCard.name}`);
+    } else {
+      addToActionLog('Deck is empty!');
+    }
+  };
+
+  const handleCardClick = (card) => {
+    setPreviewCard(card);
+  };
+
+  const handlePhaseChange = (phase) => {
+    setCurrentPhase(phase);
+    addToActionLog(`Changed phase to ${phase}`);
+  };
+
+  const handleLifePointsChange = (amount, isEnemy) => {
+    if (isEnemy) {
+      setEnemyLifePoints(amount);
+    } else {
+      setPlayerLifePoints(amount);
+    }
+  };
+
+  const addToActionLog = (action) => {
+    setActionLog(prev => [...prev, {
+      id: Date.now(),
+      action: action
+    }]);
+  };
+
+  // Update chat to hide names of face-down cards
+  const addToChatLog = (message, cardName = null, isFaceDown = false) => {
+    const displayName = (isFaceDown && cardName) ? 'Carta coperta' : cardName;
+    const fullMessage = displayName ? `${message}: ${displayName}` : message;
+    setChatMessages(prev => [...prev, {
+      id: Date.now(),
+      player: 'Sistema',
+      message: fullMessage
+    }]);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
       <div className="container mx-auto p-4">
-        {/* Card Preview */}
-        <CardPreview 
-          card={previewCard} 
-          onClose={() => setPreviewCard(null)} 
-        />
-
-        {/* Header del gioco */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold font-cinzel text-gold-400 mb-2">
-              Duel Cards Simulator
-            </h1>
-            <Badge variant="secondary" className="text-lg">
-              Turno {gameState.turn} - {gameState.currentPlayer === 'player' ? 'Il tuo turno' : 'Turno avversario'}
-            </Badge>
-          </div>
-          
-          <Button 
-            onClick={resetField}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3"
-          >
-            <RotateCcw size={16} />
-            Reset Campo
-          </Button>
-        </div>
-
-        {/* Layout principale riorganizzato */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
-          {/* Colonna sinistra - Life Points Giocatore */}
-          <div className="lg:col-span-3">
-            <LifePointsControl
-              playerName="Giocatore"
-              lifePoints={gameState.playerHP}
-              onLifePointsChange={(newValue) => {
-                setGameState(prev => ({ ...prev, playerHP: newValue }));
-                logAction('Giocatore', `Life Points: ${newValue}`);
-              }}
-              color="blue"
-            />
-          </div>
-
-          {/* Colonna centrale - Fasi di gioco, Dadi e Moneta, Timer */}
-          <div className="lg:col-span-6 space-y-4">
-            <GamePhases
-              currentPhase={gameState.phase}
-              onPhaseChange={handlePhaseChange}
-              onEndTurn={endTurn}
-              isPlayerTurn={true}
+        <div className="flex gap-4">
+          {/* Main game area - Left side */}
+          <div className="flex-1 space-y-4">
+            {/* Game Board */}
+            <GameBoard 
+              playerField={playerField}
+              enemyField={enemyField}
+              onCardPlace={handleCardPlace}
+              selectedCardFromHand={selectedCardFromHand}
+              onCardPreview={setPreviewCard}
+              onCardMove={handleCardMove}
+              onDrawCard={handleDrawCard}
             />
             
-            <div className="grid grid-cols-2 gap-4">
+            {/* Player Hand */}
+            <PlayerHand 
+              cards={playerHand}
+              onPlayCard={setSelectedCardFromHand}
+              currentMana={currentMana}
+              isPlayerTurn={isPlayerTurn}
+              onCardPreview={setPreviewCard}
+              onCardMove={handleCardMove}
+            />
+            
+            {/* Bottom Controls */}
+            <div className="grid grid-cols-3 gap-4">
+              <ActionLog actions={actionLog} />
               <DiceAndCoin />
               <TurnTimer 
-                isActive={gameState.currentPlayer === 'player'}
-                onTimeUp={() => {
-                  logAction('Sistema', 'Tempo scaduto');
-                  endTurn();
-                }}
+                currentPhase={currentPhase}
+                timeRemaining={timeRemaining}
+                isPlayerTurn={isPlayerTurn}
               />
             </div>
           </div>
-
-          {/* Colonna destra - Life Points Avversario */}
-          <div className="lg:col-span-3">
-            <LifePointsControl
-              playerName="Avversario"
-              lifePoints={gameState.enemyHP}
-              onLifePointsChange={(newValue) => {
-                setGameState(prev => ({ ...prev, enemyHP: newValue }));
-                logAction('Avversario', `Life Points: ${newValue}`);
-              }}
-              color="red"
+          
+          {/* Right Sidebar - Tools */}
+          <div className="w-80 space-y-4">
+            {/* Enemy Life Points */}
+            <LifePointsControl 
+              lifePoints={enemyLifePoints}
+              isEnemy={true}
+              onLifePointsChange={setEnemyLifePoints}
+            />
+            
+            {/* Game Phases - Center */}
+            <GamePhases 
+              currentPhase={currentPhase}
+              onPhaseChange={setCurrentPhase}
+              isPlayerTurn={isPlayerTurn}
+            />
+            
+            {/* Player Life Points */}
+            <LifePointsControl 
+              lifePoints={playerLifePoints}
+              isEnemy={false}
+              onLifePointsChange={setPlayerLifePoints}
+            />
+            
+            {/* Chat */}
+            <ChatBox 
+              messages={chatMessages}
+              onSendMessage={(message) => addToChatLog(message)}
             />
           </div>
         </div>
-
-        {/* Strumenti e informazioni */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-          <Calculator />
-          <ChatBox />
-          <ActionLog actions={actionLog} />
-          <DeckBuilder onDeckLoad={handleDeckLoad} />
-        </div>
-
-        {/* Campo di battaglia */}
-        <GameBoard 
-          playerField={playerField}
-          enemyField={enemyField}
-          onAttack={attackWithMonster}
-          onCardPlace={placeCard}
-          selectedCardFromHand={selectedCardFromHand}
-          onCardPreview={handleCardPreview}
-          onCardMove={handleCardMovement}
-          onDrawCard={drawCard}
-        />
-
-        {/* Mano del giocatore */}
-        <PlayerHand 
-          cards={playerHand}
-          onPlayCard={handleCardSelection}
-          currentMana={999}
-          isPlayerTurn={true}
-          onCardPreview={handleCardPreview}
-          onCardMove={handleCardMovement}
-        />
+        
+        {/* Card Preview Modal */}
+        {previewCard && (
+          <CardPreview 
+            card={previewCard}
+            onClose={() => setPreviewCard(null)}
+          />
+        )}
       </div>
     </div>
   );

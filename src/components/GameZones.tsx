@@ -86,9 +86,18 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   const handleFieldCardAction = (card, action, destination) => {
     // Find which zone the card is in
     let sourceZone = '';
-    if (field.monsters?.some(m => m && m.id === card.id)) sourceZone = 'monsters';
-    else if (field.spellsTraps?.some(s => s && s.id === card.id)) sourceZone = 'spellsTraps';
-    else if (field.fieldSpell?.some(f => f && f.id === card.id)) sourceZone = 'fieldSpell';
+    let slotIndex = -1;
+    
+    if (field.monsters?.some((m, i) => m && m.id === card.id)) {
+      sourceZone = 'monsters';
+      slotIndex = field.monsters.findIndex(m => m && m.id === card.id);
+    } else if (field.spellsTraps?.some((s, i) => s && s.id === card.id)) {
+      sourceZone = 'spellsTraps';
+      slotIndex = field.spellsTraps.findIndex(s => s && s.id === card.id);
+    } else if (field.fieldSpell?.some((f, i) => f && f.id === card.id)) {
+      sourceZone = 'fieldSpell';
+      slotIndex = 0;
+    }
 
     console.log(`Moving ${card.name} from ${sourceZone} to ${destination}`);
 
@@ -118,13 +127,23 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         onCardMove && onCardMove(card, sourceZone, 'extraDeck');
         break;
       case 'flipCard':
-        // Fix per il bug face-down: creo una nuova carta con lo stato flippato
-        const flippedCard = { ...card, faceDown: !card.faceDown };
-        // Prima rimuovo la carta originale, poi aggiungo quella flippata
-        onCardMove && onCardMove(card, sourceZone, 'temp_remove');
-        setTimeout(() => {
-          onCardMove && onCardMove(flippedCard, 'temp_remove', sourceZone);
-        }, 50);
+        // Fix per il bug face-down: aggiorno direttamente la carta
+        const updatedCard = { ...card, faceDown: !card.faceDown };
+        
+        // Creo una copia dell'array del campo e aggiorno la carta specifica
+        const updatedField = { ...field };
+        if (sourceZone === 'monsters') {
+          updatedField.monsters = [...field.monsters];
+          updatedField.monsters[slotIndex] = updatedCard;
+        } else if (sourceZone === 'spellsTraps') {
+          updatedField.spellsTraps = [...field.spellsTraps];
+          updatedField.spellsTraps[slotIndex] = updatedCard;
+        } else if (sourceZone === 'fieldSpell') {
+          updatedField.fieldSpell = [updatedCard];
+        }
+        
+        // Notifico il cambio tramite una funzione speciale per il flip
+        onCardMove && onCardMove(updatedCard, sourceZone, 'flip_in_place', slotIndex);
         break;
     }
   };
@@ -383,7 +402,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'graveyard'}
           onToggleExpand={() => handleZoneToggle('graveyard')}
-          onDrawCard={onDrawCard}
         />
         
         <ZoneManager
@@ -393,7 +411,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'banished'}
           onToggleExpand={() => handleZoneToggle('banished')}
-          onDrawCard={onDrawCard}
         />
         
         <ZoneManager
@@ -403,7 +420,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'banishedFaceDown'}
           onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
-          onDrawCard={onDrawCard}
         />
         
         {/* Extra Deck */}
@@ -414,7 +430,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'extraDeck'}
           onToggleExpand={() => handleZoneToggle('extraDeck')}
-          onDrawCard={onDrawCard}
+          isHidden={isEnemy}
         />
       </div>
       

@@ -6,19 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Send } from 'lucide-react';
 
-const ChatBox = () => {
-  const [messages, setMessages] = useState([
-    { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
-  ]);
+const ChatBox = ({ messages = [], onSendMessage }) => {
   const [newMessage, setNewMessage] = useState('');
 
   const sendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        player: 'Tu',
-        message: newMessage
-      }]);
+    if (newMessage.trim() && onSendMessage) {
+      onSendMessage(newMessage);
       setNewMessage('');
     }
   };

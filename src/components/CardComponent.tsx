@@ -109,14 +109,12 @@ const CardComponent = ({
           </div>
         </div>
 
-        {/* Stelle per mostri */}
+        {/* Livello come numero per mostri */}
         {isMonster && card.star && !isSmall && (
           <div className="text-center mb-1">
-            <div className="flex justify-center">
-              {Array.from({ length: Math.min(card.star, 12) }, (_, i) => (
-                <span key={i} className="text-yellow-400 text-xs">⭐</span>
-              ))}
-            </div>
+            <Badge className="bg-yellow-500 text-black text-xs font-bold">
+              LV {card.star}
+            </Badge>
           </div>
         )}
 
