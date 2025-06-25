@@ -19,6 +19,7 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
               selectedCardFromHand={null}
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
+              onDrawCard={onDrawCard}
             />
           </div>
           
