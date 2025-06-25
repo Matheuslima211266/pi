@@ -31,7 +31,7 @@ const Index = () => {
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [previewCard, setPreviewCard] = useState(null);
   
-  // Properly initialize all field zones as arrays including deck
+  // Properly initialize all field zones including new ones
   const [playerField, setPlayerField] = useState({
     monsters: [],
     spellsTraps: [],
@@ -39,6 +39,9 @@ const Index = () => {
     banished: [],
     banishedFaceDown: [],
     fieldSpell: [],
+    extraDeck: [],
+    pendulumLeft: [],
+    pendulumRight: [],
     deck: []
   });
   const [enemyField, setEnemyField] = useState({
@@ -48,6 +51,9 @@ const Index = () => {
     banished: [],
     banishedFaceDown: [],
     fieldSpell: [],
+    extraDeck: [],
+    pendulumLeft: [],
+    pendulumRight: [],
     deck: []
   });
 
@@ -175,8 +181,8 @@ const Index = () => {
         const newZone = [...(prev[zoneName] || [])];
         newZone[slotIndex] = cardWithPosition;
         newField[zoneName] = newZone;
-      } else if (zoneName === 'fieldSpell') {
-        // Field spell: ce ne può essere solo una, sostituisce quella esistente
+      } else if (zoneName === 'fieldSpell' || zoneName === 'pendulumLeft' || zoneName === 'pendulumRight') {
+        // Single slot zones: sostituisce quella esistente
         newField[zoneName] = [cardWithPosition];
       } else {
         // Ensure the zone exists and is an array before spreading
@@ -286,6 +292,9 @@ const Index = () => {
       banished: [],
       banishedFaceDown: [],
       fieldSpell: [],
+      extraDeck: [],
+      pendulumLeft: [],
+      pendulumRight: [],
       deck: []
     });
     setEnemyField({
@@ -295,6 +304,9 @@ const Index = () => {
       banished: [],
       banishedFaceDown: [],
       fieldSpell: [],
+      extraDeck: [],
+      pendulumLeft: [],
+      pendulumRight: [],
       deck: []
     });
     setSelectedCardFromHand(null);
@@ -330,20 +342,12 @@ const Index = () => {
 
   const handleCardMovement = (card, fromZone, toDestination) => {
     // Remove card from source zone
-    if (fromZone === 'graveyard') {
+    if (fromZone === 'hand') {
+      setPlayerHand(prev => prev.filter(c => c.id !== card.id));
+    } else {
       setPlayerField(prev => ({
         ...prev,
-        graveyard: prev.graveyard.filter(c => c.id !== card.id)
-      }));
-    } else if (fromZone === 'banished') {
-      setPlayerField(prev => ({
-        ...prev,
-        banished: prev.banished.filter(c => c.id !== card.id)
-      }));
-    } else if (fromZone === 'banishedFaceDown') {
-      setPlayerField(prev => ({
-        ...prev,
-        banishedFaceDown: prev.banishedFaceDown.filter(c => c.id !== card.id)
+        [fromZone]: prev[fromZone]?.filter(c => c.id !== card.id) || []
       }));
     }
 
@@ -360,20 +364,34 @@ const Index = () => {
         ...prev,
         spellsTraps: [...prev.spellsTraps, { ...card, faceDown: false }]
       }));
-    } else if (toDestination === 'graveyard') {
+    } else if (toDestination === 'deck_top') {
       setPlayerField(prev => ({
         ...prev,
-        graveyard: [...prev.graveyard, card]
+        deck: [card, ...prev.deck]
       }));
-    } else if (toDestination === 'banished') {
+    } else if (toDestination === 'deck_bottom') {
       setPlayerField(prev => ({
         ...prev,
-        banished: [...prev.banished, card]
+        deck: [...prev.deck, card]
       }));
+    } else if (toDestination === 'deck_shuffle') {
+      setPlayerField(prev => {
+        const newDeck = [...prev.deck, card];
+        return {
+          ...prev,
+          deck: newDeck.sort(() => Math.random() - 0.5)
+        };
+      });
     } else if (toDestination === 'banishedFaceDown') {
       setPlayerField(prev => ({
         ...prev,
         banishedFaceDown: [...prev.banishedFaceDown, { ...card, faceDown: true }]
+      }));
+    } else {
+      // Generic zone handling
+      setPlayerField(prev => ({
+        ...prev,
+        [toDestination]: [...(prev[toDestination] || []), card]
       }));
     }
 
