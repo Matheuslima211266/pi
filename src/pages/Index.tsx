@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,12 +28,20 @@ const Index = () => {
   const [playerField, setPlayerField] = useState({
     monsters: [],
     spells: [],
-    traps: []
+    traps: [],
+    graveyard: [],
+    banished: [],
+    banishedFaceDown: [],
+    fieldSpell: []
   });
   const [enemyField, setEnemyField] = useState({
     monsters: [],
     spells: [],
-    traps: []
+    traps: [],
+    graveyard: [],
+    banished: [],
+    banishedFaceDown: [],
+    fieldSpell: []
   });
 
   const { toast } = useToast();
@@ -83,13 +90,24 @@ const Index = () => {
   const playCard = (card, zone) => {
     if (gameState.currentPlayer !== 'player') return;
     
-    if (gameState.playerMana < card.cost) {
+    const cardCost = card.cost || card.star || 1;
+    if (gameState.playerMana < cardCost) {
       toast({
         title: "Mana insufficiente!",
-        description: `Serve ${card.cost} mana per giocare questa carta.`,
+        description: `Serve ${cardCost} mana per giocare questa carta.`,
         variant: "destructive"
       });
       return;
+    }
+
+    // Determina la zona corretta basata sul tipo di carta
+    let targetZone = zone;
+    if (card.card_type === 'monster' || card.atk !== undefined) {
+      targetZone = 'monsters';
+    } else if (card.card_type === 'spell' || card.type === 'Magia') {
+      targetZone = 'spells';
+    } else if (card.card_type === 'trap' || card.type === 'Trappola') {
+      targetZone = 'traps';
     }
 
     // Rimuovi la carta dalla mano
@@ -98,13 +116,13 @@ const Index = () => {
     // Aggiungi la carta al campo
     setPlayerField(prev => ({
       ...prev,
-      [zone]: [...prev[zone], { ...card, position: 'attack' }]
+      [targetZone]: [...prev[targetZone], { ...card, position: 'attack' }]
     }));
 
     // Consuma mana
     setGameState(prev => ({
       ...prev,
-      playerMana: prev.playerMana - card.cost
+      playerMana: prev.playerMana - cardCost
     }));
 
     toast({
@@ -116,7 +134,7 @@ const Index = () => {
   const attackWithMonster = (attackingCard, targetCard = null) => {
     if (!targetCard) {
       // Attacco diretto
-      const damage = attackingCard.attack;
+      const damage = attackingCard.atk;
       setGameState(prev => ({
         ...prev,
         enemyHP: Math.max(0, prev.enemyHP - damage)
@@ -128,14 +146,15 @@ const Index = () => {
       });
     } else {
       // Battaglia tra mostri
-      const attackerPower = attackingCard.attack;
-      const defenderPower = targetCard.defense;
+      const attackerPower = attackingCard.atk;
+      const defenderPower = targetCard.def;
       
       if (attackerPower > defenderPower) {
-        // Rimuovi il mostro difensore
+        // Rimuovi il mostro difensore e mandalo al cimitero
         setEnemyField(prev => ({
           ...prev,
-          monsters: prev.monsters.filter(m => m.id !== targetCard.id)
+          monsters: prev.monsters.filter(m => m.id !== targetCard.id),
+          graveyard: [...prev.graveyard, targetCard]
         }));
         
         const damage = attackerPower - defenderPower;
@@ -149,10 +168,11 @@ const Index = () => {
           description: `${targetCard.name} è stato distrutto! ${damage} danni inflitti.`,
         });
       } else if (attackerPower < defenderPower) {
-        // Rimuovi il mostro attaccante
+        // Rimuovi il mostro attaccante e mandalo al cimitero
         setPlayerField(prev => ({
           ...prev,
-          monsters: prev.monsters.filter(m => m.id !== attackingCard.id)
+          monsters: prev.monsters.filter(m => m.id !== attackingCard.id),
+          graveyard: [...prev.graveyard, attackingCard]
         }));
         
         const damage = defenderPower - attackerPower;
@@ -167,14 +187,16 @@ const Index = () => {
           variant: "destructive"
         });
       } else {
-        // Pareggio - entrambi i mostri vengono distrutti
+        // Pareggio - entrambi i mostri vengono distrutti e vanno al cimitero
         setPlayerField(prev => ({
           ...prev,
-          monsters: prev.monsters.filter(m => m.id !== attackingCard.id)
+          monsters: prev.monsters.filter(m => m.id !== attackingCard.id),
+          graveyard: [...prev.graveyard, attackingCard]
         }));
         setEnemyField(prev => ({
           ...prev,
-          monsters: prev.monsters.filter(m => m.id !== targetCard.id)
+          monsters: prev.monsters.filter(m => m.id !== targetCard.id),
+          graveyard: [...prev.graveyard, targetCard]
         }));
         
         toast({
