@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
 import GameZones from './GameZones';
 
-const GameBoard = ({ playerField, enemyField, onAttack }) => {
+const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace }) => {
   return (
     <div className="mb-8">
       <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-gold-400 p-6">
@@ -32,6 +32,7 @@ const GameBoard = ({ playerField, enemyField, onAttack }) => {
             isEnemy={false}
             onCardClick={(card) => console.log('Player card clicked:', card)}
             onAttack={onAttack}
+            onCardPlace={onCardPlace}
           />
         </div>
       </Card>

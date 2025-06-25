@@ -11,7 +11,8 @@ const CardComponent = ({
   isSmall = false,
   showCost = true,
   canAttack = false,
-  isInHand = false
+  isInHand = false,
+  isFaceDown = false
 }) => {
   const getAttributeColor = (attribute) => {
     switch (attribute?.toLowerCase()) {
@@ -35,6 +36,29 @@ const CardComponent = ({
   };
 
   const isMonster = card.card_type === 'monster' || card.atk !== undefined;
+
+  // Se è coperta, mostra il retro della carta
+  if (isFaceDown) {
+    return (
+      <Card 
+        className={`
+          bg-gradient-to-br from-blue-800 to-purple-800 border-2 border-blue-400
+          ${isSmall ? 'w-20 h-28' : 'w-40 h-56'} 
+          ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
+          transition-all duration-300 relative overflow-hidden
+        `}
+        onClick={() => isPlayable && onClick && onClick(card)}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+        <div className="relative p-2 h-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-white font-bold text-lg mb-2">DUEL</div>
+            <div className="text-white font-bold text-lg">CARDS</div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card 
@@ -71,8 +95,10 @@ const CardComponent = ({
               alt={card.name}
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling.style.display = 'flex';
+                const target = e.currentTarget as HTMLImageElement;
+                const nextSibling = target.nextElementSibling as HTMLElement;
+                target.style.display = 'none';
+                if (nextSibling) nextSibling.style.display = 'flex';
               }}
             />
           ) : null}

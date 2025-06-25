@@ -1,20 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
 import { Badge } from '@/components/ui/badge';
 import { Hand } from 'lucide-react';
 
 const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
+  const [selectedCard, setSelectedCard] = useState(null);
+
   const handleCardClick = (card) => {
     if (!isPlayerTurn) return;
     
-    if (card.type === 'monster') {
-      onPlayCard(card, 'monsters');
-    } else if (card.type === 'spell') {
-      onPlayCard(card, 'spells');
-    } else if (card.type === 'trap') {
-      onPlayCard(card, 'traps');
+    if (selectedCard?.id === card.id) {
+      setSelectedCard(null);
+    } else {
+      setSelectedCard(card);
     }
   };
 
@@ -34,10 +34,15 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
             <CardComponent
               card={card}
               onClick={handleCardClick}
-              isPlayable={isPlayerTurn && currentMana >= card.cost}
+              isPlayable={isPlayerTurn && currentMana >= (card.cost || card.star || 1)}
               isInHand={true}
               showCost={true}
             />
+            {selectedCard?.id === card.id && (
+              <div className="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                ✓
+              </div>
+            )}
           </div>
         ))}
         
@@ -47,6 +52,15 @@ const PlayerHand = ({ cards, onPlayCard, currentMana, isPlayerTurn }) => {
           </div>
         )}
       </div>
+      
+      {selectedCard && (
+        <div className="mt-4 p-3 bg-blue-900/50 border border-blue-400 rounded">
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Carta selezionata: <strong>{selectedCard.name}</strong></span>
+            <span className="text-xs text-gray-300">Clicca su una zona del campo per posizionarla</span>
+          </div>
+        </div>
+      )}
       
       {!isPlayerTurn && (
         <div className="mt-2 text-center">

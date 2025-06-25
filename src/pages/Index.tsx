@@ -27,8 +27,7 @@ const Index = () => {
   const [enemyHand, setEnemyHand] = useState([]);
   const [playerField, setPlayerField] = useState({
     monsters: [],
-    spells: [],
-    traps: [],
+    spellsTraps: [], // Zona combinata per magie e trappole
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
@@ -36,8 +35,7 @@ const Index = () => {
   });
   const [enemyField, setEnemyField] = useState({
     monsters: [],
-    spells: [],
-    traps: [],
+    spellsTraps: [], // Zona combinata per magie e trappole
     graveyard: [],
     banished: [],
     banishedFaceDown: [],
@@ -87,7 +85,7 @@ const Index = () => {
     });
   };
 
-  const playCard = (card, zone) => {
+  const placeCard = (card, zoneName, slotIndex, faceDown = false) => {
     if (gameState.currentPlayer !== 'player') return;
     
     const cardCost = card.cost || card.star || 1;
@@ -100,24 +98,28 @@ const Index = () => {
       return;
     }
 
-    // Determina la zona corretta basata sul tipo di carta
-    let targetZone = zone;
-    if (card.card_type === 'monster' || card.atk !== undefined) {
-      targetZone = 'monsters';
-    } else if (card.card_type === 'spell' || card.type === 'Magia') {
-      targetZone = 'spells';
-    } else if (card.card_type === 'trap' || card.type === 'Trappola') {
-      targetZone = 'traps';
-    }
-
     // Rimuovi la carta dalla mano
     setPlayerHand(prev => prev.filter(c => c.id !== card.id));
     
-    // Aggiungi la carta al campo
-    setPlayerField(prev => ({
-      ...prev,
-      [targetZone]: [...prev[targetZone], { ...card, position: 'attack' }]
-    }));
+    // Aggiungi la carta al campo nella posizione specificata
+    setPlayerField(prev => {
+      const newField = { ...prev };
+      const cardWithPosition = { 
+        ...card, 
+        position: 'attack', 
+        faceDown: faceDown 
+      };
+      
+      if (zoneName === 'monsters' || zoneName === 'spellsTraps') {
+        const newZone = [...prev[zoneName]];
+        newZone[slotIndex] = cardWithPosition;
+        newField[zoneName] = newZone;
+      } else {
+        newField[zoneName] = [...prev[zoneName], cardWithPosition];
+      }
+      
+      return newField;
+    });
 
     // Consuma mana
     setGameState(prev => ({
@@ -126,8 +128,8 @@ const Index = () => {
     }));
 
     toast({
-      title: "Carta Giocata!",
-      description: `${card.name} è stata evocata sul campo di battaglia!`,
+      title: "Carta Posizionata!",
+      description: `${card.name} è stata posizionata ${faceDown ? 'coperta' : 'scoperta'} in zona ${zoneName}!`,
     });
   };
 
@@ -282,12 +284,13 @@ const Index = () => {
           playerField={playerField}
           enemyField={enemyField}
           onAttack={attackWithMonster}
+          onCardPlace={placeCard}
         />
 
         {/* Mano del giocatore */}
         <PlayerHand 
           cards={playerHand}
-          onPlayCard={playCard}
+          onPlayCard={placeCard}
           currentMana={gameState.playerMana}
           isPlayerTurn={gameState.currentPlayer === 'player'}
         />
