@@ -12,7 +12,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   const [expandedZone, setExpandedZone] = useState(null);
   const [placementMenu, setPlacementMenu] = useState(null);
 
-  const handleSlotClick = (zoneName, slotIndex) => {
+  const handleSlotClick = (zoneName, slotIndex, event: React.MouseEvent) => {
     if (selectedCardFromHand && !isEnemy) {
       if (zoneName === 'monsters') {
         // Mostra menu per posizione mostri
@@ -97,7 +97,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
             ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}
             ${className}`}
-          onClick={(e) => handleSlotClick(zoneName, index)}
+          onClick={(e) => handleSlotClick(zoneName, index, e)}
         >
           {card ? (
             <div className="relative">
@@ -159,7 +159,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             className={`w-16 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
               ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
               ${fieldSpell ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}`}
-            onClick={(e) => handleSlotClick('fieldSpell', 0)}
+            onClick={(e) => handleSlotClick('fieldSpell', 0, e)}
           >
             {fieldSpell ? (
               <div className="relative">
