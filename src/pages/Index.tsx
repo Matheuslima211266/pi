@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ const Index = () => {
     // Load cards from JSON
     const allCards = sampleCardsData.cards;
 
-    // Filter cards into main deck and extra deck
+    // Filter cards into main deck and extra deck based on extra_deck field
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
@@ -218,6 +219,12 @@ const Index = () => {
     addToActionLog(`Changed phase to ${phase}`);
   };
 
+  const handleEndTurn = () => {
+    setIsPlayerTurn(!isPlayerTurn);
+    setCurrentPhase('draw');
+    addToActionLog('Turn ended');
+  };
+
   const handleLifePointsChange = (amount, isEnemy) => {
     if (isEnemy) {
       setEnemyLifePoints(amount);
@@ -233,7 +240,6 @@ const Index = () => {
     }]);
   };
 
-  // Update chat to hide names of face-down cards
   const addToChatLog = (message, cardName = null, isFaceDown = false) => {
     const displayName = (isFaceDown && cardName) ? 'Carta coperta' : cardName;
     const fullMessage = displayName ? `${message}: ${displayName}` : message;
@@ -242,6 +248,16 @@ const Index = () => {
       player: 'Sistema',
       message: fullMessage
     }]);
+  };
+
+  const handleAttack = (attackingCard, targetCard) => {
+    // Basic attack logic - can be expanded later
+    addToActionLog(`${attackingCard.name} attacks ${targetCard ? targetCard.name : 'directly'}`);
+  };
+
+  const handleTimeUp = () => {
+    addToActionLog('Time up! Turn ended automatically');
+    handleEndTurn();
   };
 
   return (
@@ -254,6 +270,7 @@ const Index = () => {
             <GameBoard 
               playerField={playerField}
               enemyField={enemyField}
+              onAttack={handleAttack}
               onCardPlace={handleCardPlace}
               selectedCardFromHand={selectedCardFromHand}
               onCardPreview={setPreviewCard}
@@ -276,9 +293,8 @@ const Index = () => {
               <ActionLog actions={actionLog} />
               <DiceAndCoin />
               <TurnTimer 
-                currentPhase={currentPhase}
-                timeRemaining={timeRemaining}
-                isPlayerTurn={isPlayerTurn}
+                isActive={isPlayerTurn}
+                onTimeUp={handleTimeUp}
               />
             </div>
           </div>
@@ -287,23 +303,26 @@ const Index = () => {
           <div className="w-80 space-y-4">
             {/* Enemy Life Points */}
             <LifePointsControl 
+              playerName="Avversario"
               lifePoints={enemyLifePoints}
-              isEnemy={true}
               onLifePointsChange={setEnemyLifePoints}
+              color="red"
             />
             
             {/* Game Phases - Center */}
             <GamePhases 
               currentPhase={currentPhase}
-              onPhaseChange={setCurrentPhase}
+              onPhaseChange={handlePhaseChange}
+              onEndTurn={handleEndTurn}
               isPlayerTurn={isPlayerTurn}
             />
             
             {/* Player Life Points */}
             <LifePointsControl 
+              playerName="Giocatore"
               lifePoints={playerLifePoints}
-              isEnemy={false}
               onLifePointsChange={setPlayerLifePoints}
+              color="blue"
             />
             
             {/* Chat */}
