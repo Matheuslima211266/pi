@@ -341,12 +341,12 @@ const Index = () => {
     } else if (fromZone === 'monsters') {
       setPlayerField(prev => ({
         ...prev,
-        monsters: prev.monsters.filter(c => c.id !== card.id)
+        monsters: prev.monsters.map(c => c && c.id === card.id ? null : c)
       }));
     } else if (fromZone === 'spellsTraps') {
       setPlayerField(prev => ({
         ...prev,
-        spellsTraps: prev.spellsTraps.filter(c => c.id !== card.id)
+        spellsTraps: prev.spellsTraps.map(c => c && c.id === card.id ? null : c)
       }));
     } else if (fromZone === 'fieldSpell') {
       setPlayerField(prev => ({
@@ -579,6 +579,7 @@ const Index = () => {
           currentMana={999}
           isPlayerTurn={true}
           onCardPreview={handleCardPreview}
+          onCardMove={handleCardMovement}
         />
       </div>
     </div>

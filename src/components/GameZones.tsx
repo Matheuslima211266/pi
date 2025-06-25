@@ -14,7 +14,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
 
   const handleSlotClick = (zoneName, slotIndex, event: React.MouseEvent) => {
     if (selectedCardFromHand && !isEnemy) {
-      // Menu universale per tutte le destinazioni
       setPlacementMenu({
         zoneName,
         slotIndex,
@@ -86,9 +85,11 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   const handleFieldCardAction = (card, action, destination) => {
     // Find which zone the card is in
     let sourceZone = '';
-    if (field.monsters?.includes(card)) sourceZone = 'monsters';
-    else if (field.spellsTraps?.includes(card)) sourceZone = 'spellsTraps';
-    else if (field.fieldSpell?.includes(card)) sourceZone = 'fieldSpell';
+    if (field.monsters?.some(m => m && m.id === card.id)) sourceZone = 'monsters';
+    else if (field.spellsTraps?.some(s => s && s.id === card.id)) sourceZone = 'spellsTraps';
+    else if (field.fieldSpell?.some(f => f && f.id === card.id)) sourceZone = 'fieldSpell';
+
+    console.log(`Moving ${card.name} from ${sourceZone} to ${destination}`);
 
     switch (action) {
       case 'toHand':
@@ -113,9 +114,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         onCardMove && onCardMove(card, sourceZone, 'deck_shuffle');
         break;
       case 'flipCard':
-        // Toggle face-up/face-down state
         const newCard = { ...card, faceDown: !card.faceDown };
-        // Update the card in place
         onCardMove && onCardMove(newCard, sourceZone, sourceZone);
         break;
     }
@@ -169,57 +168,57 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             )}
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => onCardPreview(card)}>
+        <ContextMenuContent className="w-48 bg-gray-800 border-gray-600 z-50">
+          <ContextMenuItem onClick={() => onCardPreview(card)} className="text-white hover:bg-gray-700">
             <Eye className="mr-2 h-4 w-4" />
             View Card
           </ContextMenuItem>
           
-          <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toHand', 'hand')}>
+          <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toHand', 'hand')} className="text-white hover:bg-gray-700">
             <ArrowUp className="mr-2 h-4 w-4" />
             Return to Hand
           </ContextMenuItem>
           
-          <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toGraveyard', 'graveyard')}>
+          <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toGraveyard', 'graveyard')} className="text-white hover:bg-gray-700">
             <Skull className="mr-2 h-4 w-4" />
             Send to Graveyard
           </ContextMenuItem>
 
           <ContextMenuSub>
-            <ContextMenuSubTrigger>
+            <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
               <Ban className="mr-2 h-4 w-4" />
               Banish Card
             </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toBanished', 'banished')}>
+            <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toBanished', 'banished')} className="text-white hover:bg-gray-700">
                 Banish Face-up
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toBanishedFaceDown', 'banishedFaceDown')}>
+              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toBanishedFaceDown', 'banishedFaceDown')} className="text-white hover:bg-gray-700">
                 Banish Face-down
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
 
           <ContextMenuSub>
-            <ContextMenuSubTrigger>
+            <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
               <BookOpen className="mr-2 h-4 w-4" />
               Return to Deck
             </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckTop', 'deck_top')}>
+            <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckTop', 'deck_top')} className="text-white hover:bg-gray-700">
                 Top of Deck
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckBottom', 'deck_bottom')}>
+              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckBottom', 'deck_bottom')} className="text-white hover:bg-gray-700">
                 Bottom of Deck
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckShuffle', 'deck_shuffle')}>
+              <ContextMenuItem onClick={() => handleFieldCardAction(card, 'toDeckShuffle', 'deck_shuffle')} className="text-white hover:bg-gray-700">
                 Shuffle into Deck
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
 
           {(zoneName === 'spellsTraps' || zoneName === 'monsters') && (
-            <ContextMenuItem onClick={() => handleFieldCardAction(card, 'flipCard', 'flip')}>
+            <ContextMenuItem onClick={() => handleFieldCardAction(card, 'flipCard', 'flip')} className="text-white hover:bg-gray-700">
               {card.faceDown ? '🔄 Flip Face-up' : '🔒 Set Face-down'}
             </ContextMenuItem>
           )}
