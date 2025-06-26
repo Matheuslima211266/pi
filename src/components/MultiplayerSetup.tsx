@@ -41,7 +41,8 @@ const MultiplayerSetup = ({
     playerReady: gameState?.playerReady,
     opponentReady: gameState?.opponentReady,
     gameId,
-    isHost
+    isHost,
+    gameSessionCreated
   });
 
   // Check URL for game parameter
@@ -86,7 +87,7 @@ const MultiplayerSetup = ({
         setGameId(newGameId);
         setIsHost(true);
         setGameSessionCreated(true);
-        console.log('Game created successfully');
+        console.log('Game created successfully - showing link');
       } else {
         alert('Failed to create game session. Please try again.');
       }
@@ -218,23 +219,29 @@ const MultiplayerSetup = ({
             onDeckUpload={handleDeckUpload}
           />
 
-          <GameCreationSection
-            gameId={gameId}
-            setGameId={setGameId}
-            playerName={playerName}
-            deckLoaded={deckLoaded}
-            isCreatingGame={isCreatingGame}
-            onCreateGame={createGame}
-            onJoinGame={joinGame}
-          />
+          {/* Mostra sempre la sezione di creazione del gioco se non c'è un gameId */}
+          {!gameId && (
+            <GameCreationSection
+              gameId={gameId}
+              setGameId={setGameId}
+              playerName={playerName}
+              deckLoaded={deckLoaded}
+              isCreatingGame={isCreatingGame}
+              onCreateGame={createGame}
+              onJoinGame={joinGame}
+            />
+          )}
 
-          <GameStatusDisplay
-            gameId={gameId}
-            isHost={isHost}
-            gameSessionCreated={gameSessionCreated}
-            linkCopied={linkCopied}
-            onCopyGameLink={copyGameLink}
-          />
+          {/* Mostra sempre il GameStatusDisplay quando c'è un gameId */}
+          {gameId && (
+            <GameStatusDisplay
+              gameId={gameId}
+              isHost={isHost}
+              gameSessionCreated={gameSessionCreated}
+              linkCopied={linkCopied}
+              onCopyGameLink={copyGameLink}
+            />
+          )}
 
           <StatusMessage
             playerName={playerName}
