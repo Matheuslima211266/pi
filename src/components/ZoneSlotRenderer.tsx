@@ -36,24 +36,24 @@ const ZoneSlotRenderer = ({
       const spellTrapCards = field.spellsTraps || [];
       for (let i = 0; i < 5; i++) {
         const card = spellTrapCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
         const isHighlighted = !isEnemy && selectedCardFromHand && !card;
         
         slots.push(
-          <ResponsiveGameZoneSlot
-            key={`spell-trap-${i}`}
-            card={card}
-            zoneName="spellsTraps"
-            slotIndex={i}
-            icon="⚡"
-            isHighlighted={isHighlighted}
-            onSlotClick={handleSlotClick}
-            onCardPreview={onCardPreview}
-            onFieldCardAction={handleFieldCardAction}
-            onCardClick={handleCardClick}
-            isEffectActivated={isEffectActivated}
-            zoneLabel="S/T"
-          />
+          <div key={`spell-trap-${i}`} className="w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40">
+            <ResponsiveGameZoneSlot
+              card={card}
+              zoneName="spellsTraps"
+              slotIndex={i}
+              icon="⚡"
+              isHighlighted={isHighlighted}
+              onSlotClick={handleSlotClick}
+              onCardPreview={onCardPreview}
+              onFieldCardAction={handleFieldCardAction}
+              onCardClick={handleCardClick}
+              isEffectActivated={isEffectActivated}
+              zoneLabel="S/T"
+            />
+          </div>
         );
       }
 
@@ -88,24 +88,24 @@ const ZoneSlotRenderer = ({
       const monsterCards = field.monsters || [];
       for (let i = 0; i < 5; i++) {
         const card = monsterCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
         const isHighlighted = !isEnemy && selectedCardFromHand && !card;
         
         slots.push(
-          <ResponsiveGameZoneSlot
-            key={`monster-${i}`}
-            card={card}
-            zoneName="monsters"
-            slotIndex={i}
-            icon="🐉"
-            isHighlighted={isHighlighted}
-            onSlotClick={handleSlotClick}
-            onCardPreview={onCardPreview}
-            onFieldCardAction={handleFieldCardAction}
-            onCardClick={handleCardClick}
-            isEffectActivated={isEffectActivated}
-            zoneLabel="Monster"
-          />
+          <div key={`monster-${i}`} className="w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40">
+            <ResponsiveGameZoneSlot
+              card={card}
+              zoneName="monsters"
+              slotIndex={i}
+              icon="🐉"
+              isHighlighted={isHighlighted}
+              onSlotClick={handleSlotClick}
+              onCardPreview={onCardPreview}
+              onFieldCardAction={handleFieldCardAction}
+              onCardClick={handleCardClick}
+              isEffectActivated={isEffectActivated}
+              zoneLabel="Monster"
+            />
+          </div>
         );
       }
 
@@ -138,24 +138,24 @@ const ZoneSlotRenderer = ({
     } else if (zoneType === 'fieldSpell') {
       // Field Spell zone
       const fieldCard = (field.fieldSpell || [])[0];
-      // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
       const isHighlighted = !isEnemy && selectedCardFromHand && !fieldCard;
       
       slots.push(
-        <ResponsiveGameZoneSlot
-          key="field-spell"
-          card={fieldCard}
-          zoneName="fieldSpell"
-          slotIndex={0}
-          icon="🏛️"
-          isHighlighted={isHighlighted}
-          onSlotClick={handleSlotClick}
-          onCardPreview={onCardPreview}
-          onFieldCardAction={handleFieldCardAction}
-          onCardClick={handleCardClick}
-          isEffectActivated={isEffectActivated}
-          zoneLabel="Field Spell"
-        />
+        <div key="field-spell" className="w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40">
+          <ResponsiveGameZoneSlot
+            card={fieldCard}
+            zoneName="fieldSpell"
+            slotIndex={0}
+            icon="🏛️"
+            isHighlighted={isHighlighted}
+            onSlotClick={handleSlotClick}
+            onCardPreview={onCardPreview}
+            onFieldCardAction={handleFieldCardAction}
+            onCardClick={handleCardClick}
+            isEffectActivated={isEffectActivated}
+            zoneLabel="Field Spell"
+          />
+        </div>
       );
     }
 

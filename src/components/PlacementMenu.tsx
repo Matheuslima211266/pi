@@ -50,9 +50,16 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     }
   };
 
+  const options = getMenuOptions(placementMenu.zoneName);
+  
+  if (options.length === 0) {
+    onClose();
+    return null;
+  }
+
   // Calcola la posizione del menu vicino al cursore
-  const menuStyle: React.CSSProperties = {
-    position: 'fixed' as const,
+  const menuStyle = {
+    position: 'fixed',
     left: Math.max(10, Math.min(placementMenu.x - 100, window.innerWidth - 220)),
     top: Math.max(10, Math.min(placementMenu.y - 50, window.innerHeight - 200)),
     zIndex: 1000
@@ -61,6 +68,11 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
   return (
     <>
       <div 
+        className="fixed inset-0 z-50"
+        onClick={onClose}
+        style={{ zIndex: 999 }}
+      />
+      <div 
         className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-2xl min-w-48 max-w-64"
         style={menuStyle}
       >
@@ -68,11 +80,14 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           Place: {placementMenu.card?.name}
         </div>
         <div className="space-y-2">
-          {getMenuOptions(placementMenu.zoneName).map((option) => (
+          {options.map((option) => (
             <Button 
               key={option.key}
               size="sm" 
-              onClick={() => onPlacementChoice(option.key)}
+              onClick={() => {
+                console.log('Placement option clicked:', option.key, placementMenu.zoneName);
+                onPlacementChoice(option.key);
+              }}
               className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500"
               variant="ghost"
             >
@@ -90,11 +105,6 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           Cancel
         </Button>
       </div>
-      <div 
-        className="fixed inset-0 z-50"
-        onClick={onClose}
-        style={{ zIndex: 999 }}
-      />
     </>
   );
 };

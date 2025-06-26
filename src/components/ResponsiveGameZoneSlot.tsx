@@ -20,7 +20,6 @@ const ResponsiveGameZoneSlot = ({
     if (card) {
       onCardPreview?.(card);
     } else if (onSlotClick && isHighlighted) {
-      // Passa le coordinate del click per il menu di posizionamento
       onSlotClick(zoneName, slotIndex, e);
     }
   };
@@ -34,11 +33,11 @@ const ResponsiveGameZoneSlot = ({
   return (
     <div 
       className={`
-        relative w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40
+        relative w-full h-full
         border-2 rounded-lg cursor-pointer transition-all duration-200
         ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
-        ${isHighlighted ? 'border-blue-400 bg-blue-900/50 animate-pulse shadow-lg shadow-blue-400/50' : ''}
-        ${isEffectActivated ? 'ring-2 ring-purple-400 animate-pulse' : ''}
+        ${isHighlighted ? 'border-blue-400 bg-blue-900/50 shadow-lg shadow-blue-400/50' : ''}
+        ${isEffectActivated ? 'ring-2 ring-purple-400' : ''}
       `}
       onClick={handleClick}
     >
@@ -61,14 +60,14 @@ const ResponsiveGameZoneSlot = ({
           />
           
           {/* Menu popup per azioni rapide */}
-          <div className="absolute top-0 right-0 opacity-0 hover:opacity-100 transition-opacity">
-            <div className="bg-black/80 rounded p-1 space-y-1">
+          <div className="absolute top-1 right-1 opacity-0 hover:opacity-100 transition-opacity z-10">
+            <div className="bg-black/90 rounded p-1 space-y-1 shadow-lg">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardAction('destroy');
                 }}
-                className="text-red-400 text-xs hover:text-red-300 block"
+                className="text-red-400 text-xs hover:text-red-300 block w-6 h-6 flex items-center justify-center rounded hover:bg-red-900/50"
                 title="Destroy"
               >
                 💥
@@ -78,7 +77,7 @@ const ResponsiveGameZoneSlot = ({
                   e.stopPropagation();
                   handleCardAction('banish');
                 }}
-                className="text-purple-400 text-xs hover:text-purple-300 block"
+                className="text-purple-400 text-xs hover:text-purple-300 block w-6 h-6 flex items-center justify-center rounded hover:bg-purple-900/50"
                 title="Banish"
               >
                 🚫
@@ -88,7 +87,7 @@ const ResponsiveGameZoneSlot = ({
                   e.stopPropagation();
                   handleCardAction('toHand');
                 }}
-                className="text-green-400 text-xs hover:text-green-300 block"
+                className="text-green-400 text-xs hover:text-green-300 block w-6 h-6 flex items-center justify-center rounded hover:bg-green-900/50"
                 title="To Hand"
               >
                 📋
