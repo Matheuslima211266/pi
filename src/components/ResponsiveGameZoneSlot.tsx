@@ -73,7 +73,15 @@ const ResponsiveGameZoneSlot = ({
       case 'flipCard':
         onFieldCardAction && onFieldCardAction(card, 'flipCard', 'flip');
         break;
+      case 'changePosition':
+        onFieldCardAction && onFieldCardAction(card, 'changePosition', 'position');
+        break;
     }
+  };
+
+  const handlePositionChange = (card, newPosition) => {
+    console.log('Position change requested:', card.name, 'to', newPosition);
+    onFieldCardAction && onFieldCardAction({ ...card, position: newPosition }, 'changePosition', 'position');
   };
 
   if (!card) {
@@ -104,6 +112,8 @@ const ResponsiveGameZoneSlot = ({
           isSmall={true}
           showCost={false}
           isFaceDown={card.faceDown}
+          position={card.position}
+          onPositionChange={zoneName === 'monsters' ? handlePositionChange : null}
         />
         {isEffectActivated && isEffectActivated(card) && (
           <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>

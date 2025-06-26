@@ -10,7 +10,8 @@ const CardComponent = ({
   canAttack = false,
   isInHand = false,
   isFaceDown = false,
-  position = 'attack'
+  position = 'attack',
+  onPositionChange = null
 }) => {
   const isMonster = card.card_type === 'monster' || card.atk !== undefined;
   const isDefensePosition = position === 'defense' || card.position === 'defense';
@@ -42,6 +43,14 @@ const CardComponent = ({
     );
   }
 
+  const handlePositionClick = (e) => {
+    e.stopPropagation();
+    if (onPositionChange && isMonster) {
+      const newPosition = isDefensePosition ? 'attack' : 'defense';
+      onPositionChange(card, newPosition);
+    }
+  };
+
   return (
     <div 
       className={`
@@ -56,7 +65,8 @@ const CardComponent = ({
       onClick={() => isPlayable && onClick && onClick(card)}
       style={{
         boxShadow: isPlayable ? '0 8px 25px rgba(0,0,0,0.5)' : '0 4px 15px rgba(0,0,0,0.3)',
-        background: 'linear-gradient(135deg, #2a3b5c, #1a2a3a)'
+        background: 'linear-gradient(135deg, #2a3b5c, #1a2a3a)',
+        border: '3px solid #ffd700'
       }}
       onMouseEnter={(e) => {
         if (isPlayable) {
@@ -160,8 +170,23 @@ const CardComponent = ({
         {card.name}
       </div>
 
-      {/* Position indicator for monsters */}
-      {isMonster && !isSmall && (
+      {/* Position indicator for monsters - Clickable */}
+      {isMonster && !isSmall && onPositionChange && (
+        <div className="absolute top-2 left-2">
+          <div 
+            className={`text-xs px-2 py-1 rounded cursor-pointer transition-colors ${
+              isDefensePosition ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'
+            } text-white border border-white/20`}
+            onClick={handlePositionClick}
+            title="Click to change position"
+          >
+            {isDefensePosition ? 'DEF' : 'ATK'}
+          </div>
+        </div>
+      )}
+
+      {/* Position indicator for monsters - Non-clickable */}
+      {isMonster && !isSmall && !onPositionChange && (
         <div className="absolute top-2 left-2">
           <div className={`text-xs px-1 py-0 rounded ${isDefensePosition ? 'bg-blue-500' : 'bg-red-500'} text-white`}>
             {isDefensePosition ? 'DEF' : 'ATK'}

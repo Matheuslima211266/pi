@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowUp, Skull, Ban, BookOpen, Star, Eye, ArrowDown } from 'lucide-react';
+import { ArrowUp, Skull, Ban, BookOpen, Star, Eye, ArrowDown, RotateCcw } from 'lucide-react';
 
 const SlotPopupMenu = ({ 
   card, 
@@ -17,6 +17,8 @@ const SlotPopupMenu = ({
     onAction(action, card, destination);
     onClose();
   };
+
+  const isMonster = card.card_type === 'monster' || card.atk !== undefined;
 
   return (
     <>
@@ -46,6 +48,19 @@ const SlotPopupMenu = ({
             <Eye className="mr-2 h-4 w-4" />
             View Card
           </Button>
+
+          {/* Change Position (only for monsters in monster zone) */}
+          {isMonster && zoneName === 'monsters' && (
+            <Button 
+              size="sm" 
+              onClick={() => handleAction('changePosition', 'position')}
+              className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white"
+              variant="ghost"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Change Position
+            </Button>
+          )}
 
           {/* To Hand */}
           <Button 

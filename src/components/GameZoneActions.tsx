@@ -138,6 +138,7 @@ export const useGameZoneActions = ({
         // Cambia la posizione della carta (da attack a defense e viceversa)
         const newPosition = card.position === 'attack' ? 'defense' : 'attack';
         const updatedCard = { ...card, position: newPosition };
+        console.log('Changing position from', card.position, 'to', newPosition);
         onCardMove && onCardMove(updatedCard, sourceZone, 'flip_in_place', slotIndex);
         break;
       case 'flipCard':
