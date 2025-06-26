@@ -383,8 +383,8 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
 
   return (
     <div className="h-full flex">
-      {/* Left side - Zone managers - Ultra compact, no gaps */}
-      <div className="w-16 flex flex-col justify-center space-y-0">
+      {/* Left side - Zone managers - Ultra compact sidebar */}
+      <div className="w-12 flex flex-col justify-center">
         {/* Deck - Top */}
         {!isEnemy && (
           <ZoneManager
@@ -431,44 +431,39 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         />
       </div>
       
-      {/* Center - Main play field - Maximum space, no gaps between zones */}
-      <div className="flex-1 flex flex-col justify-between">
-        {/* Field Spell - Top left corner */}
-        <div className="flex justify-start">
-          <div className="w-16">
-            {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={10} />, 'Field')}
-          </div>
+      {/* Center - Main play field - Centered and compact */}
+      <div className="flex-1 flex flex-col items-center justify-center space-y-1">
+        {/* Field Spell - Compact top */}
+        <div className="self-start">
+          {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={10} />, 'Field')}
         </div>
         
-        {/* Monster Zone - Centered, more space */}
-        <div className="flex-1 flex items-center justify-center">
+        {/* Monster Zone - Centered */}
+        <div className="flex items-center justify-center">
           {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={12} />, 5)}
         </div>
         
-        {/* Spell/Trap Zone - Centered, no gap with monster zone */}
-        <div className="flex-1 flex items-center justify-center">
+        {/* Spell/Trap Zone - Centered, no gap */}
+        <div className="flex items-center justify-center">
           {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={12} />, 5)}
         </div>
         
-        {/* Banished Face Down - Bottom left corner */}
-        <div className="flex justify-start">
-          <div className="w-16">
-            <ZoneManager
-              cards={field.banishedFaceDown || []}
-              zoneName="banishedFaceDown"
-              onCardMove={onCardMove}
-              onCardPreview={onCardPreview}
-              isExpanded={expandedZone === 'banishedFaceDown'}
-              onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
-              isCompact={true}
-            />
-          </div>
+        {/* Banished Face Down - Compact bottom */}
+        <div className="self-start">
+          <ZoneManager
+            cards={field.banishedFaceDown || []}
+            zoneName="banishedFaceDown"
+            onCardMove={onCardMove}
+            onCardPreview={onCardPreview}
+            isExpanded={expandedZone === 'banishedFaceDown'}
+            onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
+            isCompact={true}
+          />
         </div>
       </div>
       
-      {/* Right side - Zone managers - Ultra compact, no gaps */}
-      <div className="w-16 flex flex-col justify-center space-y-0">
-        {/* Banished Face Down */}
+      {/* Right side - Zone managers - Ultra compact sidebar */}
+      <div className="w-12 flex flex-col justify-center">
         <ZoneManager
           cards={field.banishedFaceDown || []}
           zoneName="banishedFaceDown"
@@ -480,7 +475,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         />
       </div>
 
-      {/* Placement menu - Compressed */}
+      {/* Placement menu and overlays - keep existing code */}
       {placementMenu && (
         <div 
           className="fixed bg-gray-800 border border-gray-600 rounded-lg p-1 shadow-lg z-50 min-w-32"
@@ -514,7 +509,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         </div>
       )}
 
-      {/* Instructions - Compressed */}
       {selectedCardFromHand && !isEnemy && (
         <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-900/80 border border-blue-400 rounded p-1 z-10">
           <p className="text-xs text-gray-300 text-center">
@@ -523,7 +517,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         </div>
       )}
 
-      {/* Overlay for menu */}
       {placementMenu && (
         <div 
           className="fixed inset-0 z-40"

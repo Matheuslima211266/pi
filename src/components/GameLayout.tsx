@@ -1,4 +1,3 @@
-
 import React from 'react';
 import GameBoard from '@/components/GameBoard';
 import PlayerHand from '@/components/PlayerHand';
@@ -62,10 +61,10 @@ const GameLayout = ({
         </div>
       )}
       
-      {/* Main Layout Grid - More space for game board */}
-      <div className="h-full grid grid-cols-10 gap-0.5 p-0.5">
-        {/* Left Side - Main Game Area - Much more space */}
-        <div className="col-span-8 flex flex-col h-full">
+      {/* Main Layout Grid - More balanced */}
+      <div className="h-full grid grid-cols-12 gap-0.5 p-0.5">
+        {/* Left Side - Main Game Area - More space */}
+        <div className="col-span-9 flex flex-col h-full">
           {/* Enemy Hand - Very compact */}
           <div className="h-12">
             <EnemyHand 
@@ -75,7 +74,7 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Game Board - Much more space */}
+          {/* Game Board - Maximum space */}
           <div className="flex-1 min-h-0">
             <GameBoard 
               playerField={playerField}
@@ -103,9 +102,9 @@ const GameLayout = ({
           </div>
         </div>
         
-        {/* Right Side - Sidebar and Controls - Much smaller */}
-        <div className="col-span-2 flex flex-col h-full space-y-0.5">
-          {/* Game Controls - Ultra compact */}
+        {/* Right Side - Sidebar and Controls - Compact */}
+        <div className="col-span-3 flex flex-col h-full space-y-0.5">
+          {/* Game Controls - Compact */}
           <div className="flex-shrink-0">
             <GameSidebar
               enemyLifePoints={enemyLifePoints}
@@ -123,7 +122,7 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Action Log and Dice/Coin - Ultra compact */}
+          {/* Action Log and Dice/Coin - Compact */}
           <div className="flex-1 grid grid-rows-2 gap-0.5 min-h-0">
             <ActionLog actions={actionLog} />
             <DiceAndCoin 
