@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import CardComponent from './CardComponent';
@@ -266,7 +267,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       return (
         <div 
           key={index} 
-          className={`w-20 h-28 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all text-xs
+          className={`w-14 h-20 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all text-xs
             ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
             ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}
             ${className}`}
@@ -276,7 +277,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             renderFieldCardWithContextMenu(card, zoneName, index)
           ) : (
             <div className="text-gray-600 text-center">
-              {React.cloneElement(icon, { size: 16 })}
+              {React.cloneElement(icon, { size: 12 })}
             </div>
           )}
         </div>
@@ -284,9 +285,9 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     });
 
     return (
-      <div className="mb-2">
+      <div className="mb-1">
         <div className="flex items-center gap-1 mb-1">
-          {icon}
+          {React.cloneElement(icon, { size: 12 })}
           <Badge variant="outline" className="text-xs py-0 px-1">
             {zoneName}
           </Badge>
@@ -294,7 +295,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             {cards.filter(c => c !== null).length}/{maxCards}
           </span>
         </div>
-        <div className="flex gap-1 justify-center">
+        <div className="flex gap-0.5 justify-center">
           {slots}
         </div>
       </div>
@@ -306,9 +307,9 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     const isHighlighted = selectedCardFromHand && !card && !isEnemy;
     
     return (
-      <div className="mb-2">
+      <div className="mb-1">
         <div className="flex items-center gap-1 mb-1">
-          {icon}
+          {React.cloneElement(icon, { size: 12 })}
           <Badge variant="outline" className="text-xs py-0 px-1">
             {title}
           </Badge>
@@ -318,7 +319,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         </div>
         <div className="flex justify-center">
           <div 
-            className={`w-20 h-28 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
+            className={`w-14 h-20 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
               ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
               ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}`}
             onClick={(e) => handleSlotClick(zoneName, 0, e)}
@@ -327,7 +328,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
               renderFieldCardWithContextMenu(card, zoneName, 0)
             ) : (
               <div className="text-gray-600 text-center">
-                {React.cloneElement(icon, { size: 16 })}
+                {React.cloneElement(icon, { size: 12 })}
               </div>
             )}
           </div>
@@ -382,42 +383,44 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   };
 
   return (
-    <div className="h-full flex">
-      {/* Left side - Main play field */}
-      <div className="flex-1 flex flex-col justify-between py-2">
-        {/* Field Spell - Now at top left (old banished facedown position) */}
+    <div className="h-full flex gap-1">
+      {/* Left side - Main play field - Compressed */}
+      <div className="flex-1 flex flex-col justify-between py-1">
+        {/* Field Spell - Top left corner */}
         <div className="flex justify-start">
-          <div className="w-20">
-            {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={12} />, 'Field')}
+          <div className="w-16">
+            {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={10} />, 'Field')}
           </div>
         </div>
         
-        {/* Monster Zone */}
+        {/* Monster Zone - Compressed */}
         <div className="flex-1 flex items-center justify-center">
-          {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={16} />, 5)}
+          {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={12} />, 5)}
         </div>
         
-        {/* Spell/Trap Zone */}
+        {/* Spell/Trap Zone - Compressed */}
         <div className="flex-1 flex items-center justify-center">
-          {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={16} />, 5)}
+          {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={12} />, 5)}
         </div>
         
-        {/* Banished Face Down - Now at bottom left (old field spell position) */}
+        {/* Banished Face Down - Bottom left corner */}
         <div className="flex justify-start">
-          <ZoneManager
-            cards={field.banishedFaceDown || []}
-            zoneName="banishedFaceDown"
-            onCardMove={onCardMove}
-            onCardPreview={onCardPreview}
-            isExpanded={expandedZone === 'banishedFaceDown'}
-            onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
-            isCompact={true}
-          />
+          <div className="w-16">
+            <ZoneManager
+              cards={field.banishedFaceDown || []}
+              zoneName="banishedFaceDown"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={expandedZone === 'banishedFaceDown'}
+              onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
+              isCompact={true}
+            />
+          </div>
         </div>
       </div>
       
-      {/* Right side - Zone managers stack */}
-      <div className="w-24 flex flex-col justify-center space-y-1 px-1">
+      {/* Right side - Zone managers stack - Ultra compressed */}
+      <div className="w-16 flex flex-col justify-center space-y-0.5 px-0.5">
         {/* Deck - Top right */}
         {!isEnemy && (
           <ZoneManager
@@ -467,22 +470,22 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         />
       </div>
 
-      {/* Placement menu */}
+      {/* Placement menu - Compressed */}
       {placementMenu && (
         <div 
-          className="fixed bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg z-50 min-w-40"
+          className="fixed bg-gray-800 border border-gray-600 rounded-lg p-1 shadow-lg z-50 min-w-32"
           style={{ left: placementMenu.x, top: placementMenu.y }}
         >
           <div className="text-xs font-semibold mb-1 text-gray-300">
             {placementMenu.card?.name}
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {getMenuOptions(placementMenu.zoneName).map((option) => (
               <Button 
                 key={option.key}
                 size="sm" 
                 onClick={() => handlePlacementChoice(option.key)}
-                className="w-full text-left justify-start text-xs h-6"
+                className="w-full text-left justify-start text-xs h-5"
                 variant="ghost"
               >
                 <span className="mr-1">{option.icon}</span>
@@ -494,16 +497,16 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             size="sm" 
             variant="outline"
             onClick={() => setPlacementMenu(null)}
-            className="w-full mt-2 text-xs h-6"
+            className="w-full mt-1 text-xs h-5"
           >
             Cancel
           </Button>
         </div>
       )}
 
-      {/* Instructions */}
+      {/* Instructions - Compressed */}
       {selectedCardFromHand && !isEnemy && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-900/80 border border-blue-400 rounded p-2 z-10">
+        <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-900/80 border border-blue-400 rounded p-1 z-10">
           <p className="text-xs text-gray-300 text-center">
             Click anywhere to place <strong>{selectedCardFromHand.name}</strong>
           </p>

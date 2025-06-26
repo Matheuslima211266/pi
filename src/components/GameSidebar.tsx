@@ -20,8 +20,8 @@ const GameSidebar = ({
   onSendMessage
 }) => {
   return (
-    <div className="w-80 space-y-4">
-      {/* Enemy Life Points */}
+    <div className="w-full space-y-2">
+      {/* Enemy Life Points - Compressed */}
       <LifePointsControl 
         playerName="Avversario"
         lifePoints={enemyLifePoints}
@@ -29,7 +29,7 @@ const GameSidebar = ({
         color="red"
       />
       
-      {/* Game Phases - Center */}
+      {/* Game Phases - Center - Compressed */}
       <GamePhases 
         currentPhase={currentPhase}
         onPhaseChange={onPhaseChange}
@@ -37,7 +37,7 @@ const GameSidebar = ({
         isPlayerTurn={isPlayerTurn}
       />
       
-      {/* Player Life Points */}
+      {/* Player Life Points - Compressed */}
       <LifePointsControl 
         playerName="Giocatore"
         lifePoints={playerLifePoints}
@@ -45,7 +45,7 @@ const GameSidebar = ({
         color="blue"
       />
       
-      {/* Timer */}
+      {/* Timer - Compressed */}
       <TurnTimer 
         isActive={isPlayerTurn}
         onTimeUp={onTimeUp}
@@ -53,7 +53,7 @@ const GameSidebar = ({
         onTimeChange={onTimeChange}
       />
       
-      {/* Chat */}
+      {/* Chat - Compressed */}
       <ChatBox 
         messages={chatMessages}
         onSendMessage={onSendMessage}
