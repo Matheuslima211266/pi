@@ -54,20 +54,20 @@ const GameLayout = ({
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
       {/* Game ID Display */}
       {gameData?.gameId && (
-        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="inline-flex items-center gap-1 bg-gold-600 text-black px-2 py-0.5 rounded text-xs font-semibold">
+        <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="inline-flex items-center gap-1 bg-gold-600 text-black px-1.5 py-0.5 rounded text-xs font-semibold">
             <span>Game ID: {gameData.gameId}</span>
             {gameData.isHost && <span className="text-xs">(Host)</span>}
           </div>
         </div>
       )}
       
-      {/* Main Layout Grid - Compressed */}
-      <div className="h-full grid grid-cols-12 gap-1 p-1">
-        {/* Left Side - Main Game Area */}
-        <div className="col-span-9 flex flex-col h-full">
-          {/* Enemy Hand - Reduced height */}
-          <div className="h-16">
+      {/* Main Layout Grid - More space for game board */}
+      <div className="h-full grid grid-cols-10 gap-0.5 p-0.5">
+        {/* Left Side - Main Game Area - Much more space */}
+        <div className="col-span-8 flex flex-col h-full">
+          {/* Enemy Hand - Very compact */}
+          <div className="h-12">
             <EnemyHand 
               handCount={enemyHandCount}
               revealedCard={enemyRevealedCard}
@@ -75,7 +75,7 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Game Board - Takes most space */}
+          {/* Game Board - Much more space */}
           <div className="flex-1 min-h-0">
             <GameBoard 
               playerField={playerField}
@@ -89,8 +89,8 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Player Hand - Reduced height */}
-          <div className="h-24">
+          {/* Player Hand - Very compact */}
+          <div className="h-16">
             <PlayerHand 
               cards={playerHand}
               onPlayCard={gameState.setSelectedCardFromHand}
@@ -103,9 +103,9 @@ const GameLayout = ({
           </div>
         </div>
         
-        {/* Right Side - Sidebar and Controls - Compressed */}
-        <div className="col-span-3 flex flex-col h-full space-y-1">
-          {/* Game Controls - Reduced size */}
+        {/* Right Side - Sidebar and Controls - Much smaller */}
+        <div className="col-span-2 flex flex-col h-full space-y-0.5">
+          {/* Game Controls - Ultra compact */}
           <div className="flex-shrink-0">
             <GameSidebar
               enemyLifePoints={enemyLifePoints}
@@ -123,8 +123,8 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Action Log and Dice/Coin - Compressed */}
-          <div className="flex-1 grid grid-rows-2 gap-1 min-h-0">
+          {/* Action Log and Dice/Coin - Ultra compact */}
+          <div className="flex-1 grid grid-rows-2 gap-0.5 min-h-0">
             <ActionLog actions={actionLog} />
             <DiceAndCoin 
               onDiceRoll={handleDiceRoll}
