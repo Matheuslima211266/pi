@@ -21,7 +21,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   const [linkCopied, setLinkCopied] = useState(false);
   const [isHost, setIsHost] = useState(false);
 
-  // Check for game ID in URL on component mount
+  // Always call useEffect hooks in the same order
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const gameFromUrl = urlParams.get('game');
@@ -30,14 +30,25 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     }
   }, []);
 
+  // Move the auto-start logic to a separate useEffect that always runs
+  useEffect(() => {
+    if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
+      const bothReady = gameState?.playerReady && gameState?.opponentReady;
+      if (bothReady && !gameState?.bothPlayersReady) {
+        gameState?.setBothPlayersReady(true);
+      }
+    }
+  }, [gameState?.playerReady, gameState?.opponentReady, gameState?.bothPlayersReady, gameState?.gameStarted, gameState]);
+
   const createGame = () => {
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setGameId(newGameId);
     setIsHost(true);
   };
 
-  const joinGame = () => {
+  const joinGame = async () => {
     if (gameId && playerName) {
+      console.log('Attempting to join game:', gameId);
       onGameStart({ 
         gameId: gameId,
         playerName: playerName, 
@@ -94,13 +105,6 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   // Se il gioco è già iniziato ma non tutti i giocatori sono pronti
   if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
     const bothReady = gameState?.playerReady && gameState?.opponentReady;
-    
-    // Auto-start when both players are ready
-    useEffect(() => {
-      if (bothReady && !gameState?.bothPlayersReady) {
-        gameState?.setBothPlayersReady(true);
-      }
-    }, [bothReady, gameState]);
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">

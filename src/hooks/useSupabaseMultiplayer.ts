@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -56,6 +55,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       if (error) throw error;
 
       setGameSessionId(data.id);
+      console.log('Game session created:', data);
       return data;
     } catch (error: any) {
       console.error('Error creating game session:', error);
@@ -73,14 +73,31 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     if (!user) return null;
 
     try {
+      console.log('Searching for game session with ID:', gameId);
+      
       // First, find the game session
       const { data: session, error: findError } = await supabase
         .from('game_sessions')
         .select('*')
         .eq('game_id', gameId)
+        .eq('status', 'waiting')
         .single();
 
-      if (findError) throw findError;
+      if (findError) {
+        console.error('Error finding game session:', findError);
+        throw new Error('Game session not found or already full');
+      }
+
+      if (!session) {
+        throw new Error('Game session not found');
+      }
+
+      console.log('Found game session:', session);
+
+      // Check if there's already a guest
+      if (session.guest_id) {
+        throw new Error('Game session is already full');
+      }
 
       // Update with guest info
       const { data, error } = await supabase
@@ -94,15 +111,19 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating game session:', error);
+        throw error;
+      }
 
       setGameSessionId(data.id);
+      console.log('Successfully joined game session:', data);
       return data;
     } catch (error: any) {
       console.error('Error joining game session:', error);
       toast({
         title: "Error",
-        description: "Failed to join game session",
+        description: error.message || "Failed to join game session",
         variant: "destructive",
       });
       return null;
