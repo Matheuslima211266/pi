@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -92,14 +91,14 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
 
     try {
-      console.log('Searching for game session:', gameId);
+      console.log('=== GUEST JOINING GAME ===', { gameId, playerName, userId: user.id });
       
       // First, find the game session
       const { data: existingSession, error: fetchError } = await supabase
         .from('game_sessions')
         .select('*')
         .eq('game_id', gameId)
-        .eq('status', 'waiting')
+        .in('status', ['waiting', 'active'])
         .maybeSingle();
 
       if (fetchError) {
@@ -109,59 +108,31 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       if (!existingSession) {
-        console.log('No waiting session found, checking active sessions...');
-        // Try to find active session in case host already entered waiting room
-        const { data: activeSession, error: activeError } = await supabase
-          .from('game_sessions')
-          .select('*')
-          .eq('game_id', gameId)
-          .eq('status', 'active')
-          .maybeSingle();
+        console.error('No session found for game ID:', gameId);
+        setError('Game not found or expired');
+        return null;
+      }
 
-        if (activeError || !activeSession) {
-          console.error('No session found for game ID:', gameId);
-          setError('Game not found or expired');
-          return null;
-        }
+      console.log('Found existing session:', existingSession);
 
-        if (activeSession.guest_id) {
-          setError('Game is already full');
-          return null;
-        }
+      if (existingSession.guest_id && existingSession.guest_id !== user.id) {
+        console.error('Game is already full');
+        setError('Game is already full');
+        return null;
+      }
 
-        // Join the active session
-        const { data: joinData, error: joinError } = await supabase
-          .from('game_sessions')
-          .update({
-            guest_id: user.id,
-            guest_name: playerName
-          })
-          .eq('id', activeSession.id)
-          .select()
-          .single();
-
-        if (joinError) {
-          console.error('Error joining active session:', joinError);
-          setError('Failed to join game session');
-          return null;
-        }
-
-        console.log('Successfully joined active game session:', joinData);
-        const gameSession = castToGameSession(joinData);
+      // If guest is already in this session, just return it
+      if (existingSession.guest_id === user.id) {
+        console.log('Guest already joined, returning existing session');
+        const gameSession = castToGameSession(existingSession);
         setCurrentSession(gameSession);
         setError(null);
         return gameSession;
       }
 
-      if (existingSession.guest_id) {
-        setError('Game is already full');
-        return null;
-      }
-
-      console.log('Found waiting session, joining:', existingSession);
-
-      // Join the game
-      const { data, error } = await supabase
+      // Join the game by updating the session
+      console.log('Joining game session:', existingSession.id);
+      const { data: updatedSession, error: updateError } = await supabase
         .from('game_sessions')
         .update({
           guest_id: user.id,
@@ -172,14 +143,14 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .select()
         .single();
 
-      if (error) {
-        console.error('Error joining game session:', error);
+      if (updateError) {
+        console.error('Error joining game session:', updateError);
         setError('Failed to join game session');
         return null;
       }
 
-      console.log('Successfully joined game session:', data);
-      const gameSession = castToGameSession(data);
+      console.log('=== GUEST SUCCESSFULLY JOINED ===', updatedSession);
+      const gameSession = castToGameSession(updatedSession);
       setCurrentSession(gameSession);
       setError(null);
       
@@ -202,7 +173,13 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     const updateField = isHost ? 'host_ready' : 'guest_ready';
 
     try {
-      console.log('Setting player ready:', { isReady, isHost, updateField, sessionId: currentSession.id });
+      console.log('=== SETTING PLAYER READY ===', { 
+        isReady, 
+        isHost, 
+        updateField, 
+        sessionId: currentSession.id,
+        userId: user.id 
+      });
       
       const { data, error } = await supabase
         .from('game_sessions')
@@ -215,7 +192,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         console.error('Error updating ready status:', error);
         setError('Failed to update ready status');
       } else {
-        console.log('Player ready status updated successfully:', data);
+        console.log('=== PLAYER READY STATUS UPDATED ===', data);
         const updatedSession = castToGameSession(data);
         setCurrentSession(updatedSession);
         
@@ -295,7 +272,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   useEffect(() => {
     if (!currentSession || !user) return;
 
-    console.log('Setting up real-time subscriptions for session:', currentSession.id);
+    console.log('=== SETTING UP REAL-TIME SUBSCRIPTIONS ===', currentSession.id);
 
     // Subscribe to game session changes
     const gameSessionChannel = supabase
@@ -309,8 +286,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           filter: `id=eq.${currentSession.id}`
         },
         (payload) => {
-          console.log('=== REAL-TIME UPDATE ===');
-          console.log('Game session updated via realtime:', payload.new);
+          console.log('=== REAL-TIME SESSION UPDATE ===', payload.new);
           const updatedSession = castToGameSession(payload.new);
           setCurrentSession(updatedSession);
           
@@ -319,7 +295,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           const opponentReadyStatus = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
           setOpponentReady(opponentReadyStatus);
           
-          console.log('Updated ready states via realtime:', {
+          console.log('=== REAL-TIME READY STATES ===', {
             playerIsHost: isHost,
             hostReady: updatedSession.host_ready,
             guestReady: updatedSession.guest_ready,
@@ -328,7 +304,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
             guestName: updatedSession.guest_name
           });
 
-          // Show toast when opponent joins
+          // Show toast when opponent joins or gets ready
           if (isHost && updatedSession.guest_id && updatedSession.guest_name && !currentSession.guest_id) {
             toast({
               title: "Avversario connesso!",
@@ -354,14 +330,14 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
     const loadInitialData = async () => {
       try {
-        console.log('Loading initial data for session:', currentSession.id);
+        console.log('=== LOADING INITIAL DATA ===', currentSession.id);
         
         // Set initial opponent ready status
         const isHost = currentSession.host_id === user.id;
         const initialOpponentReady = isHost ? currentSession.guest_ready : currentSession.host_ready;
         setOpponentReady(initialOpponentReady);
 
-        console.log('Initial ready states set:', {
+        console.log('=== INITIAL READY STATES ===', {
           playerIsHost: isHost,
           hostReady: currentSession.host_ready,
           guestReady: currentSession.guest_ready,
@@ -399,7 +375,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           
           // Only update if something actually changed
           if (JSON.stringify(updatedSession) !== JSON.stringify(currentSession)) {
-            console.log('Manual update detected:', updatedSession);
+            console.log('=== MANUAL UPDATE DETECTED ===', updatedSession);
             setCurrentSession(updatedSession);
             
             const isHost = updatedSession.host_id === user.id;

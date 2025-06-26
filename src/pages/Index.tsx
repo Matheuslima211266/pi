@@ -56,12 +56,14 @@ const Index = () => {
       
       if (session) {
         console.log('Session created/joined successfully, updating game state...');
-        // Per l'host, NON impostare gameStarted subito - lascia vedere il link
-        // Per il guest, imposta gameStarted perché deve entrare subito nella waiting room
+        gameState.setGameData(gameData);
+        
+        // IMPORTANTE: Per il guest, imposta gameStarted subito per andare nella waiting room
         if (!gameData.isHost) {
+          console.log('=== GUEST ENTERING WAITING ROOM IMMEDIATELY ===');
           gameState.setGameStarted(true);
         }
-        gameState.setGameData(gameData);
+        
         return true;
       } else {
         console.error('Failed to create/join game session');
