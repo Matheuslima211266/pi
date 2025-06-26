@@ -50,30 +50,30 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     }
   };
 
-  // Calculate menu position with proper TypeScript typing
+  // Calcola la posizione del menu vicino al cursore
   const menuStyle: React.CSSProperties = {
     position: 'fixed' as const,
-    left: Math.min(placementMenu.x, window.innerWidth - 200),
-    top: Math.min(placementMenu.y, window.innerHeight - 300),
-    zIndex: 50
+    left: Math.max(10, Math.min(placementMenu.x - 100, window.innerWidth - 220)),
+    top: Math.max(10, Math.min(placementMenu.y - 50, window.innerHeight - 200)),
+    zIndex: 1000
   };
 
   return (
     <>
       <div 
-        className="bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg min-w-40"
+        className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-2xl min-w-48 max-w-64"
         style={menuStyle}
       >
-        <div className="text-sm font-semibold mb-2 text-gray-300">
-          {placementMenu.card?.name}
+        <div className="text-sm font-semibold mb-3 text-gray-300 border-b border-gray-600 pb-2">
+          Place: {placementMenu.card?.name}
         </div>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {getMenuOptions(placementMenu.zoneName).map((option) => (
             <Button 
               key={option.key}
               size="sm" 
               onClick={() => onPlacementChoice(option.key)}
-              className="w-full text-left justify-start text-sm h-7 bg-gray-700 hover:bg-gray-600 text-white"
+              className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500"
               variant="ghost"
             >
               <span className="mr-2">{option.icon}</span>
@@ -85,14 +85,15 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           size="sm" 
           variant="outline"
           onClick={onClose}
-          className="w-full mt-2 text-sm h-7 border-gray-600 text-gray-300 hover:bg-gray-700"
+          className="w-full mt-3 text-sm h-8 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
         >
           Cancel
         </Button>
       </div>
       <div 
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-50"
         onClick={onClose}
+        style={{ zIndex: 999 }}
       />
     </>
   );

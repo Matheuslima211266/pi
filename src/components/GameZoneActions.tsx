@@ -13,15 +13,20 @@ export const useGameZoneActions = ({
   const handleSlotClick = (zoneName, slotIndex, event) => {
     console.log('Slot clicked:', zoneName, slotIndex, 'selectedCard:', selectedCardFromHand);
     
-    if (selectedCardFromHand) {
-      event?.preventDefault();
-      event?.stopPropagation();
+    if (selectedCardFromHand && event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Usa le coordinate del click per posizionare il menu
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
       
       setPlacementMenu({
         zoneName,
         slotIndex,
-        x: event?.clientX || 0,
-        y: event?.clientY || 0,
+        x: x,
+        y: y,
         card: selectedCardFromHand
       });
     }

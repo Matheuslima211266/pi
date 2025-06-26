@@ -144,7 +144,7 @@ export const useGameState = () => {
     console.log('[useGameState] Main deck cards:', mainDeckCards.length);
     console.log('[useGameState] Extra deck cards:', extraDeckCards.length);
 
-    // Crea il deck principale con tutte le carte dal JSON
+    // Crea il deck principale con tutte le carte dal JSON (non limitato a 40)
     const playerMainDeck = mainDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', index)
@@ -159,8 +159,8 @@ export const useGameState = () => {
     const shuffledHand = shuffledMainDeck.slice(0, 5);
     const remainingDeck = shuffledMainDeck.slice(5);
 
-    // Crea il deck nemico con le stesse carte del giocatore
-    const enemyMainDeck = mainDeckCards.slice(0, 40).map((card, index) => ({
+    // Crea il deck nemico con le stesse carte del giocatore (non limitato a 40)
+    const enemyMainDeck = mainDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, 'enemy', index)
     }));
