@@ -194,7 +194,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
       case 'CARD_PLACED':
         return `ha giocato ${actionData.card.name} in ${actionData.zoneName}`;
       case 'LIFE_POINTS_CHANGED':
-        return `ha cambiato i suoi punti vita a ${action_data.newLifePoints}`;
+        return `ha cambiato i suoi punti vita a ${actionData.newLifePoints}`;
       case 'CARD_DRAWN':
         return `ha pescato una carta`;
       case 'PHASE_CHANGED':
