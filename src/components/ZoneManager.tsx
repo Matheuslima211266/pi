@@ -16,7 +16,8 @@ const ZoneManager = ({
   onToggleExpand,
   maxDisplayCards = 20,
   onDrawCard = null,
-  isHidden = false
+  isHidden = false,
+  isCompact = false
 }) => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -209,11 +210,11 @@ const ZoneManager = ({
     const shouldShowFaceDown = zoneName === 'deck' || zoneName === 'extraDeck' || zoneName === 'banishedFaceDown';
     
     return (
-      <div className={`${getZoneColor()} border-2 rounded-lg p-2 cursor-pointer transition-all hover:scale-105`}>
+      <div className={`${getZoneColor()} border-2 rounded-lg ${isCompact ? 'p-1' : 'p-2'} cursor-pointer transition-all hover:scale-105`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1">
-            <span className="text-lg">{getZoneIcon()}</span>
-            <Badge variant="outline" className="text-xs">
+            <span className={`${isCompact ? 'text-sm' : 'text-lg'}`}>{getZoneIcon()}</span>
+            <Badge variant="outline" className={`${isCompact ? 'text-xs' : 'text-xs'}`}>
               {zoneName}
             </Badge>
           </div>
@@ -226,24 +227,24 @@ const ZoneManager = ({
           {/* Stack representation */}
           {zoneName === 'deck' ? (
             <div 
-              className="w-12 h-16 bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center cursor-pointer hover:bg-blue-700"
+              className={`${isCompact ? 'w-10 h-14' : 'w-12 h-16'} bg-blue-800 rounded border-2 border-blue-400 flex items-center justify-center cursor-pointer hover:bg-blue-700`}
               onClick={handleDrawCard}
               title="Click to draw a card"
             >
-              <span className="text-xs font-bold text-white">DRAW</span>
+              <span className={`${isCompact ? 'text-xs' : 'text-xs'} font-bold text-white`}>DRAW</span>
             </div>
           ) : (
             <div 
-              className={`w-12 h-16 ${getZoneColor()} rounded border-2 flex items-center justify-center`}
+              className={`${isCompact ? 'w-10 h-14' : 'w-12 h-16'} ${getZoneColor()} rounded border-2 flex items-center justify-center`}
               onClick={onToggleExpand}
             >
-              <span className="text-lg">{getZoneIcon()}</span>
+              <span className={`${isCompact ? 'text-sm' : 'text-lg'}`}>{getZoneIcon()}</span>
             </div>
           )}
           
           {/* Top card preview */}
           {topCard && (
-            <div className="w-12 h-16" onClick={onToggleExpand}>
+            <div className={`${isCompact ? 'w-10 h-14' : 'w-12 h-16'}`} onClick={onToggleExpand}>
               <CardComponent
                 card={topCard}
                 isSmall={true}
@@ -261,7 +262,7 @@ const ZoneManager = ({
             <Button 
               size="sm" 
               onClick={handleDrawCard}
-              className="w-full text-xs"
+              className={`w-full ${isCompact ? 'text-xs h-6' : 'text-xs'}`}
               disabled={cards.length === 0}
             >
               Draw Card ({cards.length})
