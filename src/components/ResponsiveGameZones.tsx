@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Star, BookOpen, Skull, Ban } from 'lucide-react';
 import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
 import PlacementMenu from './PlacementMenu';
+import ZoneManager from './ZoneManager';
 import { useGameZoneActions } from './GameZoneActions';
 
 const ResponsiveGameZones = ({ 
@@ -18,6 +19,7 @@ const ResponsiveGameZones = ({
 }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
   const [placementMenu, setPlacementMenu] = useState(null);
+  const [expandedZone, setExpandedZone] = useState(null);
 
   const {
     handleSlotClick,
@@ -41,6 +43,10 @@ const ResponsiveGameZones = ({
     handlePlacementChoice(choice, placementMenu);
   };
 
+  const handleZoneToggle = (zoneName) => {
+    setExpandedZone(expandedZone === zoneName ? null : zoneName);
+  };
+
   const renderZoneSlots = () => {
     const slots = [];
     
@@ -49,17 +55,40 @@ const ResponsiveGameZones = ({
       if (isEnemy) {
         // Extra Deck per avversario (nascosto)
         slots.push(
-          <div key="extra-deck" className="card-slot extra-deck-slot">
+          <div key="extra-deck" className="card-slot extra-deck-slot" onClick={() => handleZoneToggle('extraDeck')}>
             <div className="zone-label">Extra Deck</div>
             <div className="text-xl">⭐</div>
+            {expandedZone === 'extraDeck' && (
+              <ZoneManager
+                cards={field.extraDeck || []}
+                zoneName="extraDeck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isHidden={isEnemy}
+                isCompact={true}
+              />
+            )}
           </div>
         );
       } else {
         // Extra Deck per giocatore
         slots.push(
-          <div key="extra-deck" className="card-slot extra-deck-slot">
+          <div key="extra-deck" className="card-slot extra-deck-slot" onClick={() => handleZoneToggle('extraDeck')}>
             <div className="zone-label">Extra Deck</div>
             <div className="text-xl">⭐</div>
+            {expandedZone === 'extraDeck' && (
+              <ZoneManager
+                cards={field.extraDeck || []}
+                zoneName="extraDeck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isCompact={true}
+              />
+            )}
           </div>
         );
       }
@@ -91,9 +120,20 @@ const ResponsiveGameZones = ({
 
       // Banished Face-down
       slots.push(
-        <div key="banished-facedown" className="card-slot banished-facedown-slot">
+        <div key="banished-facedown" className="card-slot banished-facedown-slot" onClick={() => handleZoneToggle('banishedFaceDown')}>
           <div className="zone-label">Banish FD</div>
           <div className="text-xl">🔒</div>
+          {expandedZone === 'banishedFaceDown' && (
+            <ZoneManager
+              cards={field.banishedFaceDown || []}
+              zoneName="banishedFaceDown"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+              isCompact={true}
+            />
+          )}
         </div>
       );
     } else if (zoneType === 'monsters') {
@@ -101,17 +141,40 @@ const ResponsiveGameZones = ({
       if (!isEnemy) {
         // Deck per giocatore
         slots.push(
-          <div key="deck" className="card-slot main-deck-slot">
+          <div key="deck" className="card-slot main-deck-slot" onClick={() => handleZoneToggle('deck')}>
             <div className="zone-label">Deck</div>
             <div className="text-xl">🃏</div>
+            {expandedZone === 'deck' && (
+              <ZoneManager
+                cards={field.deck || []}
+                zoneName="deck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                onDrawCard={onDrawCard}
+                isCompact={true}
+              />
+            )}
           </div>
         );
       } else {
         // Deck per avversario
         slots.push(
-          <div key="deck" className="card-slot main-deck-slot">
+          <div key="deck" className="card-slot main-deck-slot" onClick={() => handleZoneToggle('deck')}>
             <div className="zone-label">Deck</div>
             <div className="text-xl">🃏</div>
+            {expandedZone === 'deck' && (
+              <ZoneManager
+                cards={field.deck || []}
+                zoneName="deck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isCompact={true}
+              />
+            )}
           </div>
         );
       }
@@ -143,9 +206,20 @@ const ResponsiveGameZones = ({
 
       // Banished
       slots.push(
-        <div key="banished" className="card-slot banished-slot">
+        <div key="banished" className="card-slot banished-slot" onClick={() => handleZoneToggle('banished')}>
           <div className="zone-label">Banished</div>
           <div className="text-xl">🚫</div>
+          {expandedZone === 'banished' && (
+            <ZoneManager
+              cards={field.banished || []}
+              zoneName="banished"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+              isCompact={true}
+            />
+          )}
         </div>
       );
     }
@@ -163,6 +237,11 @@ const ResponsiveGameZones = ({
         onPlacementChoice={handlePlacementChoiceWrapper}
         onClose={() => setPlacementMenu(null)}
       />
+
+      {/* Zone Manager espanse */}
+      {expandedZone && (
+        <div className="fixed inset-0 bg-black/50 z-30" onClick={() => setExpandedZone(null)} />
+      )}
     </>
   );
 };

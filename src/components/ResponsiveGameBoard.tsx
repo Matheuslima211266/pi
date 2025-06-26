@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
 import PlayerHand from './PlayerHand';
+import ZoneManager from './ZoneManager';
 
 const ResponsiveGameBoard = ({ 
   playerField, 
@@ -19,6 +20,13 @@ const ResponsiveGameBoard = ({
   onDrawCard,
   setSelectedCardFromHand 
 }) => {
+  const [expandedZone, setExpandedZone] = useState(null);
+
+  const handleZoneToggle = (zoneName, isEnemy = false) => {
+    const zoneKey = isEnemy ? `enemy_${zoneName}` : zoneName;
+    setExpandedZone(expandedZone === zoneKey ? null : zoneKey);
+  };
+
   return (
     <div className="battlefield-container">
       {/* Mano Avversario (Ruotata 180°) */}
@@ -64,11 +72,11 @@ const ResponsiveGameBoard = ({
       <div className="center-zone">
         {/* Gruppo Avversario: Graveyard + Field Spell */}
         <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
-          <div className="card-slot graveyard-slot graveyard-slot-center">
+          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard', true)}>
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
           </div>
-          <div className="card-slot field-spell-zone field-spell-slot">
+          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell', true)}>
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
           </div>
@@ -78,11 +86,11 @@ const ResponsiveGameBoard = ({
         
         {/* Gruppo Giocatore: Field Spell + Graveyard */}
         <div className="center-group">
-          <div className="card-slot field-spell-zone field-spell-slot">
+          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell')}>
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
           </div>
-          <div className="card-slot graveyard-slot graveyard-slot-center">
+          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard')}>
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
           </div>
@@ -131,6 +139,72 @@ const ResponsiveGameBoard = ({
           onShowHand={() => {}}
         />
       </div>
+      
+      {/* Zone Manager per zone centrali */}
+      {expandedZone === 'graveyard' && (
+        <div className="fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <ZoneManager
+              cards={playerField.graveyard || []}
+              zoneName="graveyard"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+            />
+          </div>
+        </div>
+      )}
+      
+      {expandedZone === 'enemy_graveyard' && (
+        <div className="fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <ZoneManager
+              cards={enemyField.graveyard || []}
+              zoneName="graveyard"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Field Spell Zones */}
+      {expandedZone === 'fieldSpell' && (
+        <div className="fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <ZoneManager
+              cards={playerField.fieldSpell || []}
+              zoneName="fieldSpell"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+            />
+          </div>
+        </div>
+      )}
+      
+      {expandedZone === 'enemy_fieldSpell' && (
+        <div className="fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <ZoneManager
+              cards={enemyField.fieldSpell || []}
+              zoneName="fieldSpell"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+            />
+          </div>
+        </div>
+      )}
       
       {/* Indicatore carta selezionata */}
       {selectedCardFromHand && (

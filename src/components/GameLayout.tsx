@@ -1,8 +1,13 @@
+
 import React from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
 import DiceAndCoin from '@/components/DiceAndCoin';
 import CardPreview from '@/components/CardPreview';
+import LifePointsControl from '@/components/LifePointsControl';
+import GamePhases from '@/components/GamePhases';
+import ChatBox from '@/components/ChatBox';
+import TurnTimer from '@/components/TurnTimer';
 
 const GameLayout = ({
   gameData,
@@ -60,34 +65,66 @@ const GameLayout = ({
         )}
       </div>
       
-      {/* Sidebar con Life Points e Controlli */}
+      {/* Sidebar completa con tutti i controlli */}
       <div className="sidebar">
-        <div className="life-points-section">
-          <div className="player-info">
-            <div className="player-name">Avversario</div>
-            <div className="life-points">{enemyLifePoints}</div>
-          </div>
+        {/* Enemy Life Points */}
+        <div className="sidebar-section">
+          <LifePointsControl 
+            playerName="Avversario"
+            lifePoints={enemyLifePoints}
+            onLifePointsChange={(amount) => handleLifePointsChange(amount, true)}
+            color="red"
+          />
         </div>
         
-        <div className="life-points-section">
-          <div className="player-info">
-            <div className="player-name">Tu</div>
-            <div className="life-points">{playerLifePoints}</div>
-          </div>
+        {/* Game Phases */}
+        <div className="sidebar-section">
+          <GamePhases 
+            currentPhase={currentPhase}
+            onPhaseChange={handlePhaseChange}
+            onEndTurn={handleEndTurn}
+            isPlayerTurn={isPlayerTurn}
+          />
         </div>
         
-        <div className="game-info">
-          <div><strong>Turno:</strong> {isPlayerTurn ? 'Tuo' : 'Avversario'}</div>
-          <div><strong>Fase:</strong> {currentPhase}</div>
-          <div><strong>Tempo:</strong> {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}</div>
+        {/* Player Life Points */}
+        <div className="sidebar-section">
+          <LifePointsControl 
+            playerName="Giocatore"
+            lifePoints={playerLifePoints}
+            onLifePointsChange={(amount) => handleLifePointsChange(amount, false)}
+            color="blue"
+          />
         </div>
         
-        {/* Action Log e Dice/Coin nella sidebar */}
-        <div className="flex-1 flex flex-col gap-4 mt-4">
+        {/* Timer */}
+        <div className="sidebar-section">
+          <TurnTimer 
+            isActive={isPlayerTurn}
+            onTimeUp={handleTimeUp}
+            timeRemaining={timeRemaining}
+            onTimeChange={setTimeRemaining}
+          />
+        </div>
+        
+        {/* Action Log */}
+        <div className="sidebar-section flex-1">
           <ActionLog actions={actionLog} />
+        </div>
+        
+        {/* Dice and Coin */}
+        <div className="sidebar-section">
           <DiceAndCoin 
             onDiceRoll={handleDiceRoll}
             onCoinFlip={handleCoinFlip}
+          />
+        </div>
+        
+        {/* Chat */}
+        <div className="sidebar-section">
+          <ChatBox 
+            messages={chatMessages}
+            onSendMessage={handleSendMessage}
           />
         </div>
       </div>
