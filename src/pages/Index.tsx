@@ -7,11 +7,13 @@ import GameLayout from '@/components/GameLayout';
 import { useGameState } from '@/hooks/useGameState';
 import { useSupabaseMultiplayer } from '@/hooks/useSupabaseMultiplayer';
 import { useGameHandlers } from '@/hooks/useGameHandlers';
+import { useGameSync } from '@/hooks/useGameSync';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const gameState = useGameState();
   const multiplayerHook = useSupabaseMultiplayer(user!, gameState);
+  const gameSync = useGameSync(user, multiplayerHook.currentSession?.id || null, gameState, gameState);
   const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
 
   useEffect(() => {
@@ -25,19 +27,58 @@ const Index = () => {
     });
   });
 
-  // Enhanced handlers that also log to database
+  // Enhanced handlers that also sync to database
   const enhancedHandlers = {
     ...handlers,
     handleSendMessage: (message: string) => {
-      multiplayerHook.sendChatMessage(message, gameState.gameData?.playerName || 'Player');
       handlers.handleSendMessage(message);
+      // Send via real-time sync
+      gameSync.sendGameAction('CHAT_MESSAGE', {
+        message,
+        playerName: gameState.gameData?.playerName || 'Player'
+      });
+      // Also send via old system
+      multiplayerHook.sendChatMessage(message, gameState.gameData?.playerName || 'Player');
     },
     handleCardPlace: (card: any, zoneName: string, slotIndex: number, isFaceDown?: boolean, position?: string) => {
       handlers.handleCardPlace(card, zoneName, slotIndex, isFaceDown, position);
+      // Sync the action
+      gameSync.sendGameAction('CARD_PLACED', {
+        card,
+        zoneName,
+        slotIndex,
+        isFaceDown,
+        position
+      });
       multiplayerHook.logGameAction(`placed ${card.name} in ${zoneName}`, gameState.gameData?.playerName || 'Player');
+    },
+    handleLifePointsChange: (newLifePoints: number, isPlayer: boolean = true) => {
+      handlers.handleLifePointsChange(newLifePoints, isPlayer);
+      // Sync life points change
+      gameSync.sendGameAction('LIFE_POINTS_CHANGED', {
+        newLifePoints,
+        isPlayer
+      });
+    },
+    handlePhaseChange: (newPhase: string) => {
+      handlers.handlePhaseChange(newPhase);
+      // Sync phase change
+      gameSync.sendGameAction('PHASE_CHANGED', {
+        phase: newPhase
+      });
+    },
+    handleDrawCard: () => {
+      handlers.handleDrawCard();
+      // Sync card draw
+      gameSync.sendGameAction('CARD_DRAWN', {
+        playerName: gameState.gameData?.playerName || 'Player'
+      });
     },
     handleEndTurn: () => {
       handlers.handleEndTurn();
+      gameSync.sendGameAction('PHASE_CHANGED', {
+        phase: 'draw'
+      });
       multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
     }
   };
@@ -125,6 +166,11 @@ const Index = () => {
       console.log('Initializing game...');
       gameState.initializeGame();
     }
+    
+    // Sync the initial game state
+    setTimeout(() => {
+      gameSync.syncCompleteGameState();
+    }, 1000);
   };
 
   // Show error if there's a multiplayer error

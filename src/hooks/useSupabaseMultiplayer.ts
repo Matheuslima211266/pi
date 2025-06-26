@@ -299,7 +299,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
   }, [currentSession, user]);
 
-  // Log game action
+  // Log game action - now enhanced for real-time sync
   const logGameAction = useCallback(async (action: string, playerName: string) => {
     if (!currentSession || !user) return;
     try {
@@ -321,10 +321,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
   }, [currentSession, user]);
 
-  // Send chat message
+  // Send chat message - enhanced for real-time sync
   const sendChatMessage = useCallback(async (message: string, playerName: string) => {
     if (!currentSession || !user) return;
     try {
+      // Send to old chat system
       const { error } = await supabase
         .from('chat_messages')
         .insert({
