@@ -1,3 +1,4 @@
+
 import React from 'react';
 import GameBoard from '@/components/GameBoard';
 import PlayerHand from '@/components/PlayerHand';
@@ -61,12 +62,12 @@ const GameLayout = ({
         </div>
       )}
       
-      {/* Main Layout Grid - More balanced */}
-      <div className="h-full grid grid-cols-12 gap-0.5 p-0.5">
-        {/* Left Side - Main Game Area - More space */}
+      {/* Main Layout Grid - No gaps */}
+      <div className="h-full grid grid-cols-12">
+        {/* Left Side - Main Game Area */}
         <div className="col-span-9 flex flex-col h-full">
-          {/* Enemy Hand - Very compact */}
-          <div className="h-12">
+          {/* Enemy Hand - Ultra compact */}
+          <div className="h-8">
             <EnemyHand 
               handCount={enemyHandCount}
               revealedCard={enemyRevealedCard}
@@ -75,7 +76,7 @@ const GameLayout = ({
           </div>
           
           {/* Game Board - Maximum space */}
-          <div className="flex-1 min-h-0">
+          <div className="flex-1">
             <GameBoard 
               playerField={playerField}
               enemyField={enemyField}
@@ -88,8 +89,8 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Player Hand - Very compact */}
-          <div className="h-16">
+          {/* Player Hand - Ultra compact */}
+          <div className="h-12">
             <PlayerHand 
               cards={playerHand}
               onPlayCard={gameState.setSelectedCardFromHand}
@@ -102,9 +103,9 @@ const GameLayout = ({
           </div>
         </div>
         
-        {/* Right Side - Sidebar and Controls - Compact */}
-        <div className="col-span-3 flex flex-col h-full space-y-0.5">
-          {/* Game Controls - Compact */}
+        {/* Right Side - Sidebar and Controls - No spacing */}
+        <div className="col-span-3 flex flex-col h-full">
+          {/* Game Controls */}
           <div className="flex-shrink-0">
             <GameSidebar
               enemyLifePoints={enemyLifePoints}
@@ -122,8 +123,8 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Action Log and Dice/Coin - Compact */}
-          <div className="flex-1 grid grid-rows-2 gap-0.5 min-h-0">
+          {/* Action Log and Dice/Coin - No spacing */}
+          <div className="flex-1 grid grid-rows-2">
             <ActionLog actions={actionLog} />
             <DiceAndCoin 
               onDiceRoll={handleDiceRoll}
