@@ -33,7 +33,7 @@ const ResponsiveGameZoneSlot = ({
   return (
     <div 
       className={`
-        relative w-24 h-36 sm:w-28 sm:h-40 md:w-32 md:h-44 lg:w-36 lg:h-48
+        relative w-32 h-44 sm:w-36 sm:h-48 md:w-40 md:h-52 lg:w-44 lg:h-56
         border-2 rounded-lg cursor-pointer transition-all duration-200
         ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
         ${isHighlighted ? 'border-blue-400 bg-blue-900/50 animate-pulse shadow-lg shadow-blue-400/50' : ''}
@@ -47,7 +47,7 @@ const ResponsiveGameZoneSlot = ({
             card={card}
             onClick={() => onCardPreview?.(card)}
             isPlayable={true}
-            isSmall={true}
+            isSmall={false}
             showCost={false}
             isInHand={false}
             isFaceDown={card.faceDown}
@@ -74,7 +74,7 @@ const ResponsiveGameZoneSlot = ({
               </button>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
+                  e.stopPropragation();
                   handleCardAction('banish');
                 }}
                 className="text-purple-400 text-xs hover:text-purple-300 block"
@@ -97,7 +97,7 @@ const ResponsiveGameZoneSlot = ({
         </div>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center">
-          <div className="text-slate-400 text-2xl mb-2">
+          <div className="text-slate-400 text-3xl mb-2">
             {typeof icon === 'string' ? icon : '⭐'}
           </div>
           {zoneLabel && (

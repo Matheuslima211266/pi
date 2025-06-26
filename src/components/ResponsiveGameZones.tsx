@@ -23,7 +23,6 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
 
   console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones deadZone:', field?.deadZone);
   console.log('ResponsiveGameZones selectedCardFromHand:', selectedCardFromHand);
 
   const {
@@ -62,7 +61,6 @@ const ResponsiveGameZones = ({
     handlePlacementChoice(choice, placementMenu);
   };
 
-  // Enhanced zone click handler to support deadZone
   const enhancedHandleZoneClick = (zoneName, e) => {
     handleZoneClick(zoneName, e);
   };
