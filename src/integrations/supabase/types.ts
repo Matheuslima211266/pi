@@ -106,6 +106,47 @@ export type Database = {
           },
         ]
       }
+      game_actions_realtime: {
+        Row: {
+          action_data: Json
+          action_type: string
+          game_session_id: string
+          id: string
+          player_id: string
+          player_name: string
+          processed: boolean | null
+          timestamp: string
+        }
+        Insert: {
+          action_data: Json
+          action_type: string
+          game_session_id: string
+          id?: string
+          player_id: string
+          player_name: string
+          processed?: boolean | null
+          timestamp?: string
+        }
+        Update: {
+          action_data?: Json
+          action_type?: string
+          game_session_id?: string
+          id?: string
+          player_id?: string
+          player_name?: string
+          processed?: boolean | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_actions_realtime_game_session_id_fkey"
+            columns: ["game_session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_sessions: {
         Row: {
           created_at: string
