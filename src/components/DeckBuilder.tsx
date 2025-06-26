@@ -354,6 +354,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
           Livello: card.star || 'N/A',
           ATK: card.atk || 'N/A',
           DEF: card.def || 'N/A',
+          Effetto: card.effect || 'N/A',
           Deck: 'Main'
         });
       }
@@ -370,6 +371,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
           Livello: card.star || 'N/A',
           ATK: card.atk || 'N/A',
           DEF: card.def || 'N/A',
+          Effetto: card.effect || 'N/A',
           Deck: 'Extra'
         });
       }
