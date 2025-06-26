@@ -33,7 +33,7 @@ const ResponsiveGameZoneSlot = ({
   return (
     <div 
       className={`
-        relative w-32 h-44 sm:w-36 sm:h-48 md:w-40 md:h-52 lg:w-44 lg:h-56
+        relative w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40
         border-2 rounded-lg cursor-pointer transition-all duration-200
         ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
         ${isHighlighted ? 'border-blue-400 bg-blue-900/50 animate-pulse shadow-lg shadow-blue-400/50' : ''}
