@@ -43,6 +43,7 @@ const ResponsiveGameZoneSlot = ({
             isSmall={true}
             showCost={true}
             isFaceDown={card.faceDown}
+            position={card.position}
           />
           {isEffectActivated(card) && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg shadow-yellow-400/40"></div>
@@ -102,6 +103,12 @@ const ResponsiveGameZoneSlot = ({
           <Star className="mr-2 h-4 w-4" />
           Add to Extra Deck
         </ContextMenuItem>
+
+        {zoneName === 'monsters' && (
+          <ContextMenuItem onClick={() => onFieldCardAction(card, 'changePosition', 'position')} className="text-white hover:bg-gray-700">
+            🔄 Change Position
+          </ContextMenuItem>
+        )}
 
         {(zoneName === 'spellsTraps' || zoneName === 'monsters') && (
           <ContextMenuItem onClick={() => onFieldCardAction(card, 'flipCard', 'flip')} className="text-white hover:bg-gray-700">

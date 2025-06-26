@@ -4,6 +4,7 @@ import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
 import PlayerHand from './PlayerHand';
 import ZoneManager from './ZoneManager';
+import ZoneActionMenu from './ZoneActionMenu';
 
 const ResponsiveGameBoard = ({ 
   playerField, 
@@ -21,10 +22,38 @@ const ResponsiveGameBoard = ({
   setSelectedCardFromHand 
 }) => {
   const [expandedZone, setExpandedZone] = useState(null);
+  const [zoneActionMenu, setZoneActionMenu] = useState(null);
 
-  const handleZoneToggle = (zoneName, isEnemy = false) => {
-    const zoneKey = isEnemy ? `enemy_${zoneName}` : zoneName;
-    setExpandedZone(expandedZone === zoneKey ? null : zoneKey);
+  const handleZoneClick = (zoneName, isEnemy = false, event) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setZoneActionMenu({
+      zoneName,
+      isEnemy,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      }
+    });
+  };
+
+  const handleZoneAction = (action) => {
+    const { zoneName, isEnemy } = zoneActionMenu;
+    
+    switch (action) {
+      case 'view':
+        const zoneKey = isEnemy ? `enemy_${zoneName}` : zoneName;
+        setExpandedZone(zoneKey);
+        break;
+      case 'draw':
+        if (!isEnemy) onDrawCard && onDrawCard();
+        break;
+      case 'shuffle':
+        console.log(`Shuffle ${zoneName} for ${isEnemy ? 'enemy' : 'player'}`);
+        break;
+    }
+    
+    setZoneActionMenu(null);
   };
 
   return (
@@ -72,11 +101,17 @@ const ResponsiveGameBoard = ({
       <div className="center-zone">
         {/* Gruppo Avversario: Graveyard + Field Spell */}
         <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
-          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard', true)}>
+          <div 
+            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('graveyard', true, e)}
+          >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
           </div>
-          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell', true)}>
+          <div 
+            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
+            onClick={(e) => handleZoneClick('fieldSpell', true, e)}
+          >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
           </div>
@@ -86,11 +121,17 @@ const ResponsiveGameBoard = ({
         
         {/* Gruppo Giocatore: Field Spell + Graveyard */}
         <div className="center-group">
-          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell')}>
+          <div 
+            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
+            onClick={(e) => handleZoneClick('fieldSpell', false, e)}
+          >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
           </div>
-          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard')}>
+          <div 
+            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('graveyard', false, e)}
+          >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
           </div>
@@ -139,6 +180,16 @@ const ResponsiveGameBoard = ({
           onShowHand={() => {}}
         />
       </div>
+      
+      {/* Zone Action Menu */}
+      {zoneActionMenu && (
+        <ZoneActionMenu
+          zoneName={zoneActionMenu.zoneName}
+          onAction={handleZoneAction}
+          onClose={() => setZoneActionMenu(null)}
+          position={zoneActionMenu.position}
+        />
+      )}
       
       {/* Zone Manager per zone centrali */}
       {expandedZone === 'graveyard' && (
