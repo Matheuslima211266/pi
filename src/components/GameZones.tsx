@@ -71,6 +71,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         }
         break;
         
+      case 'banishedFaceDown':
+        onCardMove && onCardMove(selectedCardFromHand, 'hand', 'banishedFaceDown');
+        break;
+        
       case 'extraDeck':
         onCardMove && onCardMove(selectedCardFromHand, 'hand', 'extraDeck');
         break;
@@ -151,7 +155,6 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       
       setActivatedEffects(newActivatedEffects);
       
-      // Always show preview when clicking on field cards
       if (onCardPreview) {
         onCardPreview(card);
       }
@@ -187,7 +190,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
               isFaceDown={card.faceDown}
             />
             {isEffectActivated(card) && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
             )}
           </div>
         </ContextMenuTrigger>
@@ -263,7 +266,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
       return (
         <div 
           key={index} 
-          className={`w-32 h-44 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
+          className={`w-20 h-28 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all text-xs
             ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
             ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}
             ${className}`}
@@ -273,7 +276,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             renderFieldCardWithContextMenu(card, zoneName, index)
           ) : (
             <div className="text-gray-600 text-center">
-              {React.cloneElement(icon, { size: 32 })}
+              {React.cloneElement(icon, { size: 16 })}
             </div>
           )}
         </div>
@@ -281,17 +284,17 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     });
 
     return (
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="mb-2">
+        <div className="flex items-center gap-1 mb-1">
           {icon}
-          <Badge variant="outline" className="text-sm">
+          <Badge variant="outline" className="text-xs py-0 px-1">
             {zoneName}
           </Badge>
-          <span className="text-sm text-gray-400">
+          <span className="text-xs text-gray-400">
             {cards.filter(c => c !== null).length}/{maxCards}
           </span>
         </div>
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-1 justify-center">
           {slots}
         </div>
       </div>
@@ -303,10 +306,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
     const isHighlighted = selectedCardFromHand && !card && !isEnemy;
     
     return (
-      <div className="mb-3">
-        <div className="flex items-center gap-1 mb-2">
+      <div className="mb-2">
+        <div className="flex items-center gap-1 mb-1">
           {icon}
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs py-0 px-1">
             {title}
           </Badge>
           <span className="text-xs text-gray-400">
@@ -315,7 +318,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         </div>
         <div className="flex justify-center">
           <div 
-            className={`w-28 h-40 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
+            className={`w-20 h-28 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all
               ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
               ${card ? '' : 'hover:border-blue-400 hover:bg-blue-400/10'}`}
             onClick={(e) => handleSlotClick(zoneName, 0, e)}
@@ -324,7 +327,7 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
               renderFieldCardWithContextMenu(card, zoneName, 0)
             ) : (
               <div className="text-gray-600 text-center">
-                {React.cloneElement(icon, { size: 24 })}
+                {React.cloneElement(icon, { size: 16 })}
               </div>
             )}
           </div>
@@ -355,6 +358,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           { key: 'faceup', label: 'Banish Face-up', icon: '🚫' },
           { key: 'facedown', label: 'Banish Face-down', icon: '👁️' }
         ];
+      case 'banishedFaceDown':
+        return [
+          { key: 'facedown', label: 'Banish Face-down', icon: '👁️' }
+        ];
       case 'deck':
         return [
           { key: 'top', label: 'Top of Deck', icon: '🔝' },
@@ -375,9 +382,43 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
   };
 
   return (
-    <div className="space-y-4">
-      {/* Prima riga: Zone speciali con ZoneManager + Extra Deck */}
-      <div className="grid grid-cols-5 gap-2 justify-items-center">
+    <div className="h-full flex">
+      {/* Left side - Main play field */}
+      <div className="flex-1 flex flex-col justify-between py-2">
+        {/* Field Spell - Now at top left (old banished facedown position) */}
+        <div className="flex justify-start">
+          <div className="w-20">
+            {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={12} />, 'Field')}
+          </div>
+        </div>
+        
+        {/* Monster Zone */}
+        <div className="flex-1 flex items-center justify-center">
+          {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={16} />, 5)}
+        </div>
+        
+        {/* Spell/Trap Zone */}
+        <div className="flex-1 flex items-center justify-center">
+          {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={16} />, 5)}
+        </div>
+        
+        {/* Banished Face Down - Now at bottom left (old field spell position) */}
+        <div className="flex justify-start">
+          <ZoneManager
+            cards={field.banishedFaceDown || []}
+            zoneName="banishedFaceDown"
+            onCardMove={onCardMove}
+            onCardPreview={onCardPreview}
+            isExpanded={expandedZone === 'banishedFaceDown'}
+            onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
+            isCompact={true}
+          />
+        </div>
+      </div>
+      
+      {/* Right side - Zone managers stack */}
+      <div className="w-24 flex flex-col justify-center space-y-1 px-1">
+        {/* Deck - Top right */}
         {!isEnemy && (
           <ZoneManager
             cards={field.deck || []}
@@ -387,9 +428,11 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             isExpanded={expandedZone === 'deck'}
             onToggleExpand={() => handleZoneToggle('deck')}
             onDrawCard={onDrawCard}
+            isCompact={true}
           />
         )}
         
+        {/* Graveyard - Middle right */}
         <ZoneManager
           cards={field.graveyard || []}
           zoneName="graveyard"
@@ -397,8 +440,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'graveyard'}
           onToggleExpand={() => handleZoneToggle('graveyard')}
+          isCompact={true}
         />
         
+        {/* Banished - Below graveyard */}
         <ZoneManager
           cards={field.banished || []}
           zoneName="banished"
@@ -406,17 +451,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           onCardPreview={onCardPreview}
           isExpanded={expandedZone === 'banished'}
           onToggleExpand={() => handleZoneToggle('banished')}
+          isCompact={true}
         />
         
-        <ZoneManager
-          cards={field.banishedFaceDown || []}
-          zoneName="banishedFaceDown"
-          onCardMove={onCardMove}
-          onCardPreview={onCardPreview}
-          isExpanded={expandedZone === 'banishedFaceDown'}
-          onToggleExpand={() => handleZoneToggle('banishedFaceDown')}
-        />
-        
+        {/* Extra Deck - Bottom right */}
         <ZoneManager
           cards={field.extraDeck || []}
           zoneName="extraDeck"
@@ -425,29 +463,17 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
           isExpanded={expandedZone === 'extraDeck'}
           onToggleExpand={() => handleZoneToggle('extraDeck')}
           isHidden={isEnemy}
+          isCompact={true}
         />
       </div>
-      
-      {/* Field Spell - Zona singola */}
-      <div className="flex justify-center">
-        <div className="w-28">
-          {renderSingleSlotZone(field.fieldSpell || [], 'fieldSpell', <Shield className="text-purple-400" size={16} />, 'Field')}
-        </div>
-      </div>
-      
-      {/* Zona Mostri - Più grande */}
-      {renderZone(field.monsters || [], 'monsters', <Sword className="text-red-400" size={20} />, 5)}
-      
-      {/* Zona Magie/Trappole - Più grande */}
-      {renderZone(field.spellsTraps || [], 'spellsTraps', <Zap className="text-green-400" size={20} />, 5)}
 
-      {/* Menu di piazzamento universale */}
+      {/* Placement menu */}
       {placementMenu && (
         <div 
-          className="fixed bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg z-50 min-w-48"
+          className="fixed bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg z-50 min-w-40"
           style={{ left: placementMenu.x, top: placementMenu.y }}
         >
-          <div className="text-sm font-semibold mb-2 text-gray-300">
+          <div className="text-xs font-semibold mb-1 text-gray-300">
             {placementMenu.card?.name}
           </div>
           <div className="space-y-1">
@@ -456,10 +482,10 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
                 key={option.key}
                 size="sm" 
                 onClick={() => handlePlacementChoice(option.key)}
-                className="w-full text-left justify-start text-xs"
+                className="w-full text-left justify-start text-xs h-6"
                 variant="ghost"
               >
-                <span className="mr-2">{option.icon}</span>
+                <span className="mr-1">{option.icon}</span>
                 {option.label}
               </Button>
             ))}
@@ -468,26 +494,23 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
             size="sm" 
             variant="outline"
             onClick={() => setPlacementMenu(null)}
-            className="w-full mt-3 text-xs"
+            className="w-full mt-2 text-xs h-6"
           >
             Cancel
           </Button>
         </div>
       )}
 
-      {/* Istruzioni per il posizionamento */}
+      {/* Instructions */}
       {selectedCardFromHand && !isEnemy && (
-        <div className="bg-blue-900/50 border border-blue-400 rounded p-2 mt-4">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-900/80 border border-blue-400 rounded p-2 z-10">
           <p className="text-xs text-gray-300 text-center">
-            Clicca su qualsiasi zona per posizionare <strong>{selectedCardFromHand.name}</strong>
-          </p>
-          <p className="text-xs text-gray-400 text-center mt-1">
-            Movimento libero - Nessuna restrizione
+            Click anywhere to place <strong>{selectedCardFromHand.name}</strong>
           </p>
         </div>
       )}
 
-      {/* Overlay per chiudere il menu */}
+      {/* Overlay for menu */}
       {placementMenu && (
         <div 
           className="fixed inset-0 z-40"

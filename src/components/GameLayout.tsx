@@ -51,29 +51,32 @@ const GameLayout = ({
   } = handlers;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white">
-      <div className="container mx-auto p-4">
-        {/* Game ID Display */}
-        {gameData?.gameId && (
-          <div className="mb-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-gold-600 text-black px-4 py-2 rounded-lg font-semibold">
-              <span>Game ID: {gameData.gameId}</span>
-              {gameData.isHost && <span className="text-xs">(Host)</span>}
-            </div>
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
+      {/* Game ID Display */}
+      {gameData?.gameId && (
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="inline-flex items-center gap-2 bg-gold-600 text-black px-3 py-1 rounded text-sm font-semibold">
+            <span>Game ID: {gameData.gameId}</span>
+            {gameData.isHost && <span className="text-xs">(Host)</span>}
           </div>
-        )}
-        
-        <div className="flex gap-4">
-          {/* Main game area - Left side */}
-          <div className="flex-1 space-y-4">
-            {/* Enemy Hand */}
+        </div>
+      )}
+      
+      {/* Main Layout Grid */}
+      <div className="h-full grid grid-cols-12 gap-2 p-2">
+        {/* Left Side - Main Game Area */}
+        <div className="col-span-9 flex flex-col h-full">
+          {/* Enemy Hand */}
+          <div className="h-20">
             <EnemyHand 
               handCount={enemyHandCount}
               revealedCard={enemyRevealedCard}
               revealedHand={enemyRevealedHand}
             />
-            
-            {/* Game Board */}
+          </div>
+          
+          {/* Game Board - Takes most space */}
+          <div className="flex-1 min-h-0">
             <GameBoard 
               playerField={playerField}
               enemyField={enemyField}
@@ -84,8 +87,10 @@ const GameLayout = ({
               onCardMove={handleCardMove}
               onDrawCard={handleDrawCard}
             />
-            
-            {/* Player Hand */}
+          </div>
+          
+          {/* Player Hand */}
+          <div className="h-32">
             <PlayerHand 
               cards={playerHand}
               onPlayCard={gameState.setSelectedCardFromHand}
@@ -95,42 +100,47 @@ const GameLayout = ({
               onShowCard={handleShowCard}
               onShowHand={handleShowHand}
             />
-            
-            {/* Bottom Controls */}
-            <div className="grid grid-cols-2 gap-4">
-              <ActionLog actions={actionLog} />
-              <DiceAndCoin 
-                onDiceRoll={handleDiceRoll}
-                onCoinFlip={handleCoinFlip}
-              />
-            </div>
           </div>
-          
-          {/* Right Sidebar - Tools */}
-          <GameSidebar
-            enemyLifePoints={enemyLifePoints}
-            playerLifePoints={playerLifePoints}
-            currentPhase={currentPhase}
-            isPlayerTurn={isPlayerTurn}
-            timeRemaining={timeRemaining}
-            chatMessages={chatMessages}
-            onLifePointsChange={handleLifePointsChange}
-            onPhaseChange={handlePhaseChange}
-            onEndTurn={handleEndTurn}
-            onTimeUp={handleTimeUp}
-            onTimeChange={setTimeRemaining}
-            onSendMessage={handleSendMessage}
-          />
         </div>
         
-        {/* Card Preview Modal */}
-        {previewCard && (
-          <CardPreview 
-            card={previewCard}
-            onClose={() => setPreviewCard(null)}
-          />
-        )}
+        {/* Right Side - Sidebar and Controls */}
+        <div className="col-span-3 flex flex-col h-full space-y-2">
+          {/* Game Controls */}
+          <div className="flex-shrink-0">
+            <GameSidebar
+              enemyLifePoints={enemyLifePoints}
+              playerLifePoints={playerLifePoints}
+              currentPhase={currentPhase}
+              isPlayerTurn={isPlayerTurn}
+              timeRemaining={timeRemaining}
+              chatMessages={chatMessages}
+              onLifePointsChange={handleLifePointsChange}
+              onPhaseChange={handlePhaseChange}
+              onEndTurn={handleEndTurn}
+              onTimeUp={handleTimeUp}
+              onTimeChange={setTimeRemaining}
+              onSendMessage={handleSendMessage}
+            />
+          </div>
+          
+          {/* Action Log and Dice/Coin */}
+          <div className="flex-1 grid grid-rows-2 gap-2 min-h-0">
+            <ActionLog actions={actionLog} />
+            <DiceAndCoin 
+              onDiceRoll={handleDiceRoll}
+              onCoinFlip={handleCoinFlip}
+            />
+          </div>
+        </div>
       </div>
+      
+      {/* Card Preview Modal */}
+      {previewCard && (
+        <CardPreview 
+          card={previewCard}
+          onClose={() => setPreviewCard(null)}
+        />
+      )}
     </div>
   );
 };
