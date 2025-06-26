@@ -67,12 +67,20 @@ const ResponsiveGameZones = ({
         onDrawCard && onDrawCard();
         break;
       case 'mill':
-        // Implementa mill 1 carta
-        console.log('Mill 1 card from deck to graveyard');
+        // Mill 1 carta dal deck al cimitero
+        if (field.deck && field.deck.length > 0) {
+          const cardToMill = field.deck[0];
+          onCardMove && onCardMove(cardToMill, 'deck', 'graveyard');
+        }
         break;
       case 'mill3':
-        // Implementa mill 3 carte
-        console.log('Mill 3 cards from deck to graveyard');
+        // Mill 3 carte dal deck al cimitero
+        if (field.deck && field.deck.length > 0) {
+          const cardsToMill = field.deck.slice(0, 3);
+          cardsToMill.forEach(card => {
+            onCardMove && onCardMove(card, 'deck', 'graveyard');
+          });
+        }
         break;
       case 'shuffle':
         console.log(`Shuffle ${zoneName}`);
@@ -242,7 +250,7 @@ const ResponsiveGameZones = ({
         />
       )}
 
-      {/* Zone Manager espanse */}
+      {/* Zone Manager espanse - FIXED: Ora passano onCardMove correttamente */}
       {expandedZone && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
