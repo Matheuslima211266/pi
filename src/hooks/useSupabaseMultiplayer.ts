@@ -24,6 +24,14 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Helper function to cast database row to GameSession
+  const castToGameSession = (data: any): GameSession => {
+    return {
+      ...data,
+      status: data.status as GameSession['status']
+    };
+  };
+
   // Create game session (for host)
   const createGameSession = useCallback(async (gameId: string, playerName: string) => {
     if (!user) return null;
@@ -56,9 +64,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       console.log('Game session created successfully:', data);
-      setCurrentSession(data);
+      const gameSession = castToGameSession(data);
+      setCurrentSession(gameSession);
       setError(null);
-      return data;
+      return gameSession;
     } catch (err) {
       console.error('Error in createGameSession:', err);
       setError('Failed to create game session');
@@ -128,7 +137,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       console.log('Successfully joined game session:', data);
-      setCurrentSession(data);
+      const gameSession = castToGameSession(data);
+      setCurrentSession(gameSession);
       setError(null);
       
       // Notify that opponent connected
@@ -136,7 +146,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         gameState.setOpponentConnected(true);
       }
       
-      return data;
+      return gameSession;
     } catch (err) {
       console.error('Error in joinGameSession:', err);
       setError('Failed to join game session');
@@ -262,7 +272,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         },
         (payload) => {
           console.log('Game session updated:', payload.new);
-          const updatedSession = payload.new as GameSession;
+          const updatedSession = castToGameSession(payload.new);
           setCurrentSession(updatedSession);
           
           // Update opponent ready status and connection status
