@@ -96,7 +96,27 @@ export const useGameHandlers = (gameState, syncGameState) => {
   };
 
   const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
-    console.log(`Moving card ${card.name} from ${fromZone} to ${toZone}`, { card, fromZone, toZone, slotIndex });
+    console.log(`Moving card ${card.name || 'card'} from ${fromZone} to ${toZone}`, { card, fromZone, toZone, slotIndex });
+    
+    // Handle damage dealing
+    if (fromZone === 'damage' && toZone === 'lifePoints') {
+      const { damage, isToEnemy } = card;
+      if (isToEnemy) {
+        setEnemyLifePoints(prev => Math.max(0, prev - damage));
+      } else {
+        setPlayerLifePoints(prev => Math.max(0, prev - damage));
+      }
+      
+      const newAction = {
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
+        action: `dealt ${damage} damage to ${isToEnemy ? 'opponent' : 'self'}`,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
+      setTimeout(() => syncGameState(), 100);
+      return;
+    }
     
     if (toZone === 'flip_in_place') {
       if (fromZone === 'monsters') {

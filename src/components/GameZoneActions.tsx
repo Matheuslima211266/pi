@@ -97,7 +97,7 @@ export const useGameZoneActions = ({
   };
 
   const handleFieldCardAction = (action, card, zoneName, slotIndex) => {
-    console.log(`Field card action: ${action} on ${card.name} in ${zoneName} at slot ${slotIndex}`);
+    console.log(`Field card action: ${action} on ${card.name || 'card'} in ${zoneName} at slot ${slotIndex}`);
 
     switch (action) {
       case 'destroy':
@@ -105,6 +105,9 @@ export const useGameZoneActions = ({
         break;
       case 'banish':
         onCardMove && onCardMove(card, zoneName, 'banished');
+        break;
+      case 'banishFaceDown':
+        onCardMove && onCardMove(card, zoneName, 'banishedFaceDown');
         break;
       case 'toHand':
         onCardMove && onCardMove(card, zoneName, 'hand');
@@ -131,14 +134,23 @@ export const useGameZoneActions = ({
         onCardMove && onCardMove(card, zoneName, 'extraDeck');
         break;
       case 'changePosition':
-        const newPosition = card.position === 'attack' ? 'defense' : 'attack';
-        const updatedCard = { ...card, position: newPosition };
-        console.log('Changing position from', card.position, 'to', newPosition);
-        onCardMove && onCardMove(updatedCard, zoneName, 'flip_in_place', slotIndex);
+        console.log('Changing position for card:', card.name, 'to:', card.position);
+        onCardMove && onCardMove(card, zoneName, 'flip_in_place', slotIndex);
         break;
       case 'flipCard':
         const flippedCard = { ...card, faceDown: !card.faceDown };
         onCardMove && onCardMove(flippedCard, zoneName, 'flip_in_place', slotIndex);
+        break;
+      case 'updateATK':
+        console.log('Updating ATK for card:', card.name, 'to:', card.atk);
+        onCardMove && onCardMove(card, zoneName, 'updateATK', slotIndex);
+        break;
+      case 'dealDamage':
+        console.log('Dealing damage:', card.damage, 'to enemy:', card.isToEnemy);
+        // This should trigger a damage event to the parent component
+        if (onCardMove) {
+          onCardMove(card, 'damage', 'lifePoints', null);
+        }
         break;
     }
   };

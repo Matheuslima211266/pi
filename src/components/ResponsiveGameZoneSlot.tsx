@@ -20,7 +20,6 @@ const ResponsiveGameZoneSlot = ({
   zoneLabel,
   enemyField
 }) => {
-  const [showAttackMenu, setShowAttackMenu] = useState(false);
   const [showEditATK, setShowEditATK] = useState(false);
   const [newATK, setNewATK] = useState(card?.atk || 0);
 
@@ -51,11 +50,11 @@ const ResponsiveGameZoneSlot = ({
     
     if (shouldDealDamage && damage > 0) {
       console.log(`Dealing ${damage} damage to opponent`);
-      // Here you should call a function to reduce opponent's life points
-      // onDealDamage?.(damage);
+      // Trigger damage event - this should be handled by parent component
+      if (onFieldCardAction) {
+        onFieldCardAction('dealDamage', { damage, isToEnemy: true }, zoneName, slotIndex);
+      }
     }
-
-    setShowAttackMenu(false);
   };
 
   const handleAttackMonster = (targetCard) => {
@@ -64,6 +63,7 @@ const ResponsiveGameZoneSlot = ({
     const attackingATK = card.atk || 0;
     let damage = 0;
     let battleResult = '';
+    let damageToOpponent = 0;
 
     const targetDEF = targetCard.position === 'defense' ? (targetCard.def || 0) : (targetCard.atk || 0);
     const isTargetDefense = targetCard.position === 'defense';
@@ -71,36 +71,37 @@ const ResponsiveGameZoneSlot = ({
     if (isTargetDefense) {
       // Attacco contro mostro in difesa
       if (attackingATK > targetDEF) {
-        damage = attackingATK - targetDEF;
-        battleResult = `${card.name} distrugge ${targetCard.name} in difesa! Danni: ${damage}`;
+        damageToOpponent = attackingATK - targetDEF;
+        battleResult = `${card.name} distrugge ${targetCard.name} in difesa! Danni all'avversario: ${damageToOpponent}`;
       } else if (attackingATK < targetDEF) {
         damage = targetDEF - attackingATK;
-        battleResult = `${targetCard.name} resiste! ${card.name} subisce ${damage} danni`;
+        battleResult = `${targetCard.name} resiste! Tu subisci ${damage} danni`;
       } else {
         battleResult = `Battaglia pari! Nessun danno`;
       }
     } else {
       // Attacco contro mostro in attacco
-      if (attackingATK > targetCard.atk) {
-        damage = attackingATK - (targetCard.atk || 0);
-        battleResult = `${card.name} distrugge ${targetCard.name}! Danni: ${damage}`;
+      if (attackingATK > (targetCard.atk || 0)) {
+        damageToOpponent = attackingATK - (targetCard.atk || 0);
+        battleResult = `${card.name} distrugge ${targetCard.name}! Danni all'avversario: ${damageToOpponent}`;
       } else if (attackingATK < (targetCard.atk || 0)) {
         damage = (targetCard.atk || 0) - attackingATK;
-        battleResult = `${targetCard.name} vince! ${card.name} viene distrutto. Danni: ${damage}`;
+        battleResult = `${targetCard.name} vince! ${card.name} viene distrutto. Tu subisci ${damage} danni`;
       } else {
         battleResult = `Battaglia pari! Entrambi i mostri vengono distrutti`;
       }
     }
 
-    const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${damage} danni ai life points ${damage > 0 ? 'avversari' : 'tuoi'}?`);
+    const totalDamage = damageToOpponent || damage;
+    const isToEnemy = damageToOpponent > 0;
     
-    if (shouldDealDamage && damage > 0) {
-      console.log(`Dealing ${damage} damage`);
-      // Here you should call a function to reduce life points
-      // onDealDamage?.(damage, damage > 0 ? isTargetDefense : false);
+    if (totalDamage > 0) {
+      const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${totalDamage} danni ai life points ${isToEnemy ? 'avversari' : 'tuoi'}?`);
+      
+      if (shouldDealDamage && onFieldCardAction) {
+        onFieldCardAction('dealDamage', { damage: totalDamage, isToEnemy }, zoneName, slotIndex);
+      }
     }
-
-    setShowAttackMenu(false);
   };
 
   const handleEditATK = () => {
@@ -160,17 +161,9 @@ const ResponsiveGameZoneSlot = ({
               View Card
             </ContextMenuItem>
 
-            {/* Fixed position options for monsters */}
+            {/* Position options for monsters */}
             {zoneName === 'monsters' && (
               <>
-                <ContextMenuItem 
-                  onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' }, zoneName, slotIndex)} 
-                  className="text-white hover:bg-gray-700"
-                  disabled={card.position === 'defense'}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Set Defense Position
-                </ContextMenuItem>
                 <ContextMenuItem 
                   onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'attack' }, zoneName, slotIndex)} 
                   className="text-white hover:bg-gray-700"
@@ -178,6 +171,14 @@ const ResponsiveGameZoneSlot = ({
                 >
                   <Sword className="mr-2 h-4 w-4" />
                   Set Attack Position
+                </ContextMenuItem>
+                <ContextMenuItem 
+                  onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' }, zoneName, slotIndex)} 
+                  className="text-white hover:bg-gray-700"
+                  disabled={card.position === 'defense'}
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Set Defense Position
                 </ContextMenuItem>
               </>
             )}
@@ -208,7 +209,10 @@ const ResponsiveGameZoneSlot = ({
 
             {/* Edit ATK for monsters */}
             {zoneName === 'monsters' && (
-              <ContextMenuItem onClick={() => setShowEditATK(true)} className="text-white hover:bg-gray-700">
+              <ContextMenuItem onClick={() => {
+                setNewATK(card.atk || 0);
+                setShowEditATK(true);
+              }} className="text-white hover:bg-gray-700">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit ATK
               </ContextMenuItem>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
@@ -97,6 +96,7 @@ const ResponsiveGameBoard = ({
           onDrawCard={onDrawCard}
           onDeckMill={onDeckMill}
           zoneType="spellsTraps"
+          enemyField={playerField}
         />
       </div>
       
@@ -113,6 +113,7 @@ const ResponsiveGameBoard = ({
           onDrawCard={onDrawCard}
           onDeckMill={onDeckMill}
           zoneType="monsters"
+          enemyField={playerField}
         />
       </div>
       
@@ -174,6 +175,7 @@ const ResponsiveGameBoard = ({
           onDrawCard={onDrawCard}
           onDeckMill={onDeckMill}
           zoneType="monsters"
+          enemyField={enemyField}
         />
       </div>
       
@@ -190,6 +192,7 @@ const ResponsiveGameBoard = ({
           onDrawCard={onDrawCard}
           onDeckMill={onDeckMill}
           zoneType="spellsTraps"
+          enemyField={enemyField}
         />
       </div>
 
