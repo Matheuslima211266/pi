@@ -25,24 +25,25 @@ const WaitingForPlayersScreen = ({
   const [countdown, setCountdown] = useState<number | null>(null);
   const bothReady = playerReady && opponentReady;
 
-  console.log('WaitingForPlayersScreen render:', {
+  console.log('=== WAITING SCREEN STATE ===', {
     playerReady,
     opponentReady,
     bothReady,
+    countdown,
     gameData: gameData?.gameId
   });
 
-  // Auto-start game when both players are ready with longer countdown
+  // Start countdown when both players are ready
   useEffect(() => {
-    if (bothReady && onGameStart) {
-      console.log('Both players ready, starting countdown...');
-      setCountdown(10); // 10 seconds countdown
+    if (bothReady && onGameStart && countdown === null) {
+      console.log('Both players ready, starting 5 second countdown...');
+      setCountdown(5);
       
       const interval = setInterval(() => {
         setCountdown(prev => {
           if (prev === null || prev <= 1) {
             clearInterval(interval);
-            console.log('Executing game start...');
+            console.log('Countdown finished, starting game...');
             onGameStart();
             return null;
           }
@@ -52,7 +53,7 @@ const WaitingForPlayersScreen = ({
       
       return () => clearInterval(interval);
     }
-  }, [bothReady, onGameStart]);
+  }, [bothReady, onGameStart, countdown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -97,30 +98,33 @@ const WaitingForPlayersScreen = ({
               </div>
             </div>
 
+            {/* Ready button */}
             {!playerReady && onPlayerReady && (
               <Button
                 onClick={() => {
-                  console.log('Player ready button clicked');
+                  console.log('Ready button clicked');
                   onPlayerReady();
                 }}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
               >
                 <Play className="w-4 h-4 mr-2" />
                 I'm Ready!
               </Button>
             )}
 
+            {/* Waiting for opponent */}
             {playerReady && !opponentReady && (
               <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
                 <p className="text-green-400 font-semibold">You are ready!</p>
                 <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
                 <div className="mt-2">
-                  <div className="animate-pulse text-yellow-400">●●●</div>
+                  <div className="animate-pulse text-yellow-400 text-lg">⏳</div>
                 </div>
               </div>
             )}
 
-            {bothReady && countdown !== null && (
+            {/* Both ready - countdown */}
+            {bothReady && countdown !== null && countdown > 0 && (
               <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Clock className="w-5 h-5 text-blue-400" />
@@ -130,17 +134,21 @@ const WaitingForPlayersScreen = ({
                 <div className="w-full bg-blue-800 rounded-full h-3 mb-2">
                   <div 
                     className="bg-blue-400 h-3 rounded-full transition-all duration-1000"
-                    style={{ width: `${((10 - countdown) / 10) * 100}%` }}
+                    style={{ width: `${((5 - countdown) / 5) * 100}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-blue-300">Get ready to duel!</p>
+                <p className="text-xs text-blue-300">Get ready to duel! 🎮</p>
               </div>
             )}
 
+            {/* Starting game */}
             {bothReady && countdown === null && (
               <div className="text-center p-4 bg-purple-900/30 rounded-lg border border-purple-400">
                 <p className="text-purple-400 font-semibold text-lg">🎮 Starting Game...</p>
                 <p className="text-sm text-gray-300 mt-1">Loading duel arena...</p>
+                <div className="mt-2">
+                  <div className="animate-spin w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full mx-auto"></div>
+                </div>
               </div>
             )}
           </div>

@@ -32,6 +32,17 @@ const MultiplayerSetup = ({
   const [isHost, setIsHost] = useState(false);
   const [gameSessionCreated, setGameSessionCreated] = useState(false);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
+
+  console.log('=== MULTIPLAYER SETUP STATE ===', {
+    gameStarted: gameState?.gameStarted,
+    currentSession: !!gameState?.currentSession,
+    bothPlayersReady: gameState?.bothPlayersReady,
+    playerReady: gameState?.playerReady,
+    opponentReady: gameState?.opponentReady,
+    gameId,
+    isHost
+  });
 
   // Check URL for game parameter
   useEffect(() => {
@@ -103,6 +114,7 @@ const MultiplayerSetup = ({
       return;
     }
 
+    setIsJoiningGame(true);
     console.log('Attempting to join game:', gameId);
     
     try {
@@ -122,6 +134,8 @@ const MultiplayerSetup = ({
     } catch (error) {
       console.error('Error joining game:', error);
       alert('Failed to join game. Please try again.');
+    } finally {
+      setIsJoiningGame(false);
     }
   };
 
@@ -129,7 +143,7 @@ const MultiplayerSetup = ({
     const gameLink = `${window.location.origin}?game=${gameId}`;
     navigator.clipboard.writeText(gameLink);
     setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
+    setTimeout(() => setLinkCopied(false), 3000);
   };
 
   const handleDeckUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,15 +172,9 @@ const MultiplayerSetup = ({
     window.location.reload();
   };
 
-  // Show waiting screen when game has started but not both players ready
+  // Show waiting screen when session exists but both players not ready
   if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
-    console.log('Showing waiting screen with state:', {
-      gameStarted: gameState.gameStarted,
-      currentSession: !!gameState.currentSession,
-      bothPlayersReady: gameState.bothPlayersReady,
-      playerReady: gameState.playerReady,
-      opponentReady: gameState.opponentReady
-    });
+    console.log('=== SHOWING WAITING SCREEN ===');
     
     return (
       <WaitingForPlayersScreen
@@ -180,6 +188,9 @@ const MultiplayerSetup = ({
     );
   }
 
+  // Show setup screen
+  console.log('=== SHOWING SETUP SCREEN ===');
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
@@ -232,6 +243,16 @@ const MultiplayerSetup = ({
             isHost={isHost}
             gameSessionCreated={gameSessionCreated}
           />
+
+          {/* Loading state */}
+          {(isCreatingGame || isJoiningGame) && (
+            <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
+              <p className="text-blue-400 font-semibold">
+                {isCreatingGame ? 'Creating game...' : 'Joining game...'}
+              </p>
+              <p className="text-sm text-gray-300 mt-1">Please wait...</p>
+            </div>
+          )}
         </div>
       </Card>
     </div>

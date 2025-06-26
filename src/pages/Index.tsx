@@ -14,6 +14,15 @@ const Index = () => {
   const multiplayerHook = useSupabaseMultiplayer(user!, gameState);
   const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
 
+  console.log('=== INDEX STATE DEBUG ===', {
+    gameStarted: gameState.gameStarted,
+    bothPlayersReady: gameState.bothPlayersReady,
+    currentSession: !!multiplayerHook.currentSession,
+    playerReady: gameState.playerReady,
+    opponentReady: multiplayerHook.opponentReady,
+    user: !!user
+  });
+
   // Enhanced handlers that also log to database
   const enhancedHandlers = {
     ...handlers,
@@ -28,24 +37,13 @@ const Index = () => {
     handleEndTurn: () => {
       handlers.handleEndTurn();
       multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
-    },
-    handlePlayerReady: async () => {
-      console.log('Player ready button clicked');
-      
-      // Set player ready in local state
-      gameState.setPlayerReady(true);
-      
-      // Update ready status in database
-      await multiplayerHook.setPlayerReady(true);
-      
-      console.log('Player marked as ready');
     }
   };
 
-  // Enhanced game start handler
+  // Handle game start - create or join session
   const handleGameStart = async (gameData: any) => {
     try {
-      console.log('Starting game with data:', gameData);
+      console.log('=== STARTING GAME ===', gameData);
       
       let session = null;
       if (gameData.isHost) {
@@ -57,8 +55,10 @@ const Index = () => {
       }
       
       if (session) {
-        console.log('Game session successful, setting up game...', session);
-        handlers.handleGameStart(gameData);
+        console.log('Session created/joined successfully, updating game state...');
+        // Set the game as started but not both players ready yet
+        gameState.setGameStarted(true);
+        gameState.setGameData(gameData);
         return true;
       } else {
         console.error('Failed to create/join game session');
@@ -70,13 +70,33 @@ const Index = () => {
     }
   };
 
-  // Handle when both players are ready and start the actual game
+  // Handle player ready
+  const handlePlayerReady = async () => {
+    console.log('=== PLAYER READY CLICKED ===');
+    
+    try {
+      // Set player ready in local state
+      gameState.setPlayerReady(true);
+      
+      // Update ready status in database
+      await multiplayerHook.setPlayerReady(true);
+      
+      console.log('Player marked as ready successfully');
+    } catch (error) {
+      console.error('Error setting player ready:', error);
+    }
+  };
+
+  // Handle when both players are ready - start the actual game
   const handleBothPlayersReady = () => {
-    console.log('Both players are ready, initializing game...');
+    console.log('=== BOTH PLAYERS READY - STARTING ACTUAL GAME ===');
+    
+    // Set both players ready and initialize the game
     gameState.setBothPlayersReady(true);
     
     // Initialize the game
     if (gameState.initializeGame) {
+      console.log('Initializing game...');
       gameState.initializeGame();
     }
   };
@@ -106,16 +126,9 @@ const Index = () => {
     return <AuthComponent onAuth={setUser} />;
   }
 
-  console.log('Current game state:', {
-    gameStarted: gameState.gameStarted,
-    bothPlayersReady: gameState.bothPlayersReady,
-    playerReady: gameState.playerReady,
-    currentSession: !!multiplayerHook.currentSession,
-    opponentReady: multiplayerHook.opponentReady
-  });
-
-  // Show game when both players are ready
+  // Show actual game when both players are ready
   if (gameState.gameStarted && gameState.bothPlayersReady) {
+    console.log('=== RENDERING GAME LAYOUT ===');
     return (
       <GameLayout
         gameData={gameState.gameData}
@@ -125,12 +138,13 @@ const Index = () => {
     );
   }
 
-  // Show multiplayer setup and waiting screen
+  // Show multiplayer setup
+  console.log('=== RENDERING MULTIPLAYER SETUP ===');
   return (
     <MultiplayerSetup 
       onGameStart={handleGameStart}
       onDeckLoad={handlers.handleDeckLoad}
-      onPlayerReady={enhancedHandlers.handlePlayerReady}
+      onPlayerReady={handlePlayerReady}
       onBothPlayersReady={handleBothPlayersReady}
       gameState={{
         ...gameState,

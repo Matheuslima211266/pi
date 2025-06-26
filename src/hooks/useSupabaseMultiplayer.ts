@@ -23,6 +23,13 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  console.log('=== SUPABASE MULTIPLAYER HOOK ===', {
+    hasUser: !!user,
+    currentSession: !!currentSession,
+    opponentReady,
+    error
+  });
+
   // Helper function to cast database row to GameSession
   const castToGameSession = (data: any): GameSession => {
     return {
@@ -33,7 +40,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
   // Create game session (for host)
   const createGameSession = useCallback(async (gameId: string, playerName: string) => {
-    if (!user) return null;
+    if (!user) {
+      console.error('No user for createGameSession');
+      return null;
+    }
 
     try {
       console.log('Creating game session:', { gameId, playerName, userId: user.id });
@@ -67,11 +77,14 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       setError('Failed to create game session');
       return null;
     }
-  }, [user, toast]);
+  }, [user]);
 
   // Join game session (for guest)
   const joinGameSession = useCallback(async (gameId: string, playerName: string) => {
-    if (!user) return null;
+    if (!user) {
+      console.error('No user for joinGameSession');
+      return null;
+    }
 
     try {
       console.log('Searching for game session:', gameId);
@@ -125,18 +138,13 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       setCurrentSession(gameSession);
       setError(null);
       
-      // Notify that opponent connected
-      if (gameState.setOpponentConnected) {
-        gameState.setOpponentConnected(true);
-      }
-      
       return gameSession;
     } catch (err) {
       console.error('Error in joinGameSession:', err);
       setError('Failed to join game session');
       return null;
     }
-  }, [user, gameState]);
+  }, [user]);
 
   // Update player ready status
   const setPlayerReady = useCallback(async (isReady: boolean) => {
@@ -169,6 +177,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         // Update opponent ready status
         const newOpponentReady = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
         setOpponentReady(newOpponentReady);
+        
+        console.log('Updated opponent ready status:', newOpponentReady);
       }
     } catch (err) {
       console.error('Error in setPlayerReady:', err);
@@ -179,7 +189,6 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   // Log game action
   const logGameAction = useCallback(async (action: string, playerName: string) => {
     if (!currentSession || !user) return;
-
     try {
       const { error } = await supabase
         .from('game_actions')
@@ -189,10 +198,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           player_name: playerName,
           action: action
         });
-
-      if (error) {
-        console.error('Error logging game action:', error);
-      }
+      if (error) console.error('Error logging game action:', error);
     } catch (err) {
       console.error('Error in logGameAction:', err);
     }
@@ -201,7 +207,6 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   // Send chat message
   const sendChatMessage = useCallback(async (message: string, playerName: string) => {
     if (!currentSession || !user) return;
-
     try {
       const { error } = await supabase
         .from('chat_messages')
@@ -211,10 +216,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           player_name: playerName,
           message: message
         });
-
-      if (error) {
-        console.error('Error sending chat message:', error);
-      }
+      if (error) console.error('Error sending chat message:', error);
     } catch (err) {
       console.error('Error in sendChatMessage:', err);
     }
@@ -223,7 +225,6 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   // Sync game state to database
   const syncGameState = useCallback(async () => {
     if (!currentSession || !user) return;
-
     try {
       const { error } = await supabase
         .from('game_states')
@@ -239,10 +240,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           player_ready: gameState.playerReady,
           last_update: new Date().toISOString()
         });
-
-      if (error) {
-        console.error('Error syncing game state:', error);
-      }
+      if (error) console.error('Error syncing game state:', error);
     } catch (error) {
       console.error('Error syncing game state:', error);
     }
@@ -266,7 +264,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           filter: `id=eq.${currentSession.id}`
         },
         (payload) => {
-          console.log('Game session updated:', payload.new);
+          console.log('Game session updated via realtime:', payload.new);
           const updatedSession = castToGameSession(payload.new);
           setCurrentSession(updatedSession);
           
@@ -275,97 +273,12 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           const opponentReadyStatus = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
           setOpponentReady(opponentReadyStatus);
           
-          console.log('Updated ready states:', {
+          console.log('Updated ready states via realtime:', {
             playerIsHost: isHost,
             hostReady: updatedSession.host_ready,
             guestReady: updatedSession.guest_ready,
             opponentReady: opponentReadyStatus
           });
-          
-          // If a guest joined, notify that opponent connected
-          if (updatedSession.guest_id && gameState.setOpponentConnected) {
-            gameState.setOpponentConnected(true);
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to game states for opponent updates
-    const gameStateChannel = supabase
-      .channel(`game_states_${currentSession.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'game_states',
-          filter: `game_session_id=eq.${currentSession.id}`
-        },
-        (payload) => {
-          console.log('Game state update:', payload);
-          // Handle opponent state updates
-          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
-            // Update opponent's game state
-            if ('player_field' in payload.new && payload.new.player_field) {
-              gameState.setEnemyField(payload.new.player_field);
-            }
-            if ('player_life_points' in payload.new && typeof payload.new.player_life_points === 'number') {
-              gameState.setEnemyLifePoints(payload.new.player_life_points);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to chat messages
-    const chatChannel = supabase
-      .channel(`chat_${currentSession.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `game_session_id=eq.${currentSession.id}`
-        },
-        (payload) => {
-          console.log('New chat message:', payload);
-          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
-            if ('id' in payload.new && 'player_name' in payload.new && 'message' in payload.new) {
-              gameState.setChatMessages((prev: any[]) => [...prev, {
-                id: payload.new.id,
-                player: payload.new.player_name,
-                message: payload.new.message
-              }]);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to game actions
-    const actionsChannel = supabase
-      .channel(`actions_${currentSession.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'game_actions',
-          filter: `game_session_id=eq.${currentSession.id}`
-        },
-        (payload) => {
-          console.log('New game action:', payload);
-          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
-            if ('id' in payload.new && 'player_name' in payload.new && 'action' in payload.new && 'timestamp' in payload.new) {
-              gameState.setActionLog((prev: any[]) => [...prev, {
-                id: payload.new.id,
-                player: payload.new.player_name,
-                action: payload.new.action,
-                timestamp: new Date(payload.new.timestamp as string).toLocaleTimeString()
-              }]);
-            }
-          }
         }
       )
       .subscribe();
@@ -374,11 +287,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     return () => {
       console.log('Cleaning up subscriptions');
       supabase.removeChannel(gameSessionChannel);
-      supabase.removeChannel(gameStateChannel);
-      supabase.removeChannel(chatChannel);
-      supabase.removeChannel(actionsChannel);
     };
-  }, [currentSession, user, gameState]);
+  }, [currentSession, user]);
 
   // Load initial data when session is set
   useEffect(() => {
@@ -399,49 +309,13 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           guestReady: currentSession.guest_ready,
           initialOpponentReady
         });
-
-        // Load game actions
-        const { data: actions } = await supabase
-          .from('game_actions')
-          .select('*')
-          .eq('game_session_id', currentSession.id)
-          .order('timestamp', { ascending: true });
-
-        if (actions) {
-          const formattedActions = actions.map(action => ({
-            id: action.id,
-            player: action.player_name,
-            action: action.action,
-            timestamp: new Date(action.timestamp).toLocaleTimeString()
-          }));
-          gameState.setActionLog(formattedActions);
-        }
-
-        // Load chat messages
-        const { data: messages } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('game_session_id', currentSession.id)
-          .order('timestamp', { ascending: true });
-
-        if (messages) {
-          const formattedMessages = messages.map(msg => ({
-            id: msg.id,
-            player: msg.player_name,
-            message: msg.message
-          }));
-          gameState.setChatMessages([
-            { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
-            ...formattedMessages
-          ]);
-        }
       } catch (err) {
         console.error('Error loading initial data:', err);
       }
     };
 
     loadInitialData();
-  }, [currentSession, user, gameState]);
+  }, [currentSession, user]);
 
   return {
     currentSession,
