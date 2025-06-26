@@ -20,6 +20,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   const [deckLoaded, setDeckLoaded] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [gameSessionCreated, setGameSessionCreated] = useState(false);
 
   // Always call useEffect hooks in the same order
   useEffect(() => {
@@ -40,14 +41,33 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     }
   }, [gameState?.playerReady, gameState?.opponentReady, gameState?.bothPlayersReady, gameState?.gameStarted, gameState]);
 
-  const createGame = () => {
+  const createGame = async () => {
+    if (!playerName || !deckLoaded) {
+      alert('Please enter your name and upload a deck first');
+      return;
+    }
+
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setGameId(newGameId);
     setIsHost(true);
+    
+    // Immediately create the game session in the database
+    console.log('Creating game session for:', newGameId);
+    const gameData = {
+      gameId: newGameId,
+      playerName: playerName,
+      isHost: true,
+      deckLoaded: true
+    };
+    
+    const success = await onGameStart(gameData);
+    if (success !== false) {
+      setGameSessionCreated(true);
+    }
   };
 
   const joinGame = async () => {
-    if (gameId && playerName) {
+    if (gameId && playerName && deckLoaded) {
       console.log('Attempting to join game:', gameId);
       onGameStart({ 
         gameId: gameId,
@@ -83,17 +103,6 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
         }
       };
       reader.readAsText(file);
-    }
-  };
-
-  const startGame = () => {
-    if (playerName && deckLoaded) {
-      onGameStart({
-        gameId,
-        playerName,
-        isHost,
-        deckLoaded: true
-      });
     }
   };
 
@@ -239,7 +248,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
               <Button
                 onClick={createGame}
                 className="w-full bg-gold-600 hover:bg-gold-700 text-black"
-                disabled={!playerName}
+                disabled={!playerName || !deckLoaded}
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Create Game
@@ -258,7 +267,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                   onClick={joinGame}
                   variant="outline"
                   className="border-gold-400 text-gold-400"
-                  disabled={!gameId || !playerName}
+                  disabled={!gameId || !playerName || !deckLoaded}
                 >
                   Join
                 </Button>
@@ -273,7 +282,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                 <p className="text-xs text-gray-400 mt-1">Game ID</p>
               </div>
               
-              {isHost && (
+              {isHost && gameSessionCreated && (
                 <div className="space-y-2">
                   <Button
                     onClick={copyGameLink}
@@ -290,16 +299,20 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                       {window.location.origin}?game={gameId}
                     </div>
                   </div>
+                  
+                  <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
+                    <p className="text-green-400 font-semibold">Game created successfully!</p>
+                    <p className="text-sm text-gray-300 mt-1">Waiting for opponent to join...</p>
+                  </div>
                 </div>
               )}
 
-              <Button
-                onClick={startGame}
-                className="w-full bg-green-600 hover:bg-green-700"
-                disabled={!playerName || !deckLoaded}
-              >
-                Enter Game Lobby
-              </Button>
+              {!isHost && (
+                <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
+                  <p className="text-blue-400 font-semibold">Joining game...</p>
+                  <p className="text-sm text-gray-300 mt-1">Please wait...</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -308,7 +321,8 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
             {!playerName && 'Enter your name to continue'}
             {playerName && !deckLoaded && 'Upload your deck to continue'}
             {playerName && deckLoaded && !gameId && 'Create or join a game'}
-            {playerName && deckLoaded && gameId && 'Ready to enter lobby!'}
+            {playerName && deckLoaded && gameId && isHost && gameSessionCreated && 'Game created! Share the link with your opponent'}
+            {playerName && deckLoaded && gameId && !isHost && 'Joining game...'}
           </div>
         </div>
       </Card>

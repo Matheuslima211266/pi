@@ -35,18 +35,26 @@ const Index = () => {
     }
   };
 
-  // Enhanced game start handler
+  // Enhanced game start handler that returns success/failure
   const handleGameStart = async (gameData: any) => {
     let session = null;
     
-    if (gameData.isHost) {
-      session = await multiplayerHook.createGameSession(gameData.gameId, gameData.playerName);
-    } else {
-      session = await multiplayerHook.joinGameSession(gameData.gameId, gameData.playerName);
-    }
-    
-    if (session) {
-      handlers.handleGameStart(gameData);
+    try {
+      if (gameData.isHost) {
+        session = await multiplayerHook.createGameSession(gameData.gameId, gameData.playerName);
+      } else {
+        session = await multiplayerHook.joinGameSession(gameData.gameId, gameData.playerName);
+      }
+      
+      if (session) {
+        handlers.handleGameStart(gameData);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error('Error in handleGameStart:', error);
+      return false;
     }
   };
 
