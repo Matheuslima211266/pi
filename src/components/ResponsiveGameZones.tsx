@@ -228,24 +228,9 @@ const ResponsiveGameZones = ({
     return slots;
   };
 
-  // Add graveyard zone that was missing
-  const graveyardZone = (
-    <div 
-      key="graveyard" 
-      className="card-slot graveyard-slot cursor-pointer"
-      onClick={(e) => handleZoneClick('graveyard', e)}
-    >
-      <div className="zone-label">Graveyard</div>
-      <div className="text-xl">💀</div>
-      <div className="zone-count">{(field.graveyard || []).length}</div>
-    </div>
-  );
-
   return (
     <>
       {renderZoneSlots()}
-      {/* Add graveyard zone */}
-      {zoneType === 'monsters' && graveyardZone}
 
       {/* Menu di piazzamento */}
       <PlacementMenu
@@ -264,7 +249,7 @@ const ResponsiveGameZones = ({
         />
       )}
 
-      {/* Zone Manager espanse - Fixed to pass correct data */}
+      {/* Zone Manager espanse - Only for zones managed by ResponsiveGameZones */}
       {expandedZone && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
@@ -308,17 +293,6 @@ const ResponsiveGameZones = ({
               <ZoneManager
                 cards={field.banishedFaceDown || []}
                 zoneName="banishedFaceDown"
-                onCardMove={onCardMove}
-                onCardPreview={onCardPreview}
-                isExpanded={true}
-                onToggleExpand={() => setExpandedZone(null)}
-              />
-            )}
-
-            {expandedZone === 'graveyard' && (
-              <ZoneManager
-                cards={field.graveyard || []}
-                zoneName="graveyard"
                 onCardMove={onCardMove}
                 onCardPreview={onCardPreview}
                 isExpanded={true}

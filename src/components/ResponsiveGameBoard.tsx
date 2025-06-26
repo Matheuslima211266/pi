@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
@@ -23,6 +24,9 @@ const ResponsiveGameBoard = ({
 }) => {
   const [expandedZone, setExpandedZone] = useState(null);
   const [zoneActionMenu, setZoneActionMenu] = useState(null);
+
+  console.log('ResponsiveGameBoard playerField:', playerField);
+  console.log('ResponsiveGameBoard enemyField:', enemyField);
 
   const handleZoneClick = (zoneName, isEnemy = false, event) => {
     event.stopPropagation();
@@ -60,6 +64,13 @@ const ResponsiveGameBoard = ({
     }
     
     setZoneActionMenu(null);
+  };
+
+  const getZoneCards = (zoneName, isEnemy = false) => {
+    const field = isEnemy ? enemyField : playerField;
+    const cards = field[zoneName] || [];
+    console.log(`Getting cards for ${zoneName} (enemy: ${isEnemy}):`, cards);
+    return cards;
   };
 
   return (
@@ -115,6 +126,7 @@ const ResponsiveGameBoard = ({
           >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
+            <div className="zone-count">{(enemyField.graveyard || []).length}</div>
           </div>
           <div 
             className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
@@ -122,6 +134,7 @@ const ResponsiveGameBoard = ({
           >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
+            <div className="zone-count">{(enemyField.fieldSpell || []).length}</div>
           </div>
         </div>
         
@@ -135,6 +148,7 @@ const ResponsiveGameBoard = ({
           >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
+            <div className="zone-count">{(playerField.fieldSpell || []).length}</div>
           </div>
           <div 
             className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
@@ -142,6 +156,7 @@ const ResponsiveGameBoard = ({
           >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
+            <div className="zone-count">{(playerField.graveyard || []).length}</div>
           </div>
         </div>
       </div>
@@ -201,13 +216,13 @@ const ResponsiveGameBoard = ({
         />
       )}
       
-      {/* Zone Manager per zone centrali */}
+      {/* Zone Manager Modals - Fixed data passing */}
       {expandedZone === 'graveyard' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={playerField.graveyard || []}
+              cards={getZoneCards('graveyard', false)}
               zoneName="graveyard"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -223,7 +238,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={enemyField.graveyard || []}
+              cards={getZoneCards('graveyard', true)}
               zoneName="graveyard"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -240,7 +255,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={playerField.fieldSpell || []}
+              cards={getZoneCards('fieldSpell', false)}
               zoneName="fieldSpell"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -256,7 +271,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={enemyField.fieldSpell || []}
+              cards={getZoneCards('fieldSpell', true)}
               zoneName="fieldSpell"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
