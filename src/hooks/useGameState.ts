@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import sampleCardsData from '@/data/sampleCards.json';
 
@@ -56,43 +55,77 @@ export const useGameState = () => {
     return shuffled;
   };
 
-  // Funzione per generare ID unici per le carte
-  const generateUniqueCardId = (baseId, playerId) => {
-    return `${playerId}_${baseId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Funzione per generare ID unici per le carte (corretta)
+  const generateUniqueCardId = (baseId: any, playerId: string, index: string | number = 0) => {
+    return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   };
 
   const initializeGame = () => {
+    console.log('[useGameState] Initializing game...');
     const allCards = playerDeckData?.cards || sampleCardsData.cards;
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Genera ID unici per ogni carta
-    const uniqueMainDeckCards = mainDeckCards.map(card => ({
-      ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
-    }));
+    // Genera un deck completo con ID unici per ogni copia
+    const fullDeck = [];
+    mainDeckCards.forEach((card, cardIndex) => {
+      // Crea esattamente 3 copie di ogni carta per un deck più completo
+      for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
+        const uniqueCard = {
+          ...card,
+          id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `${cardIndex}_copy${copyIndex}`)
+        };
+        fullDeck.push(uniqueCard);
+        console.log(`[useGameState] Added card copy:`, uniqueCard.name, 'with ID:', uniqueCard.id);
+      }
+    });
     
-    const uniqueExtraDeckCards = extraDeckCards.map(card => ({
+    const uniqueExtraDeckCards = extraDeckCards.map((card, index) => ({
       ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
+      id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    const shuffledMainDeck = shuffleArray([...uniqueMainDeckCards]);
-    const shuffledHand = shuffleArray([...shuffledMainDeck.slice(0, 5)]);
+    console.log(`[useGameState] Created deck with ${fullDeck.length} cards total`);
+    console.log('[useGameState] Full deck cards:', fullDeck.map(c => `${c.name} (${c.id})`));
 
-    setPlayerDeck(shuffledMainDeck.slice(0, 20));
-    setEnemyDeck(shuffledMainDeck.slice(20, 40));
+    const shuffledMainDeck = shuffleArray([...fullDeck]);
+    const shuffledHand = shuffledMainDeck.slice(0, 5);
+    const remainingDeck = shuffledMainDeck.slice(5);
+
+    // Crea anche un deck separato per il nemico con le stesse carte ma ID diversi
+    const enemyDeck = [];
+    mainDeckCards.forEach((card, cardIndex) => {
+      for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
+        enemyDeck.push({
+          ...card,
+          id: generateUniqueCardId(card.id, 'enemy', `${cardIndex}_copy${copyIndex}`)
+        });
+      }
+    });
+
+    console.log(`[useGameState] Initial hand:`, shuffledHand.map(c => `${c.name} (${c.id})`));
+
+    setPlayerDeck(remainingDeck);
+    setEnemyDeck(shuffleArray(enemyDeck).slice(0, 35));
     setPlayerHand(shuffledHand);
     setPlayerField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
-      deck: shuffledMainDeck.slice(5, 20)
+      deck: remainingDeck,
+      graveyard: [],
+      banished: [],
+      banishedFaceDown: []
     }));
     setEnemyField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
-      deck: shuffledMainDeck.slice(20, 40)
+      deck: shuffleArray([...enemyDeck]).slice(0, 35),
+      graveyard: [],
+      banished: [],
+      banishedFaceDown: []
     }));
+
+    console.log('[useGameState] Game initialized successfully');
   };
 
   return {

@@ -4,6 +4,7 @@ import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
 import PlayerHand from './PlayerHand';
 import ZoneManager from './ZoneManager';
+import ZoneActionMenu from './ZoneActionMenu';
 
 const ResponsiveGameBoard = ({ 
   playerField, 
@@ -16,15 +17,60 @@ const ResponsiveGameBoard = ({
   onCardPlace, 
   selectedCardFromHand, 
   onCardPreview, 
-  onCardMove, 
+  onCardMove,
+  onDeckMill,
   onDrawCard,
   setSelectedCardFromHand 
 }) => {
   const [expandedZone, setExpandedZone] = useState(null);
+  const [zoneActionMenu, setZoneActionMenu] = useState(null);
 
-  const handleZoneToggle = (zoneName, isEnemy = false) => {
-    const zoneKey = isEnemy ? `enemy_${zoneName}` : zoneName;
-    setExpandedZone(expandedZone === zoneKey ? null : zoneKey);
+  console.log('ResponsiveGameBoard playerField:', playerField);
+  console.log('ResponsiveGameBoard enemyField:', enemyField);
+
+  const handleZoneClick = (zoneName, isEnemy = false, event) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setZoneActionMenu({
+      zoneName,
+      isEnemy,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      }
+    });
+  };
+
+  const handleZoneAction = (action) => {
+    const { zoneName, isEnemy } = zoneActionMenu;
+    
+    switch (action) {
+      case 'view':
+        const zoneKey = isEnemy ? `enemy_${zoneName}` : zoneName;
+        setExpandedZone(zoneKey);
+        break;
+      case 'draw':
+        if (!isEnemy) onDrawCard && onDrawCard();
+        break;
+      case 'mill':
+        if (!isEnemy) onDeckMill && onDeckMill(1);
+        break;
+      case 'mill3':
+        if (!isEnemy) onDeckMill && onDeckMill(3);
+        break;
+      case 'shuffle':
+        console.log(`Shuffle ${zoneName} for ${isEnemy ? 'enemy' : 'player'}`);
+        break;
+    }
+    
+    setZoneActionMenu(null);
+  };
+
+  const getZoneCards = (zoneName, isEnemy = false) => {
+    const field = isEnemy ? enemyField : playerField;
+    const cards = field[zoneName] || [];
+    console.log(`Getting cards for ${zoneName} (enemy: ${isEnemy}):`, cards);
+    return cards;
   };
 
   return (
@@ -49,6 +95,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="spellsTraps"
         />
       </div>
@@ -64,6 +111,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="monsters"
         />
       </div>
@@ -72,13 +120,21 @@ const ResponsiveGameBoard = ({
       <div className="center-zone">
         {/* Gruppo Avversario: Graveyard + Field Spell */}
         <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
-          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard', true)}>
+          <div 
+            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('graveyard', true, e)}
+          >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
+            <div className="zone-count">{(enemyField.graveyard || []).length}</div>
           </div>
-          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell', true)}>
+          <div 
+            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
+            onClick={(e) => handleZoneClick('fieldSpell', true, e)}
+          >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
+            <div className="zone-count">{(enemyField.fieldSpell || []).length}</div>
           </div>
         </div>
         
@@ -86,13 +142,21 @@ const ResponsiveGameBoard = ({
         
         {/* Gruppo Giocatore: Field Spell + Graveyard */}
         <div className="center-group">
-          <div className="card-slot field-spell-zone field-spell-slot" onClick={() => handleZoneToggle('fieldSpell')}>
+          <div 
+            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
+            onClick={(e) => handleZoneClick('fieldSpell', false, e)}
+          >
             <div className="zone-label">Field Spell</div>
             <div className="text-2xl">🏔️</div>
+            <div className="zone-count">{(playerField.fieldSpell || []).length}</div>
           </div>
-          <div className="card-slot graveyard-slot graveyard-slot-center" onClick={() => handleZoneToggle('graveyard')}>
+          <div 
+            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('graveyard', false, e)}
+          >
             <div className="zone-label">Graveyard</div>
             <div className="text-2xl">💀</div>
+            <div className="zone-count">{(playerField.graveyard || []).length}</div>
           </div>
         </div>
       </div>
@@ -108,6 +172,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="monsters"
         />
       </div>
@@ -123,6 +188,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="spellsTraps"
         />
       </div>
@@ -140,13 +206,23 @@ const ResponsiveGameBoard = ({
         />
       </div>
       
-      {/* Zone Manager per zone centrali */}
+      {/* Zone Action Menu */}
+      {zoneActionMenu && (
+        <ZoneActionMenu
+          zoneName={zoneActionMenu.zoneName}
+          onAction={handleZoneAction}
+          onClose={() => setZoneActionMenu(null)}
+          position={zoneActionMenu.position}
+        />
+      )}
+      
+      {/* Zone Manager Modals - Fixed data passing */}
       {expandedZone === 'graveyard' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={playerField.graveyard || []}
+              cards={getZoneCards('graveyard', false)}
               zoneName="graveyard"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -162,7 +238,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={enemyField.graveyard || []}
+              cards={getZoneCards('graveyard', true)}
               zoneName="graveyard"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -179,7 +255,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={playerField.fieldSpell || []}
+              cards={getZoneCards('fieldSpell', false)}
               zoneName="fieldSpell"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
@@ -195,7 +271,7 @@ const ResponsiveGameBoard = ({
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={enemyField.fieldSpell || []}
+              cards={getZoneCards('fieldSpell', true)}
               zoneName="fieldSpell"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}

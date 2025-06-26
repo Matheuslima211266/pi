@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -107,7 +108,7 @@
   overflow: hidden;
 }
 
-/* ==== SIDEBAR LIFE POINTS ==== */
+/* ==== SIDEBAR LIFE POINTS - SCROLLABLE ==== */
 .sidebar {
   width: clamp(250px, 20vw, 350px);
   min-width: 250px;
@@ -116,43 +117,26 @@
   border-right: 2px solid #4a5568;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.life-points-section {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  text-align: center;
+.sidebar::-webkit-scrollbar {
+  width: 8px;
 }
 
-.player-info {
-  margin-bottom: 1rem;
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.player-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
 }
 
-.life-points {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #4ade80;
-  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-}
-
-.game-info {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 1rem;
-  color: #cbd5e0;
-  font-size: 0.9rem;
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* ==== AREA PRINCIPALE CAMPO ==== */
@@ -364,6 +348,15 @@
   color: #98fb98;
 }
 
+/* ==== DEFENSE POSITION CARDS ==== */
+.card-defense-position {
+  transform: rotate(90deg);
+}
+
+.card-defense-position.card-slot {
+  transform: rotate(90deg) scale(1.02);
+}
+
 /* ==== ANIMAZIONI ==== */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -414,13 +407,8 @@
     align-items: center;
     border-right: none;
     border-bottom: 2px solid #4a5568;
-  }
-  
-  .life-points-section {
-    margin: 0;
-    padding: 1rem;
-    flex: 1;
-    max-width: 300px;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   
   .field-area {
@@ -455,11 +443,6 @@
     padding: 0.5rem;
   }
   
-  .life-points-section {
-    padding: 0.75rem;
-    font-size: 0.9rem;
-  }
-  
   .card-slot {
     width: clamp(35px, 6.5vw, 55px);
     height: clamp(49px, 9.1vw, 77px);
@@ -477,10 +460,6 @@
   .hand-zone {
     gap: clamp(0.15rem, 0.4vw, 0.25rem);
   }
-  
-  .life-points {
-    font-size: 1.5rem;
-  }
 
   .battlefield-container {
     gap: clamp(0.2rem, 0.8vw, 0.5rem);
@@ -495,9 +474,11 @@
   }
 }
 
-/* ==== SIDEBAR SECTIONS ==== */
+/* ==== SIDEBAR SECTIONS - FIXED SPACING ==== */
 .sidebar-section {
   margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  flex-shrink: 0;
 }
 
 .sidebar-section:last-child {

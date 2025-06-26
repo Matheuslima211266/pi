@@ -40,6 +40,7 @@ const GameLayout = ({
     handleAttack,
     handleCardPlace,
     handleCardMove,
+    handleDeckMill,
     handleDrawCard,
     handleCardClick,
     handleLifePointsChange,
@@ -144,6 +145,7 @@ const GameLayout = ({
           selectedCardFromHand={selectedCardFromHand}
           onCardPreview={setPreviewCard}
           onCardMove={handleCardMove}
+          onDeckMill={handleDeckMill}
           onDrawCard={handleDrawCard}
           setSelectedCardFromHand={setSelectedCardFromHand}
         />
