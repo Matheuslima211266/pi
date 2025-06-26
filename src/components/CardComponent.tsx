@@ -12,7 +12,8 @@ const CardComponent = ({
   showCost = true,
   canAttack = false,
   isInHand = false,
-  isFaceDown = false
+  isFaceDown = false,
+  position = 'attack'
 }) => {
   const getAttributeColor = (attribute) => {
     switch (attribute?.toLowerCase()) {
@@ -36,6 +37,7 @@ const CardComponent = ({
   };
 
   const isMonster = card.card_type === 'monster' || card.atk !== undefined;
+  const isDefensePosition = position === 'defense' || card.position === 'defense';
 
   // Se è coperta, mostra il retro della carta
   if (isFaceDown) {
@@ -45,6 +47,7 @@ const CardComponent = ({
           bg-gradient-to-br from-blue-800 to-purple-800 border-2 border-blue-400
           ${isSmall ? 'w-28 h-40' : 'w-40 h-56'} 
           ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
+          ${isDefensePosition ? 'card-defense-position' : ''}
           transition-all duration-300 relative overflow-hidden
         `}
         onClick={() => isPlayable && onClick && onClick(card)}
@@ -68,6 +71,7 @@ const CardComponent = ({
         ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
         ${canAttack ? 'ring-2 ring-red-400 animate-pulse' : ''}
         ${isInHand ? 'hover:-translate-y-2' : ''}
+        ${isDefensePosition ? 'card-defense-position' : ''}
         transition-all duration-300 relative overflow-hidden
       `}
       onClick={() => isPlayable && onClick && onClick(card)}
@@ -150,6 +154,15 @@ const CardComponent = ({
           <div className="absolute top-1 right-1">
             <Badge className="bg-black/50 text-white text-xs px-1 py-0">
               {card.attribute}
+            </Badge>
+          </div>
+        )}
+
+        {/* Indicatore posizione per mostri */}
+        {isMonster && !isSmall && (
+          <div className="absolute bottom-1 right-1">
+            <Badge className={`text-xs px-1 py-0 ${isDefensePosition ? 'bg-blue-500' : 'bg-red-500'}`}>
+              {isDefensePosition ? 'DEF' : 'ATK'}
             </Badge>
           </div>
         )}
