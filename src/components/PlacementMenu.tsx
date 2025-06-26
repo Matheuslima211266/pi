@@ -50,9 +50,9 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     }
   };
 
-  // Calcola la posizione del menu per centrarlo meglio
-  const menuStyle = {
-    position: 'fixed',
+  // Calculate menu position with proper TypeScript typing
+  const menuStyle: React.CSSProperties = {
+    position: 'fixed' as const,
     left: Math.min(placementMenu.x, window.innerWidth - 200),
     top: Math.min(placementMenu.y, window.innerHeight - 300),
     zIndex: 50
