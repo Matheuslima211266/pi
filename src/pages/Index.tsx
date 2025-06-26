@@ -56,8 +56,11 @@ const Index = () => {
       
       if (session) {
         console.log('Session created/joined successfully, updating game state...');
-        // Set the game as started but not both players ready yet
-        gameState.setGameStarted(true);
+        // Per l'host, NON impostare gameStarted subito - lascia vedere il link
+        // Per il guest, imposta gameStarted perché deve entrare subito nella waiting room
+        if (!gameData.isHost) {
+          gameState.setGameStarted(true);
+        }
         gameState.setGameData(gameData);
         return true;
       } else {
@@ -68,6 +71,12 @@ const Index = () => {
       console.error('Error in handleGameStart:', error);
       return false;
     }
+  };
+
+  // Handle quando l'host è pronto e vuole entrare nella waiting room
+  const handleHostEnterWaiting = () => {
+    console.log('=== HOST ENTERING WAITING ROOM ===');
+    gameState.setGameStarted(true);
   };
 
   // Handle player ready
@@ -146,6 +155,7 @@ const Index = () => {
       onDeckLoad={handlers.handleDeckLoad}
       onPlayerReady={handlePlayerReady}
       onBothPlayersReady={handleBothPlayersReady}
+      onHostEnterWaiting={handleHostEnterWaiting}
       gameState={{
         ...gameState,
         opponentReady: multiplayerHook.opponentReady,

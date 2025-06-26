@@ -15,6 +15,7 @@ interface MultiplayerSetupProps {
   onDeckLoad: (deckData: any) => void;
   onPlayerReady?: () => void;
   onBothPlayersReady?: () => void;
+  onHostEnterWaiting?: () => void;
   gameState?: any;
 }
 
@@ -23,6 +24,7 @@ const MultiplayerSetup = ({
   onDeckLoad, 
   onPlayerReady, 
   onBothPlayersReady,
+  onHostEnterWaiting,
   gameState 
 }: MultiplayerSetupProps) => {
   const [gameId, setGameId] = useState('');
@@ -173,7 +175,14 @@ const MultiplayerSetup = ({
     window.location.reload();
   };
 
-  // Show waiting screen when session exists but both players not ready
+  const handleEnterWaitingRoom = () => {
+    console.log('=== HOST ENTERING WAITING ROOM ===');
+    if (onHostEnterWaiting) {
+      onHostEnterWaiting();
+    }
+  };
+
+  // Show waiting screen when game started and session exists but not both players ready
   if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
     console.log('=== SHOWING WAITING SCREEN ===');
     
@@ -219,7 +228,7 @@ const MultiplayerSetup = ({
             onDeckUpload={handleDeckUpload}
           />
 
-          {/* Mostra sempre la sezione di creazione del gioco se non c'è un gameId */}
+          {/* Mostra la sezione di creazione del gioco se non c'è un gameId */}
           {!gameId && (
             <GameCreationSection
               gameId={gameId}
@@ -232,14 +241,15 @@ const MultiplayerSetup = ({
             />
           )}
 
-          {/* Mostra sempre il GameStatusDisplay quando c'è un gameId */}
-          {gameId && (
+          {/* Mostra il GameStatusDisplay quando c'è un gameId ma il gioco non è ancora iniziato */}
+          {gameId && !gameState?.gameStarted && (
             <GameStatusDisplay
               gameId={gameId}
               isHost={isHost}
               gameSessionCreated={gameSessionCreated}
               linkCopied={linkCopied}
               onCopyGameLink={copyGameLink}
+              onEnterWaitingRoom={handleEnterWaitingRoom}
             />
           )}
 

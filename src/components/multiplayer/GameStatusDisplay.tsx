@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Link, Copy, AlertCircle, Share2 } from 'lucide-react';
+import { Check, Copy, AlertCircle, Share2, Users } from 'lucide-react';
 
 interface GameStatusDisplayProps {
   gameId: string;
@@ -10,6 +10,7 @@ interface GameStatusDisplayProps {
   gameSessionCreated: boolean;
   linkCopied: boolean;
   onCopyGameLink: () => void;
+  onEnterWaitingRoom?: () => void;
 }
 
 const GameStatusDisplay = ({ 
@@ -17,7 +18,8 @@ const GameStatusDisplay = ({
   isHost, 
   gameSessionCreated, 
   linkCopied, 
-  onCopyGameLink 
+  onCopyGameLink,
+  onEnterWaitingRoom
 }: GameStatusDisplayProps) => {
   
   console.log('GameStatusDisplay render:', { gameId, isHost, gameSessionCreated, linkCopied });
@@ -44,42 +46,52 @@ const GameStatusDisplay = ({
             <p className="text-xs text-gray-300 mb-2 text-center font-semibold">
               🔗 CONDIVIDI QUESTO LINK:
             </p>
-            <div className="bg-slate-800 p-3 rounded-lg text-xs text-white break-all font-mono border border-gold-400/30">
+            <div className="bg-slate-800 p-3 rounded-lg text-xs text-white break-all font-mono border border-gold-400/30 mb-3">
               {gameLink}
             </div>
+            
+            <Button
+              onClick={onCopyGameLink}
+              className="w-full bg-gold-600 hover:bg-gold-700 text-black font-semibold mb-3"
+              size="lg"
+            >
+              {linkCopied ? (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  ✅ Link Copiato!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 mr-2" />
+                  📋 Copia Link del Gioco
+                </>
+              )}
+            </Button>
           </div>
-          
-          <Button
-            onClick={onCopyGameLink}
-            className="w-full bg-gold-600 hover:bg-gold-700 text-black font-semibold"
-            size="lg"
-          >
-            {linkCopied ? (
-              <>
-                <Check className="w-5 h-5 mr-2" />
-                ✅ Link Copiato!
-              </>
-            ) : (
-              <>
-                <Copy className="w-5 h-5 mr-2" />
-                📋 Copia Link del Gioco
-              </>
-            )}
-          </Button>
           
           <div className="text-center p-3 bg-green-900/40 rounded-lg border border-green-400/50">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Share2 className="w-5 h-5 text-green-400" />
               <p className="text-green-400 font-semibold">Partita Creata!</p>
             </div>
-            <p className="text-sm text-gray-300">Condividi il link con il tuo avversario</p>
+            <p className="text-sm text-gray-300 mb-3">Condividi il link con il tuo avversario</p>
             
-            <div className="mt-3 flex items-center justify-center gap-2 bg-yellow-900/30 p-2 rounded border border-yellow-400/50">
+            <div className="mb-3 flex items-center justify-center gap-2 bg-yellow-900/30 p-2 rounded border border-yellow-400/50">
               <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
               <p className="text-xs text-yellow-300">
-                ⚠️ NON premere "Ready" finché l'avversario non si unisce!
+                ⚠️ Aspetta che l'avversario si unisca prima di entrare!
               </p>
             </div>
+
+            {/* Pulsante per entrare nella waiting room */}
+            <Button
+              onClick={onEnterWaitingRoom}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              size="lg"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              🎮 Entra nella Sala d'Attesa
+            </Button>
           </div>
         </div>
       )}
