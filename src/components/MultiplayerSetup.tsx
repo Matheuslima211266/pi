@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Share2, Upload, Users, Copy, Check, Link, Play, LogOut } from 'lucide-r
 import { supabase } from '@/integrations/supabase/client';
 
 interface MultiplayerSetupProps {
-  onGameStart: (gameData: any) => void;
+  onGameStart: (gameData: any) => Promise<boolean>;
   onDeckLoad: (deckData: any) => void;
   onPlayerReady?: () => void;
   gameState?: any;
@@ -21,6 +20,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   const [linkCopied, setLinkCopied] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [gameSessionCreated, setGameSessionCreated] = useState(false);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
 
   // Always call useEffect hooks in the same order
   useEffect(() => {
@@ -42,39 +42,80 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   }, [gameState?.playerReady, gameState?.opponentReady, gameState?.bothPlayersReady, gameState?.gameStarted, gameState]);
 
   const createGame = async () => {
-    if (!playerName || !deckLoaded) {
-      alert('Please enter your name and upload a deck first');
+    if (!playerName.trim()) {
+      alert('Please enter your name first');
+      return;
+    }
+    
+    if (!deckLoaded) {
+      alert('Please upload a deck first');
       return;
     }
 
+    setIsCreatingGame(true);
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setGameId(newGameId);
     setIsHost(true);
     
-    // Immediately create the game session in the database
-    console.log('Creating game session for:', newGameId);
-    const gameData = {
-      gameId: newGameId,
-      playerName: playerName,
-      isHost: true,
-      deckLoaded: true
-    };
-    
-    const success = await onGameStart(gameData);
-    if (success !== false) {
-      setGameSessionCreated(true);
+    try {
+      // Create the game session in the database
+      console.log('Creating game session for:', newGameId);
+      const gameData = {
+        gameId: newGameId,
+        playerName: playerName,
+        isHost: true,
+        deckLoaded: true
+      };
+      
+      const success = await onGameStart(gameData);
+      if (success) {
+        setGameSessionCreated(true);
+      } else {
+        alert('Failed to create game session. Please try again.');
+        setGameId('');
+        setIsHost(false);
+      }
+    } catch (error) {
+      console.error('Error creating game:', error);
+      alert('Failed to create game session. Please try again.');
+      setGameId('');
+      setIsHost(false);
+    } finally {
+      setIsCreatingGame(false);
     }
   };
 
   const joinGame = async () => {
-    if (gameId && playerName && deckLoaded) {
-      console.log('Attempting to join game:', gameId);
-      onGameStart({ 
-        gameId: gameId,
-        playerName: playerName, 
+    if (!gameId.trim()) {
+      alert('Please enter a Game ID');
+      return;
+    }
+    
+    if (!playerName.trim()) {
+      alert('Please enter your name');
+      return;
+    }
+    
+    if (!deckLoaded) {
+      alert('Please upload a deck first');
+      return;
+    }
+
+    console.log('Attempting to join game:', gameId);
+    try {
+      const success = await onGameStart({ 
+        gameId: gameId.trim().toUpperCase(),
+        playerName: playerName.trim(), 
         isHost: false,
         deckLoaded: true 
       });
+      
+      if (!success) {
+        alert('Failed to join game. Please check the Game ID and try again.');
+      }
+    } catch (error) {
+      console.error('Error joining game:', error);
+      alert('Failed to join game. Please try again.');
     }
   };
 
@@ -248,10 +289,10 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
               <Button
                 onClick={createGame}
                 className="w-full bg-gold-600 hover:bg-gold-700 text-black"
-                disabled={!playerName || !deckLoaded}
+                disabled={!playerName.trim() || !deckLoaded || isCreatingGame}
               >
                 <Share2 className="w-4 h-4 mr-2" />
-                Create Game
+                {isCreatingGame ? 'Creating...' : 'Create Game'}
               </Button>
               
               <div className="text-center text-gray-400">or</div>
@@ -267,7 +308,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                   onClick={joinGame}
                   variant="outline"
                   className="border-gold-400 text-gold-400"
-                  disabled={!gameId || !playerName || !deckLoaded}
+                  disabled={!gameId.trim() || !playerName.trim() || !deckLoaded}
                 >
                   Join
                 </Button>
@@ -318,11 +359,11 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
 
           {/* Status */}
           <div className="text-center text-sm text-gray-400">
-            {!playerName && 'Enter your name to continue'}
-            {playerName && !deckLoaded && 'Upload your deck to continue'}
-            {playerName && deckLoaded && !gameId && 'Create or join a game'}
-            {playerName && deckLoaded && gameId && isHost && gameSessionCreated && 'Game created! Share the link with your opponent'}
-            {playerName && deckLoaded && gameId && !isHost && 'Joining game...'}
+            {!playerName.trim() && 'Enter your name to continue'}
+            {playerName.trim() && !deckLoaded && 'Upload your deck to continue'}
+            {playerName.trim() && deckLoaded && !gameId && 'Create or join a game'}
+            {playerName.trim() && deckLoaded && gameId && isHost && gameSessionCreated && 'Game created! Share the link with your opponent'}
+            {playerName.trim() && deckLoaded && gameId && !isHost && 'Joining game...'}
           </div>
         </div>
       </Card>
