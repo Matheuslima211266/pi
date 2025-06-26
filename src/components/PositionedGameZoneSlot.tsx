@@ -4,6 +4,13 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, C
 import { ArrowUp, Skull, Ban, BookOpen, Star, Eye } from 'lucide-react';
 import CardComponent from './CardComponent';
 
+interface CardStyle {
+  width?: string;
+  height?: string;
+  minWidth?: string;
+  minHeight?: string;
+}
+
 const PositionedGameZoneSlot = ({ 
   card, 
   zoneName, 
@@ -15,7 +22,7 @@ const PositionedGameZoneSlot = ({
   onFieldCardAction, 
   onCardClick, 
   isEffectActivated,
-  cardStyle = {}
+  cardStyle = {} as CardStyle
 }) => {
   if (!card) {
     return (
@@ -54,7 +61,6 @@ const PositionedGameZoneSlot = ({
               isSmall={false}
               showCost={true}
               isFaceDown={card.faceDown}
-              className="w-full h-full"
             />
           </div>
           {isEffectActivated(card) && (
