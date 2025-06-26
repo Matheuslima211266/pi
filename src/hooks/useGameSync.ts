@@ -64,6 +64,15 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
     const { action_type, action_data } = action;
 
+    // Aggiungi l'azione all'action log
+    const actionText = getActionText(action_type, action_data);
+    gameState.setActionLog((prev: any) => [...prev, {
+      id: Date.now(),
+      player: action.player_name,
+      action: actionText,
+      timestamp: new Date(action.timestamp).toLocaleTimeString()
+    }]);
+
     switch (action_type) {
       case 'CARD_PLACED':
         console.log('[GAME_SYNC] Applying CARD_PLACED', action_data);
@@ -116,6 +125,8 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           ...prev,
           deck: prev.deck.slice(1) // Rimuovi una carta dal deck nemico
         }));
+        // Aggiorna il conteggio delle carte in mano del nemico
+        gameState.setEnemyHandCount((prev: number) => prev + 1);
         break;
 
       case 'CARD_MOVED':
@@ -147,10 +158,57 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
         });
         break;
 
+      case 'HAND_UPDATED':
+        console.log('[GAME_SYNC] Applying HAND_UPDATED', action_data);
+        gameState.setEnemyHandCount(action_data.handCount);
+        break;
+
+      case 'SHOW_CARD':
+        console.log('[GAME_SYNC] Applying SHOW_CARD', action_data);
+        // Mostra una carta specifica dell'avversario
+        gameState.setEnemyRevealedCard(action_data.card);
+        // Nascondi la carta dopo 5 secondi
+        setTimeout(() => {
+          gameState.setEnemyRevealedCard(null);
+        }, 5000);
+        break;
+
+      case 'SHOW_HAND':
+        console.log('[GAME_SYNC] Applying SHOW_HAND', action_data);
+        // Mostra tutte le carte in mano dell'avversario
+        gameState.setEnemyRevealedHand(action_data.hand);
+        // Nascondi le carte dopo 5 secondi
+        setTimeout(() => {
+          gameState.setEnemyRevealedHand(null);
+        }, 5000);
+        break;
+
       default:
         console.log('[GAME_SYNC] Unknown action type', action_type);
     }
   }, [user?.id, gameState]);
+
+  // Funzione helper per generare il testo dell'azione
+  const getActionText = (actionType: string, actionData: any) => {
+    switch (actionType) {
+      case 'CARD_PLACED':
+        return `ha giocato ${actionData.card.name} in ${actionData.zoneName}`;
+      case 'LIFE_POINTS_CHANGED':
+        return `ha cambiato i suoi punti vita a ${action_data.newLifePoints}`;
+      case 'CARD_DRAWN':
+        return `ha pescato una carta`;
+      case 'PHASE_CHANGED':
+        return `ha cambiato fase a ${actionData.phase}`;
+      case 'CARD_MOVED':
+        return `ha spostato ${actionData.card.name} da ${actionData.fromZone} a ${actionData.toZone}`;
+      case 'SHOW_CARD':
+        return `ha mostrato ${actionData.card.name}`;
+      case 'SHOW_HAND':
+        return `ha mostrato la sua mano`;
+      default:
+        return `ha eseguito un'azione: ${actionType}`;
+    }
+  };
 
   // Sincronizza lo stato completo (versione semplificata)
   const syncCompleteGameState = useCallback(async () => {

@@ -5,9 +5,9 @@ import CardComponent from './CardComponent';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { Hand, ArrowUp, Skull, Ban, BookOpen, Eye, Star, Zap, Sword, Shield } from 'lucide-react';
+import { Hand, ArrowUp, Skull, Ban, BookOpen, Eye, Star, Zap, Sword, Shield, Users, UserCheck } from 'lucide-react';
 
-const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove }) => {
+const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove, onShowCard, onShowHand }) => {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const handleCardClick = (card) => {
@@ -33,6 +33,18 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
     console.log(`Moving card ${card.name} from hand to ${destination}`);
     if (onCardMove) {
       onCardMove(card, 'hand', destination);
+    }
+  };
+
+  const handleShowCardToOpponent = (card) => {
+    if (onShowCard) {
+      onShowCard(card);
+    }
+  };
+
+  const handleShowHandToOpponent = () => {
+    if (onShowHand) {
+      onShowHand();
     }
   };
 
@@ -64,6 +76,11 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
           <ContextMenuItem onClick={() => handleCardPreview(card)} className="text-white hover:bg-gray-700">
             <Eye className="mr-2 h-4 w-4" />
             View Card Details
+          </ContextMenuItem>
+          
+          <ContextMenuItem onClick={() => handleShowCardToOpponent(card)} className="text-white hover:bg-gray-700">
+            <UserCheck className="mr-2 h-4 w-4" />
+            Show to Opponent
           </ContextMenuItem>
           
           <ContextMenuItem onClick={() => handleCardMovement(card, 'graveyard')} className="text-white hover:bg-gray-700">
@@ -121,6 +138,15 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
         <Badge variant="outline" className="ml-auto">
           {cards.length} carte
         </Badge>
+        <Button
+          onClick={handleShowHandToOpponent}
+          size="sm"
+          variant="outline"
+          className="ml-2"
+        >
+          <Users className="mr-1 h-4 w-4" />
+          Mostra Mano
+        </Button>
       </div>
       
       <div className="flex gap-2 overflow-x-auto pb-2">

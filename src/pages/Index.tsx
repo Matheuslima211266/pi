@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import AuthComponent from '@/components/AuthComponent';
@@ -49,6 +50,10 @@ const Index = () => {
         isFaceDown,
         position
       });
+      // Aggiorna il conteggio delle carte in mano
+      gameSync.sendGameAction('HAND_UPDATED', {
+        handCount: gameState.playerHand.length - 1
+      });
       multiplayerHook.logGameAction(`placed ${card.name} in ${zoneName}`, gameState.gameData?.playerName || 'Player');
     },
     handleLifePointsChange: (newLifePoints: number, isPlayer: boolean = true) => {
@@ -72,6 +77,10 @@ const Index = () => {
       gameSync.sendGameAction('CARD_DRAWN', {
         playerName: gameState.gameData?.playerName || 'Player'
       });
+      // Aggiorna il conteggio delle carte in mano
+      gameSync.sendGameAction('HAND_UPDATED', {
+        handCount: gameState.playerHand.length + 1
+      });
     },
     handleEndTurn: () => {
       handlers.handleEndTurn();
@@ -88,6 +97,26 @@ const Index = () => {
         fromZone,
         toZone,
         slotIndex
+      });
+      // Se la carta viene dalla mano, aggiorna il conteggio
+      if (fromZone === 'hand') {
+        gameSync.sendGameAction('HAND_UPDATED', {
+          handCount: gameState.playerHand.length - 1
+        });
+      }
+    },
+    handleShowCard: (card: any) => {
+      // Nuova funzione per mostrare una carta specifica
+      gameSync.sendGameAction('SHOW_CARD', {
+        card,
+        playerName: gameState.gameData?.playerName || 'Player'
+      });
+    },
+    handleShowHand: () => {
+      // Nuova funzione per mostrare l'intera mano
+      gameSync.sendGameAction('SHOW_HAND', {
+        hand: gameState.playerHand,
+        playerName: gameState.gameData?.playerName || 'Player'
       });
     }
   };

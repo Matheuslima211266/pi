@@ -2,6 +2,7 @@
 import React from 'react';
 import GameBoard from '@/components/GameBoard';
 import PlayerHand from '@/components/PlayerHand';
+import EnemyHand from '@/components/EnemyHand';
 import ActionLog from '@/components/ActionLog';
 import DiceAndCoin from '@/components/DiceAndCoin';
 import GameSidebar from '@/components/GameSidebar';
@@ -16,6 +17,9 @@ const GameLayout = ({
     playerField,
     enemyField,
     playerHand,
+    enemyHandCount,
+    enemyRevealedCard,
+    enemyRevealedHand,
     selectedCardFromHand,
     previewCard,
     actionLog,
@@ -41,7 +45,9 @@ const GameLayout = ({
     handleTimeUp,
     handleSendMessage,
     handleDiceRoll,
-    handleCoinFlip
+    handleCoinFlip,
+    handleShowCard,
+    handleShowHand
   } = handlers;
 
   return (
@@ -60,6 +66,13 @@ const GameLayout = ({
         <div className="flex gap-4">
           {/* Main game area - Left side */}
           <div className="flex-1 space-y-4">
+            {/* Enemy Hand */}
+            <EnemyHand 
+              handCount={enemyHandCount}
+              revealedCard={enemyRevealedCard}
+              revealedHand={enemyRevealedHand}
+            />
+            
             {/* Game Board */}
             <GameBoard 
               playerField={playerField}
@@ -79,6 +92,8 @@ const GameLayout = ({
               isPlayerTurn={true}
               onCardPreview={setPreviewCard}
               onCardMove={handleCardMove}
+              onShowCard={handleShowCard}
+              onShowHand={handleShowHand}
             />
             
             {/* Bottom Controls */}

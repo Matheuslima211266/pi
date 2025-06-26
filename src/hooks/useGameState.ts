@@ -11,6 +11,9 @@ export const useGameState = () => {
   const [playerHand, setPlayerHand] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
   const [enemyDeck, setEnemyDeck] = useState([]);
+  const [enemyHandCount, setEnemyHandCount] = useState(5); // Conteggio carte nemico
+  const [enemyRevealedCard, setEnemyRevealedCard] = useState(null); // Carta rivelata del nemico
+  const [enemyRevealedHand, setEnemyRevealedHand] = useState(null); // Mano rivelata del nemico
   const [playerField, setPlayerField] = useState({
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
@@ -102,6 +105,9 @@ export const useGameState = () => {
     playerHand, setPlayerHand,
     playerDeck, setPlayerDeck,
     enemyDeck, setEnemyDeck,
+    enemyHandCount, setEnemyHandCount,
+    enemyRevealedCard, setEnemyRevealedCard,
+    enemyRevealedHand, setEnemyRevealedHand,
     playerField, setPlayerField,
     enemyField, setEnemyField,
     previewCard, setPreviewCard,
