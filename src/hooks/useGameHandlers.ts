@@ -1,4 +1,3 @@
-
 export const useGameHandlers = (gameState, syncGameState) => {
   const {
     gameData,
@@ -127,6 +126,29 @@ export const useGameHandlers = (gameState, syncGameState) => {
       setActionLog(prev => [...prev, newAction]);
       setTimeout(() => syncGameState(), 100);
       return;
+    }
+
+    // Gestione del cambio di ATK
+    if (toZone === 'updateATK') {
+      if (fromZone === 'monsters') {
+        setPlayerField(prev => {
+          const newField = { ...prev };
+          newField.monsters = [...prev.monsters];
+          newField.monsters[slotIndex] = card;
+          console.log('Updated monster ATK:', card);
+          return newField;
+        });
+        
+        const newAction = {
+          id: Date.now() + Math.random(),
+          player: gameData?.playerName || 'Player',
+          action: `changed ${card.name} ATK to ${card.atk}`,
+          timestamp: new Date().toLocaleTimeString()
+        };
+        setActionLog(prev => [...prev, newAction]);
+        setTimeout(() => syncGameState(), 100);
+        return;
+      }
     }
 
     // Remove from source zone
@@ -385,6 +407,24 @@ export const useGameHandlers = (gameState, syncGameState) => {
     handleEndTurn();
   };
 
+  // Nuova funzione per gestire i danni
+  const handleDealDamage = (damage, isToEnemy = true) => {
+    if (isToEnemy) {
+      setEnemyLifePoints(prev => Math.max(0, prev - damage));
+    } else {
+      setPlayerLifePoints(prev => Math.max(0, prev - damage));
+    }
+    
+    const newAction = {
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
+      action: `dealt ${damage} damage to ${isToEnemy ? 'opponent' : 'self'}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
+    setTimeout(() => syncGameState(), 100);
+  };
+
   return {
     handleGameStart,
     handlePlayerReady,
@@ -401,6 +441,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
     handleDiceRoll,
     handleCoinFlip,
     handleAttack,
-    handleTimeUp
+    handleTimeUp,
+    handleDealDamage
   };
 };

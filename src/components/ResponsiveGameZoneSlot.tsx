@@ -1,7 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { ArrowUp, Skull, Ban, BookOpen, Star, Eye } from 'lucide-react';
+import { ArrowUp, Skull, Ban, BookOpen, Star, Eye, Sword, Shield, Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import CardComponent from './CardComponent';
 
 const ResponsiveGameZoneSlot = ({ 
@@ -15,8 +17,13 @@ const ResponsiveGameZoneSlot = ({
   onFieldCardAction, 
   onCardClick, 
   isEffectActivated,
-  zoneLabel 
+  zoneLabel,
+  enemyField // Aggiungo il campo nemico per poter attaccare
 }) => {
+  const [showAttackMenu, setShowAttackMenu] = useState(false);
+  const [showEditATK, setShowEditATK] = useState(false);
+  const [newATK, setNewATK] = useState(card?.atk || 0);
+
   const handleClick = (e) => {
     e.stopPropagation();
     if (card) {
@@ -31,6 +38,70 @@ const ResponsiveGameZoneSlot = ({
     if (onFieldCardAction) {
       onFieldCardAction(action, card, zoneName, slotIndex);
     }
+  };
+
+  const handleAttack = (targetCard = null) => {
+    if (!card) return;
+    
+    const attackingATK = card.atk || 0;
+    let damage = 0;
+    let battleResult = '';
+
+    if (targetCard) {
+      const targetDEF = targetCard.position === 'defense' ? (targetCard.def || 0) : (targetCard.atk || 0);
+      const isTargetDefense = targetCard.position === 'defense';
+      
+      if (isTargetDefense) {
+        // Attacco contro mostro in difesa
+        if (attackingATK > targetDEF) {
+          damage = attackingATK - targetDEF;
+          battleResult = `${card.name} distrugge ${targetCard.name} in difesa! Danni: ${damage}`;
+        } else if (attackingATK < targetDEF) {
+          damage = targetDEF - attackingATK;
+          battleResult = `${targetCard.name} resiste! ${card.name} subisce ${damage} danni`;
+        } else {
+          battleResult = `Battaglia pari! Nessun danno`;
+        }
+      } else {
+        // Attacco contro mostro in attacco
+        if (attackingATK > targetCard.atk) {
+          damage = attackingATK - (targetCard.atk || 0);
+          battleResult = `${card.name} distrugge ${targetCard.name}! Danni: ${damage}`;
+        } else if (attackingATK < (targetCard.atk || 0)) {
+          damage = (targetCard.atk || 0) - attackingATK;
+          battleResult = `${targetCard.name} vince! ${card.name} viene distrutto. Danni: ${damage}`;
+        } else {
+          battleResult = `Battaglia pari! Entrambi i mostri vengono distrutti`;
+        }
+      }
+    } else {
+      // Attacco diretto
+      damage = attackingATK;
+      battleResult = `${card.name} attacca direttamente! Danni: ${damage}`;
+    }
+
+    const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${damage} danni ai life points avversari?`);
+    
+    if (shouldDealDamage && damage > 0) {
+      // Qui dovresti chiamare una funzione per ridurre i life points dell'avversario
+      console.log(`Dealing ${damage} damage to opponent`);
+      // onDealDamage?.(damage); // Implementare questa funzione nel componente genitore
+    }
+
+    setShowAttackMenu(false);
+  };
+
+  const handleEditATK = () => {
+    if (newATK !== card.atk) {
+      const updatedCard = { ...card, atk: newATK };
+      handleFieldCardAction('updateATK', updatedCard, zoneName, slotIndex);
+    }
+    setShowEditATK(false);
+  };
+
+  const getEnemyMonsters = () => {
+    if (!enemyField?.monsters) return [];
+    return enemyField.monsters.filter(monster => monster !== null);
   };
 
   return (
@@ -67,7 +138,7 @@ const ResponsiveGameZoneSlot = ({
               </div>
               
               {isEffectActivated && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg shadow-yellow-400/40"></div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/40"></div>
               )}
             </div>
           </ContextMenuTrigger>
@@ -76,6 +147,52 @@ const ResponsiveGameZoneSlot = ({
               <Eye className="mr-2 h-4 w-4" />
               View Card
             </ContextMenuItem>
+
+            {/* Opzioni posizione per mostri */}
+            {zoneName === 'monsters' && (
+              <>
+                <ContextMenuItem onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'attack' }, zoneName, slotIndex)} className="text-white hover:bg-gray-700">
+                  <Sword className="mr-2 h-4 w-4" />
+                  Set Attack Position
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' }, zoneName, slotIndex)} className="text-white hover:bg-gray-700">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Set Defense Position
+                </ContextMenuItem>
+              </>
+            )}
+
+            {/* Menu Attacco per mostri */}
+            {zoneName === 'monsters' && !card.faceDown && (
+              <ContextMenuSub>
+                <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
+                  <Sword className="mr-2 h-4 w-4" />
+                  Attack
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent className="bg-gray-800 border-gray-600">
+                  <ContextMenuItem onClick={() => handleAttack()} className="text-white hover:bg-gray-700">
+                    Direct Attack
+                  </ContextMenuItem>
+                  {getEnemyMonsters().map((enemyMonster, index) => (
+                    <ContextMenuItem 
+                      key={`enemy-${index}`}
+                      onClick={() => handleAttack(enemyMonster)} 
+                      className="text-white hover:bg-gray-700"
+                    >
+                      Attack {enemyMonster.name}
+                    </ContextMenuItem>
+                  ))}
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+            )}
+
+            {/* Edit ATK per mostri */}
+            {zoneName === 'monsters' && (
+              <ContextMenuItem onClick={() => setShowEditATK(true)} className="text-white hover:bg-gray-700">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit ATK
+              </ContextMenuItem>
+            )}
             
             <ContextMenuItem onClick={() => handleFieldCardAction('toHand', card, zoneName, slotIndex)} className="text-white hover:bg-gray-700">
               <ArrowUp className="mr-2 h-4 w-4" />
@@ -143,6 +260,39 @@ const ResponsiveGameZoneSlot = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal per modificare ATK */}
+      {showEditATK && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setShowEditATK(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-gray-800 p-4 rounded-lg border border-gray-600 min-w-64">
+            <h3 className="text-white font-bold mb-3">Edit ATK - {card.name}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-gray-300 text-sm">Current ATK: {card.atk}</label>
+                <Input
+                  type="number"
+                  value={newATK}
+                  onChange={(e) => setNewATK(parseInt(e.target.value) || 0)}
+                  className="bg-gray-700 text-white border-gray-600"
+                  placeholder="New ATK value"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleEditATK} className="bg-green-600 hover:bg-green-700">
+                  Save
+                </Button>
+                <Button onClick={() => setShowEditATK(false)} variant="outline">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

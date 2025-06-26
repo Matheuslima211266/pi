@@ -1,13 +1,100 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, Download, Plus, Minus, Search, Save } from 'lucide-react';
-import CardPreview from '@/components/CardPreview';
+import { FileText, Upload, Download, Plus, Minus, Search, Save, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
+
+// Componente CardPreview migliorato
+const ImprovedCardPreview = ({ card, onClose }) => {
+  if (!card) return null;
+
+  return (
+    <Card className="p-4 bg-slate-900 border-2 border-purple-400 shadow-2xl">
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="text-lg font-bold text-white truncate pr-2">{card.name}</h3>
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-1 h-auto"
+          >
+            <X size={16} />
+          </Button>
+        )}
+      </div>
+      
+      {/* Immagine carta */}
+      {card.art_link && (
+        <div className="mb-3">
+          <img 
+            src={card.art_link} 
+            alt={card.name}
+            className="w-full h-48 object-cover rounded-lg border border-purple-300"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+
+      {/* Info carta */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-300">Tipo:</span>
+          <span className="text-white font-medium">{card.type}</span>
+        </div>
+        
+        {card.attribute && (
+          <div className="flex justify-between">
+            <span className="text-gray-300">Attributo:</span>
+            <span className="text-white font-medium">{card.attribute}</span>
+          </div>
+        )}
+        
+        {card.star && (
+          <div className="flex justify-between">
+            <span className="text-gray-300">Livello:</span>
+            <span className="text-white font-medium">⭐ {card.star}</span>
+          </div>
+        )}
+        
+        {(card.atk !== undefined || card.def !== undefined) && (
+          <div className="flex justify-between">
+            <span className="text-gray-300">ATK/DEF:</span>
+            <span className="text-white font-medium">
+              {card.atk || '?'} / {card.def || '?'}
+            </span>
+          </div>
+        )}
+
+        {card.cost && (
+          <div className="flex justify-between">
+            <span className="text-gray-300">Costo:</span>
+            <span className="text-white font-medium">{card.cost}</span>
+          </div>
+        )}
+        
+        {card.extra_deck && (
+          <Badge className="bg-purple-600 text-white">Extra Deck</Badge>
+        )}
+      </div>
+
+      {/* Effetto */}
+      {card.effect && (
+        <div className="mt-3 pt-3 border-t border-slate-600">
+          <h4 className="text-sm font-semibold text-gray-300 mb-2">Effetto:</h4>
+          <p className="text-xs text-gray-200 bg-slate-800/50 p-2 rounded max-h-32 overflow-y-auto">
+            {card.effect}
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+};
 
 interface DeckBuilderProps {
   availableCards: any[];
@@ -17,8 +104,21 @@ interface DeckBuilderProps {
 
 const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderProps) => {
   const [deckName, setDeckName] = useState(initialDeck?.name || 'Il Mio Deck');
-  const [mainDeck, setMainDeck] = useState<any[]>(initialDeck?.mainDeck || []);
-  const [extraDeck, setExtraDeck] = useState<any[]>(initialDeck?.extraDeck || []);
+  // Modificato: ogni carta nel deck ha solo l'ID originale + count
+  const [mainDeck, setMainDeck] = useState<{[cardId: number]: number}>(
+    initialDeck?.mainDeck ? 
+    initialDeck.mainDeck.reduce((acc, card) => {
+      acc[card.id] = (acc[card.id] || 0) + 1;
+      return acc;
+    }, {}) : {}
+  );
+  const [extraDeck, setExtraDeck] = useState<{[cardId: number]: number}>(
+    initialDeck?.extraDeck ? 
+    initialDeck.extraDeck.reduce((acc, card) => {
+      acc[card.id] = (acc[card.id] || 0) + 1;
+      return acc;
+    }, {}) : {}
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [previewCard, setPreviewCard] = useState<any>(null);
 
@@ -39,10 +139,9 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     };
   }, [availableCards, searchTerm]);
 
-  // Conta le carte nel deck
-  const getCardCount = (cardId: number, deck: any[]) => {
-    return deck.filter(card => card.id === cardId).length;
-  };
+  // Conta totale carte nei deck
+  const mainDeckTotal = Object.values(mainDeck).reduce((sum: number, count: number) => sum + count, 0);
+  const extraDeckTotal = Object.values(extraDeck).reduce((sum: number, count: number) => sum + count, 0);
 
   // Aggiunge una carta al deck
   const addCardToDeck = (card: any, isExtra: boolean = false) => {
@@ -50,19 +149,23 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     const setTargetDeck = isExtra ? setExtraDeck : setMainDeck;
     const maxCards = isExtra ? 15 : 60;
     const maxCopies = 3;
+    const currentTotal = isExtra ? extraDeckTotal : mainDeckTotal;
 
-    if (targetDeck.length >= maxCards) {
+    if (currentTotal >= maxCards) {
       alert(`Deck ${isExtra ? 'Extra' : 'Main'} pieno! Massimo ${maxCards} carte.`);
       return;
     }
 
-    const currentCount = getCardCount(card.id, targetDeck);
+    const currentCount = targetDeck[card.id] || 0;
     if (currentCount >= maxCopies) {
       alert(`Massimo ${maxCopies} copie della stessa carta!`);
       return;
     }
 
-    setTargetDeck([...targetDeck, { ...card, deckId: Date.now() + Math.random() }]);
+    setTargetDeck({
+      ...targetDeck,
+      [card.id]: currentCount + 1
+    });
   };
 
   // Rimuove una carta dal deck
@@ -70,12 +173,31 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     const targetDeck = isExtra ? extraDeck : mainDeck;
     const setTargetDeck = isExtra ? setExtraDeck : setMainDeck;
 
-    const cardIndex = targetDeck.findIndex(card => card.id === cardId);
-    if (cardIndex !== -1) {
-      const newDeck = [...targetDeck];
-      newDeck.splice(cardIndex, 1);
+    const currentCount = targetDeck[cardId] || 0;
+    if (currentCount <= 1) {
+      const newDeck = { ...targetDeck };
+      delete newDeck[cardId];
       setTargetDeck(newDeck);
+    } else {
+      setTargetDeck({
+        ...targetDeck,
+        [cardId]: currentCount - 1
+      });
     }
+  };
+
+  // Converti deck format per export/save
+  const convertDeckToArray = (deckObj: {[cardId: number]: number}, isExtra: boolean = false) => {
+    const result: any[] = [];
+    Object.entries(deckObj).forEach(([cardId, count]) => {
+      const card = availableCards.find(c => c.id === parseInt(cardId));
+      if (card) {
+        for (let i = 0; i < count; i++) {
+          result.push({ ...card });
+        }
+      }
+    });
+    return result;
   };
 
   // Import da JSON
@@ -88,15 +210,30 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       try {
         const deckData = JSON.parse(e.target?.result as string);
         if (deckData.name) setDeckName(deckData.name);
-        if (deckData.mainDeck) setMainDeck(deckData.mainDeck);
-        if (deckData.extraDeck) setExtraDeck(deckData.extraDeck);
+        
+        // Converti array in oggetto conteggio
+        if (deckData.mainDeck) {
+          const mainCount: {[cardId: number]: number} = {};
+          deckData.mainDeck.forEach((card: any) => {
+            mainCount[card.id] = (mainCount[card.id] || 0) + 1;
+          });
+          setMainDeck(mainCount);
+        }
+        
+        if (deckData.extraDeck) {
+          const extraCount: {[cardId: number]: number} = {};
+          deckData.extraDeck.forEach((card: any) => {
+            extraCount[card.id] = (extraCount[card.id] || 0) + 1;
+          });
+          setExtraDeck(extraCount);
+        }
+        
         alert('Deck importato con successo!');
       } catch (error) {
         alert('Errore nell\'importazione del file JSON');
       }
     };
     reader.readAsText(file);
-    // Reset input
     event.target.value = '';
   };
 
@@ -113,18 +250,17 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const newMainDeck: any[] = [];
-        const newExtraDeck: any[] = [];
+        const newMainDeck: {[cardId: number]: number} = {};
+        const newExtraDeck: {[cardId: number]: number} = {};
 
         jsonData.forEach((row: any) => {
-          // Trova la carta per nome
           const card = availableCards.find(c => c.name === row.Nome);
           if (card) {
-            const deckCard = { ...card, deckId: Date.now() + Math.random() };
+            const quantity = parseInt(row.Quantità) || 1;
             if (row.Deck === 'Extra') {
-              newExtraDeck.push(deckCard);
+              newExtraDeck[card.id] = (newExtraDeck[card.id] || 0) + quantity;
             } else {
-              newMainDeck.push(deckCard);
+              newMainDeck[card.id] = (newMainDeck[card.id] || 0) + quantity;
             }
           }
         });
@@ -137,7 +273,6 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset input
     event.target.value = '';
   };
 
@@ -145,14 +280,14 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
   const validateDeck = () => {
     const errors = [];
     
-    if (mainDeck.length < 40) {
-      errors.push(`Main Deck deve avere almeno 40 carte (attualmente: ${mainDeck.length})`);
+    if (mainDeckTotal < 40) {
+      errors.push(`Main Deck deve avere almeno 40 carte (attualmente: ${mainDeckTotal})`);
     }
-    if (mainDeck.length > 60) {
-      errors.push(`Main Deck può avere massimo 60 carte (attualmente: ${mainDeck.length})`);
+    if (mainDeckTotal > 60) {
+      errors.push(`Main Deck può avere massimo 60 carte (attualmente: ${mainDeckTotal})`);
     }
-    if (extraDeck.length > 15) {
-      errors.push(`Extra Deck può avere massimo 15 carte (attualmente: ${extraDeck.length})`);
+    if (extraDeckTotal > 15) {
+      errors.push(`Extra Deck può avere massimo 15 carte (attualmente: ${extraDeckTotal})`);
     }
 
     return errors;
@@ -166,12 +301,15 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       return;
     }
 
+    const mainDeckArray = convertDeckToArray(mainDeck);
+    const extraDeckArray = convertDeckToArray(extraDeck, true);
+
     const deckData = {
       name: deckName,
-      mainDeck,
-      extraDeck,
-      cards: [...mainDeck, ...extraDeck],
-      totalCards: mainDeck.length + extraDeck.length
+      mainDeck: mainDeckArray,
+      extraDeck: extraDeckArray,
+      cards: [...mainDeckArray, ...extraDeckArray],
+      totalCards: mainDeckTotal + extraDeckTotal
     };
 
     onDeckSave(deckData);
@@ -180,11 +318,14 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
 
   // Export JSON
   const exportJSON = () => {
+    const mainDeckArray = convertDeckToArray(mainDeck);
+    const extraDeckArray = convertDeckToArray(extraDeck, true);
+
     const deckData = {
       name: deckName,
-      mainDeck,
-      extraDeck,
-      cards: [...mainDeck, ...extraDeck]
+      mainDeck: mainDeckArray,
+      extraDeck: extraDeckArray,
+      cards: [...mainDeckArray, ...extraDeckArray]
     };
 
     const dataStr = JSON.stringify(deckData, null, 2);
@@ -199,27 +340,41 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
 
   // Export Excel
   const exportExcel = () => {
-    const mainDeckData = mainDeck.map(card => ({
-      Nome: card.name,
-      Tipo: card.type,
-      Attributo: card.attribute || 'N/A',
-      Livello: card.star || 'N/A',
-      ATK: card.atk || 'N/A',
-      DEF: card.def || 'N/A',
-      Deck: 'Main'
-    }));
+    const data: any[] = [];
+    
+    Object.entries(mainDeck).forEach(([cardId, count]) => {
+      const card = availableCards.find(c => c.id === parseInt(cardId));
+      if (card) {
+        data.push({
+          Nome: card.name,
+          Quantità: count,
+          Tipo: card.type,
+          Attributo: card.attribute || 'N/A',
+          Livello: card.star || 'N/A',
+          ATK: card.atk || 'N/A',
+          DEF: card.def || 'N/A',
+          Deck: 'Main'
+        });
+      }
+    });
 
-    const extraDeckData = extraDeck.map(card => ({
-      Nome: card.name,
-      Tipo: card.type,
-      Attributo: card.attribute || 'N/A',
-      Livello: card.star || 'N/A',
-      ATK: card.atk || 'N/A',
-      DEF: card.def || 'N/A',
-      Deck: 'Extra'
-    }));
+    Object.entries(extraDeck).forEach(([cardId, count]) => {
+      const card = availableCards.find(c => c.id === parseInt(cardId));
+      if (card) {
+        data.push({
+          Nome: card.name,
+          Quantità: count,
+          Tipo: card.type,
+          Attributo: card.attribute || 'N/A',
+          Livello: card.star || 'N/A',
+          ATK: card.atk || 'N/A',
+          DEF: card.def || 'N/A',
+          Deck: 'Extra'
+        });
+      }
+    });
 
-    const worksheet = XLSX.utils.json_to_sheet([...mainDeckData, ...extraDeckData]);
+    const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Deck');
     XLSX.writeFile(workbook, `${deckName.replace(/\s+/g, '_')}.xlsx`);
@@ -231,12 +386,12 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
         {/* Card Preview - Left Side */}
         <div className="w-80 flex-shrink-0">
           {previewCard ? (
-            <CardPreview 
+            <ImprovedCardPreview 
               card={previewCard} 
               onClose={() => setPreviewCard(null)} 
             />
           ) : (
-            <Card className="p-6 bg-slate-800/90 border-purple-400 h-96 flex items-center justify-center">
+            <Card className="p-6 bg-slate-900 border-2 border-purple-400 h-96 flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <FileText size={48} className="mx-auto mb-4" />
                 <p>Seleziona una carta per vedere i dettagli</p>
@@ -247,7 +402,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
 
         {/* Main Deck Builder - Right Side */}
         <div className="flex-1">
-          <Card className="p-4 bg-slate-800/90 border-purple-400">
+          <Card className="p-4 bg-slate-900 border-2 border-purple-400">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <FileText className="text-purple-400" size={24} />
@@ -301,17 +456,17 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                 value={deckName}
                 onChange={(e) => setDeckName(e.target.value)}
                 placeholder="Nome del deck"
-                className="bg-slate-700 text-white border-slate-600"
+                className="bg-slate-800 text-white border-slate-600"
               />
             </div>
 
             {/* Contatori deck */}
             <div className="flex gap-4 mb-4">
-              <Badge className={`px-3 py-1 ${mainDeck.length >= 40 && mainDeck.length <= 60 ? 'bg-green-600' : 'bg-red-600'}`}>
-                Main Deck: {mainDeck.length}/60 (min: 40)
+              <Badge className={`px-3 py-1 ${mainDeckTotal >= 40 && mainDeckTotal <= 60 ? 'bg-green-600' : 'bg-red-600'}`}>
+                Main Deck: {mainDeckTotal}/60 (min: 40)
               </Badge>
-              <Badge className={`px-3 py-1 ${extraDeck.length <= 15 ? 'bg-green-600' : 'bg-red-600'}`}>
-                Extra Deck: {extraDeck.length}/15
+              <Badge className={`px-3 py-1 ${extraDeckTotal <= 15 ? 'bg-green-600' : 'bg-red-600'}`}>
+                Extra Deck: {extraDeckTotal}/15
               </Badge>
             </div>
 
@@ -330,19 +485,19 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Cerca carte..."
-                    className="bg-slate-700 text-white border-slate-600"
+                    className="bg-slate-800 text-white border-slate-600"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Main Deck Cards */}
-                  <Card className="p-4 bg-slate-700/50">
+                  <Card className="p-4 bg-slate-800/50">
                     <h3 className="text-lg font-semibold text-white mb-3">Carte Main Deck</h3>
                     <div className="max-h-96 overflow-y-auto space-y-2">
                       {mainDeckCards.map(card => (
                         <div 
                           key={card.id} 
-                          className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
                           onMouseEnter={() => setPreviewCard(card)}
                         >
                           <div className="flex-1">
@@ -351,12 +506,12 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
-                              {getCardCount(card.id, mainDeck)}/3
+                              {mainDeck[card.id] || 0}/3
                             </Badge>
                             <Button
                               size="sm"
                               onClick={() => addCardToDeck(card)}
-                              disabled={getCardCount(card.id, mainDeck) >= 3}
+                              disabled={(mainDeck[card.id] || 0) >= 3}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               <Plus size={14} />
@@ -368,13 +523,13 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                   </Card>
 
                   {/* Extra Deck Cards */}
-                  <Card className="p-4 bg-slate-700/50">
+                  <Card className="p-4 bg-slate-800/50">
                     <h3 className="text-lg font-semibold text-white mb-3">Carte Extra Deck</h3>
                     <div className="max-h-96 overflow-y-auto space-y-2">
                       {extraDeckCards.map(card => (
                         <div 
                           key={card.id} 
-                          className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
                           onMouseEnter={() => setPreviewCard(card)}
                         >
                           <div className="flex-1">
@@ -383,12 +538,12 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
-                              {getCardCount(card.id, extraDeck)}/3
+                              {extraDeck[card.id] || 0}/3
                             </Badge>
                             <Button
                               size="sm"
                               onClick={() => addCardToDeck(card, true)}
-                              disabled={getCardCount(card.id, extraDeck) >= 3}
+                              disabled={(extraDeck[card.id] || 0) >= 3}
                               className="bg-purple-600 hover:bg-purple-700"
                             >
                               <Plus size={14} />
@@ -402,55 +557,73 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
               </TabsContent>
 
               <TabsContent value="main-deck">
-                <Card className="p-4 bg-slate-700/50">
-                  <h3 className="text-lg font-semibold text-white mb-3">Main Deck ({mainDeck.length})</h3>
+                <Card className="p-4 bg-slate-800/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">Main Deck ({mainDeckTotal})</h3>
                   <div className="max-h-96 overflow-y-auto space-y-2">
-                    {mainDeck.map(card => (
-                      <div 
-                        key={card.deckId} 
-                        className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
-                        onMouseEnter={() => setPreviewCard(card)}
-                      >
-                        <div className="flex-1">
-                          <div className="text-white font-medium">{card.name}</div>
-                          <div className="text-gray-400 text-sm">{card.type}</div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => removeCardFromDeck(card.id)}
+                    {Object.entries(mainDeck).map(([cardId, count]) => {
+                      const card = availableCards.find(c => c.id === parseInt(cardId));
+                      if (!card) return null;
+                      return (
+                        <div 
+                          key={cardId}
+                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
+                          onMouseEnter={() => setPreviewCard(card)}
                         >
-                          <Minus size={14} />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex-1">
+                            <div className="text-white font-medium">{card.name}</div>
+                            <div className="text-gray-400 text-sm">{card.type}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {count}x
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeCardFromDeck(card.id)}
+                            >
+                              <Minus size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
               </TabsContent>
 
               <TabsContent value="extra-deck">
-                <Card className="p-4 bg-slate-700/50">
-                  <h3 className="text-lg font-semibold text-white mb-3">Extra Deck ({extraDeck.length})</h3>
+                <Card className="p-4 bg-slate-800/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">Extra Deck ({extraDeckTotal})</h3>
                   <div className="max-h-96 overflow-y-auto space-y-2">
-                    {extraDeck.map(card => (
-                      <div 
-                        key={card.deckId} 
-                        className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
-                        onMouseEnter={() => setPreviewCard(card)}
-                      >
-                        <div className="flex-1">
-                          <div className="text-white font-medium">{card.name}</div>
-                          <div className="text-gray-400 text-sm">{card.type}</div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => removeCardFromDeck(card.id, true)}
+                    {Object.entries(extraDeck).map(([cardId, count]) => {
+                      const card = availableCards.find(c => c.id === parseInt(cardId));
+                      if (!card) return null;
+                      return (
+                        <div 
+                          key={cardId}
+                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
+                          onMouseEnter={() => setPreviewCard(card)}
                         >
-                          <Minus size={14} />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex-1">
+                            <div className="text-white font-medium">{card.name}</div>
+                            <div className="text-gray-400 text-sm">{card.type}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {count}x
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeCardFromDeck(card.id, true)}
+                            >
+                              <Minus size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
               </TabsContent>
@@ -459,7 +632,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
             <div className="flex justify-end mt-4">
               <Button
                 onClick={saveDeck}
-                className="bg-gold-600 hover:bg-gold-700 text-black font-semibold"
+                className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold"
                 disabled={validateDeck().length > 0}
               >
                 <Save size={16} />
