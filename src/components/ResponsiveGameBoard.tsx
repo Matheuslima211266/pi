@@ -1,19 +1,35 @@
 
 import React from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
+import EnemyHand from './EnemyHand';
+import PlayerHand from './PlayerHand';
 
 const ResponsiveGameBoard = ({ 
   playerField, 
   enemyField, 
+  playerHand,
+  enemyHandCount,
+  enemyRevealedCard,
+  enemyRevealedHand,
   onAttack, 
   onCardPlace, 
   selectedCardFromHand, 
   onCardPreview, 
   onCardMove, 
-  onDrawCard 
+  onDrawCard,
+  setSelectedCardFromHand 
 }) => {
   return (
     <div className="battlefield-container">
+      {/* Mano Avversario (Ruotata 180°) */}
+      <div className="hand-zone opponent-hand">
+        <EnemyHand 
+          handCount={enemyHandCount}
+          revealedCard={enemyRevealedCard}
+          revealedHand={enemyRevealedHand}
+        />
+      </div>
+
       {/* Zona Avversario - Prima riga: Magie/Trappole */}
       <div className="opponent-zone">
         <ResponsiveGameZones 
@@ -44,18 +60,32 @@ const ResponsiveGameBoard = ({
         />
       </div>
       
-      {/* Zona Centrale - Field Spells */}
+      {/* Zona Centrale con Field Spells e Graveyards */}
       <div className="center-zone">
-        <div className="card-slot field-spell-zone field-spell-slot">
-          <div className="zone-label">Field Spell</div>
-          <div className="text-2xl">🏔️</div>
+        {/* Gruppo Avversario: Graveyard + Field Spell */}
+        <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
+          <div className="card-slot graveyard-slot graveyard-slot-center">
+            <div className="zone-label">Graveyard</div>
+            <div className="text-2xl">💀</div>
+          </div>
+          <div className="card-slot field-spell-zone field-spell-slot">
+            <div className="zone-label">Field Spell</div>
+            <div className="text-2xl">🏔️</div>
+          </div>
         </div>
         
         <div className="battle-field-label">BATTLE FIELD</div>
         
-        <div className="card-slot field-spell-zone field-spell-slot">
-          <div className="zone-label">Field Spell</div>
-          <div className="text-2xl">🏔️</div>
+        {/* Gruppo Giocatore: Field Spell + Graveyard */}
+        <div className="center-group">
+          <div className="card-slot field-spell-zone field-spell-slot">
+            <div className="zone-label">Field Spell</div>
+            <div className="text-2xl">🏔️</div>
+          </div>
+          <div className="card-slot graveyard-slot graveyard-slot-center">
+            <div className="zone-label">Graveyard</div>
+            <div className="text-2xl">💀</div>
+          </div>
         </div>
       </div>
       
@@ -86,6 +116,19 @@ const ResponsiveGameBoard = ({
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
           zoneType="spellsTraps"
+        />
+      </div>
+
+      {/* Mano Giocatore */}
+      <div className="hand-zone">
+        <PlayerHand 
+          cards={playerHand}
+          onPlayCard={setSelectedCardFromHand}
+          isPlayerTurn={true}
+          onCardPreview={onCardPreview}
+          onCardMove={onCardMove}
+          onShowCard={() => {}}
+          onShowHand={() => {}}
         />
       </div>
       

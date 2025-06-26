@@ -1,11 +1,8 @@
 
 import React from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
-import PlayerHand from '@/components/PlayerHand';
-import EnemyHand from '@/components/EnemyHand';
 import ActionLog from '@/components/ActionLog';
 import DiceAndCoin from '@/components/DiceAndCoin';
-import GameSidebar from '@/components/GameSidebar';
 import CardPreview from '@/components/CardPreview';
 
 const GameLayout = ({
@@ -30,6 +27,7 @@ const GameLayout = ({
     timeRemaining,
     chatMessages,
     setPreviewCard,
+    setSelectedCardFromHand,
     setTimeRemaining
   } = gameState;
 
@@ -73,7 +71,7 @@ const GameLayout = ({
         
         <div className="life-points-section">
           <div className="player-info">
-            <div className="player-name">Tu</div>
+            <div class="player-name">Tu</div>
             <div className="life-points">{playerLifePoints}</div>
           </div>
         </div>
@@ -96,39 +94,22 @@ const GameLayout = ({
       
       {/* Area principale del campo */}
       <div className="field-area">
-        {/* Enemy Hand - Parte superiore */}
-        <div className="h-20 flex items-center justify-center mb-2">
-          <EnemyHand 
-            handCount={enemyHandCount}
-            revealedCard={enemyRevealedCard}
-            revealedHand={enemyRevealedHand}
-          />
-        </div>
-        
-        {/* Campo da gioco principale */}
+        {/* Campo da gioco principale con nuovo layout */}
         <ResponsiveGameBoard 
           playerField={playerField}
           enemyField={enemyField}
+          playerHand={playerHand}
+          enemyHandCount={enemyHandCount}
+          enemyRevealedCard={enemyRevealedCard}
+          enemyRevealedHand={enemyRevealedHand}
           onAttack={handleAttack}
           onCardPlace={handleCardPlace}
           selectedCardFromHand={selectedCardFromHand}
           onCardPreview={setPreviewCard}
           onCardMove={handleCardMove}
           onDrawCard={handleDrawCard}
+          setSelectedCardFromHand={setSelectedCardFromHand}
         />
-        
-        {/* Player Hand - Parte inferiore */}
-        <div className="h-24 flex items-center justify-center mt-2">
-          <PlayerHand 
-            cards={playerHand}
-            onPlayCard={gameState.setSelectedCardFromHand}
-            isPlayerTurn={true}
-            onCardPreview={setPreviewCard}
-            onCardMove={handleCardMove}
-            onShowCard={handleShowCard}
-            onShowHand={handleShowHand}
-          />
-        </div>
       </div>
       
       {/* Card Preview Modal */}

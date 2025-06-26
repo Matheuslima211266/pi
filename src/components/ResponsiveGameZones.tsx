@@ -45,7 +45,7 @@ const ResponsiveGameZones = ({
     const slots = [];
     
     if (zoneType === 'spellsTraps') {
-      // Prima riga: Extra Deck/Deck, Spell/Trap slots, Graveyard/Banished
+      // Prima riga: Extra Deck/Deck, Spell/Trap slots, Banished Face-down
       if (isEnemy) {
         // Extra Deck per avversario (nascosto)
         slots.push(
@@ -89,11 +89,11 @@ const ResponsiveGameZones = ({
         );
       }
 
-      // Graveyard
+      // Banished Face-down
       slots.push(
-        <div key="graveyard" className="card-slot graveyard-slot">
-          <div className="zone-label">Graveyard</div>
-          <div className="text-xl">💀</div>
+        <div key="banished-facedown" className="card-slot banished-facedown-slot">
+          <div className="zone-label">Banish FD</div>
+          <div className="text-xl">🔒</div>
         </div>
       );
     } else if (zoneType === 'monsters') {
