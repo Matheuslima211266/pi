@@ -76,22 +76,26 @@ const WaitingForPlayersScreen = ({
     if (bothReady && onGameStart && countdown === null) {
       console.log('Both players ready, starting 5 second countdown...');
       setCountdown(5);
-      
-      const interval = setInterval(() => {
+    }
+  }, [bothReady, onGameStart, countdown]);
+
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      const timer = setTimeout(() => {
         setCountdown(prev => {
           if (prev === null || prev <= 1) {
-            clearInterval(interval);
             console.log('Countdown finished, starting game...');
-            onGameStart();
+            onGameStart && onGameStart();
             return null;
           }
           return prev - 1;
         });
       }, 1000);
-      
-      return () => clearInterval(interval);
+
+      return () => clearTimeout(timer);
     }
-  }, [bothReady, onGameStart, countdown]);
+  }, [countdown, onGameStart]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
