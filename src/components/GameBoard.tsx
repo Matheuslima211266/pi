@@ -5,11 +5,11 @@ import GameZones from './GameZones';
 
 const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCardFromHand, onCardPreview, onCardMove, onDrawCard }) => {
   return (
-    <div className="h-full">
-      <Card className="bg-slate-800/50 border border-slate-600 h-full">
-        <div className="h-full flex flex-col">
+    <div className="h-full overflow-auto">
+      <Card className="bg-slate-800/50 border border-slate-600 min-h-full">
+        <div className="min-h-full flex flex-col">
           {/* Campo avversario - Compressed */}
-          <div className="h-1/2 transform rotate-180">
+          <div className="min-h-[45vh] transform rotate-180 overflow-auto">
             <GameZones 
               field={enemyField}
               isEnemy={true}
@@ -30,7 +30,7 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
           </div>
           
           {/* Campo giocatore - Compressed */}
-          <div className="h-1/2">
+          <div className="min-h-[45vh] overflow-auto">
             <GameZones 
               field={playerField}
               isEnemy={false}

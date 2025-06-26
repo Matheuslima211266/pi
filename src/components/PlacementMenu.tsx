@@ -18,9 +18,9 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           { key: 'activate', label: 'Activate Now', icon: '⚡' },
           { key: 'set', label: 'Set Face-down', icon: '🔒' }
         ];
-      case 'graveyard':
+      case 'deadZone':
         return [
-          { key: 'send', label: 'Send to Graveyard', icon: '💀' }
+          { key: 'send', label: 'Send to Dead Zone', icon: '💀' }
         ];
       case 'banished':
         return [
@@ -53,22 +53,26 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
   return (
     <>
       <div 
-        className="fixed bg-gray-800 border border-gray-600 rounded-lg p-1 shadow-lg z-50 min-w-32"
-        style={{ left: placementMenu.x, top: placementMenu.y }}
+        className="fixed bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg z-50 min-w-40"
+        style={{ 
+          left: `${placementMenu.x}px`, 
+          top: `${placementMenu.y}px`,
+          transform: 'translate(-50%, -50%)'
+        }}
       >
-        <div className="text-xs font-semibold mb-1 text-gray-300">
+        <div className="text-sm font-semibold mb-2 text-gray-300">
           {placementMenu.card?.name}
         </div>
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {getMenuOptions(placementMenu.zoneName).map((option) => (
             <Button 
               key={option.key}
               size="sm" 
               onClick={() => onPlacementChoice(option.key)}
-              className="w-full text-left justify-start text-xs h-5"
+              className="w-full text-left justify-start text-sm h-7 bg-gray-700 hover:bg-gray-600 text-white"
               variant="ghost"
             >
-              <span className="mr-1">{option.icon}</span>
+              <span className="mr-2">{option.icon}</span>
               {option.label}
             </Button>
           ))}
@@ -77,7 +81,7 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           size="sm" 
           variant="outline"
           onClick={onClose}
-          className="w-full mt-1 text-xs h-5"
+          className="w-full mt-2 text-sm h-7 border-gray-600 text-gray-300 hover:bg-gray-700"
         >
           Cancel
         </Button>

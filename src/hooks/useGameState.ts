@@ -20,7 +20,7 @@ export const useGameState = () => {
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    deadZone: [], // Renamed from graveyard to deadZone
+    deadZone: [],
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -31,7 +31,7 @@ export const useGameState = () => {
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    deadZone: [], // Renamed from graveyard to deadZone
+    deadZone: [],
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -65,7 +65,7 @@ export const useGameState = () => {
     return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   };
 
-  // Funzione helper per aggiungere carte alla Dead Zone (renamed from graveyard)
+  // Funzione helper per aggiungere carte alla Dead Zone
   const addCardToDeadZone = (card, isPlayer = true) => {
     console.log('[useGameState] Adding card to dead zone:', card.name);
     if (isPlayer) {
@@ -138,12 +138,8 @@ export const useGameState = () => {
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Create a normal 40-card deck (not 120!)
-    const normalDeckSize = Math.min(40, mainDeckCards.length);
-    const selectedCards = shuffleArray([...mainDeckCards]).slice(0, normalDeckSize);
-    
-    // Generate unique IDs for the selected cards
-    const playerMainDeck = selectedCards.map((card, index) => ({
+    // Use the actual deck data from the JSON instead of limiting to 40 cards
+    const playerMainDeck = mainDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', index)
     }));
@@ -157,8 +153,8 @@ export const useGameState = () => {
     const shuffledHand = shuffledMainDeck.slice(0, 5);
     const remainingDeck = shuffledMainDeck.slice(5);
 
-    // Create enemy deck (also normal size)
-    const enemyMainDeck = selectedCards.map((card, index) => ({
+    // Create enemy deck with same cards as player
+    const enemyMainDeck = mainDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, 'enemy', index)
     }));
@@ -180,13 +176,13 @@ export const useGameState = () => {
     setPlayerDeck(remainingDeck);
     setEnemyDeck(enemyRemainingDeck);
     setPlayerHand(shuffledHand);
-    setEnemyHandCount(enemyStartingHand.length); // Set correct enemy hand count
+    setEnemyHandCount(enemyStartingHand.length);
     
     setPlayerField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: remainingDeck,
-      deadZone: testDeadZoneCards, // Renamed from graveyard
+      deadZone: testDeadZoneCards,
       banished: [],
       banishedFaceDown: []
     }));
@@ -195,7 +191,7 @@ export const useGameState = () => {
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: enemyRemainingDeck,
-      deadZone: [testDeadZoneCards[0]], // Renamed from graveyard
+      deadZone: [testDeadZoneCards[0]],
       banished: [],
       banishedFaceDown: []
     }));
@@ -271,7 +267,7 @@ export const useGameState = () => {
     shuffleArray,
     initializeGame,
     generateUniqueCardId,
-    addCardToDeadZone,  // Renamed from addCardToGraveyard
+    addCardToDeadZone,
     moveCardBetweenZones,
     millCards
   };
