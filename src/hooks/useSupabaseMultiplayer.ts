@@ -84,7 +84,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
   }, [user]);
 
-  // Join game session (for guest) - FIXED VERSION
+  // Join game session (for guest) - COMPLETELY REWRITTEN VERSION
   const joinGameSession = useCallback(async (gameId: string, playerName: string) => {
     if (!user) {
       console.error('No user for joinGameSession');
@@ -93,93 +93,93 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
 
     try {
-      console.log('=== GUEST ATTEMPTING TO JOIN ===', { 
-        gameId, 
+      console.log('=== GUEST ATTEMPTING TO JOIN (v2) ===', { 
+        gameId: gameId.toUpperCase(), 
         playerName, 
         userId: user.id 
       });
       
-      // First, find the game session with more detailed logging
-      console.log('Searching for game session with game_id:', gameId);
+      // Step 1: Search for the game session - more flexible approach
+      console.log('Step 1: Searching for game session...');
       
-      const { data: existingSession, error: fetchError } = await supabase
+      const { data: sessions, error: searchError } = await supabase
         .from('game_sessions')
         .select('*')
-        .eq('game_id', gameId.toUpperCase()) // Ensure uppercase
-        .single();
+        .eq('game_id', gameId.toUpperCase())
+        .in('status', ['waiting', 'active']);
 
-      console.log('Database search result:', {
-        data: existingSession,
-        error: fetchError
-      });
+      console.log('Search result:', { sessions, searchError });
 
-      if (fetchError) {
-        console.error('Error fetching game session:', fetchError);
-        if (fetchError.code === 'PGRST116') {
-          setError('Game ID not found. Please check the ID and try again.');
-        } else {
-          setError('Failed to find game session');
-        }
+      if (searchError) {
+        console.error('Search error:', searchError);
+        setError('Failed to search for game session');
         return null;
       }
 
-      if (!existingSession) {
-        console.error('No session found for game ID:', gameId);
-        setError('Game not found');
+      if (!sessions || sessions.length === 0) {
+        console.error('No sessions found for game ID:', gameId);
+        setError('Game ID not found. Please check the ID and try again.');
         return null;
       }
 
-      console.log('Found existing session:', existingSession);
+      const existingSession = sessions[0];
+      console.log('Step 2: Found session:', existingSession);
 
-      // Check if game is full
-      if (existingSession.guest_id && existingSession.guest_id !== user.id) {
-        console.error('Game is already full');
-        setError('Game is already full');
-        return null;
-      }
-
-      // Check if user is trying to join their own game
+      // Step 2: Validation checks
       if (existingSession.host_id === user.id) {
         console.error('Cannot join your own game');
         setError('Cannot join your own game');
         return null;
       }
 
-      // If guest is already in this session, just return it
+      if (existingSession.guest_id && existingSession.guest_id !== user.id) {
+        console.error('Game is already full');
+        setError('Game is already full');
+        return null;
+      }
+
+      // Step 3: If already joined, just return the session
       if (existingSession.guest_id === user.id) {
-        console.log('Guest already joined, returning existing session');
+        console.log('Already joined this session');
         const gameSession = castToGameSession(existingSession);
         setCurrentSession(gameSession);
         setError(null);
         return gameSession;
       }
 
-      // Join the game by updating the session
-      console.log('Updating session to add guest:', existingSession.id);
+      // Step 4: Join the game
+      console.log('Step 3: Joining game by updating session...');
+      const updateData = {
+        guest_id: user.id,
+        guest_name: playerName,
+        status: 'active' as const,
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Update data:', updateData);
       
       const { data: updatedSession, error: updateError } = await supabase
         .from('game_sessions')
-        .update({
-          guest_id: user.id,
-          guest_name: playerName,
-          status: 'active'
-        })
+        .update(updateData)
         .eq('id', existingSession.id)
         .select()
         .single();
 
-      console.log('Update result:', {
-        data: updatedSession,
-        error: updateError
-      });
+      console.log('Update result:', { updatedSession, updateError });
 
       if (updateError) {
-        console.error('Error joining game session:', updateError);
-        setError('Failed to join game session');
+        console.error('Update error:', updateError);
+        setError(`Failed to join game session: ${updateError.message}`);
         return null;
       }
 
-      console.log('=== GUEST SUCCESSFULLY JOINED ===', updatedSession);
+      if (!updatedSession) {
+        console.error('No updated session returned');
+        setError('Failed to join game session - no response');
+        return null;
+      }
+
+      console.log('=== GUEST SUCCESSFULLY JOINED (v2) ===', updatedSession);
       const gameSession = castToGameSession(updatedSession);
       setCurrentSession(gameSession);
       setError(null);
@@ -192,8 +192,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       
       return gameSession;
     } catch (err) {
-      console.error('Error in joinGameSession:', err);
-      setError('Failed to join game session');
+      console.error('Error in joinGameSession (v2):', err);
+      setError(`Failed to join game session: ${err instanceof Error ? err.message : 'Unknown error'}`);
       return null;
     }
   }, [user, toast]);
