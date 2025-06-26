@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import AuthComponent from '@/components/AuthComponent';
@@ -32,17 +31,14 @@ const Index = () => {
     ...handlers,
     handleSendMessage: (message: string) => {
       handlers.handleSendMessage(message);
-      // Send via real-time sync
       gameSync.sendGameAction('CHAT_MESSAGE', {
         message,
         playerName: gameState.gameData?.playerName || 'Player'
       });
-      // Also send via old system
       multiplayerHook.sendChatMessage(message, gameState.gameData?.playerName || 'Player');
     },
     handleCardPlace: (card: any, zoneName: string, slotIndex: number, isFaceDown?: boolean, position?: string) => {
       handlers.handleCardPlace(card, zoneName, slotIndex, isFaceDown, position);
-      // Sync the action
       gameSync.sendGameAction('CARD_PLACED', {
         card,
         zoneName,
@@ -50,7 +46,6 @@ const Index = () => {
         isFaceDown,
         position
       });
-      // Aggiorna il conteggio delle carte in mano
       gameSync.sendGameAction('HAND_UPDATED', {
         handCount: gameState.playerHand.length - 1
       });
@@ -58,47 +53,45 @@ const Index = () => {
     },
     handleLifePointsChange: (newLifePoints: number, isPlayer: boolean = true) => {
       handlers.handleLifePointsChange(newLifePoints, isPlayer);
-      // Sync life points change - SEMPRE invia isPlayer: true perché è sempre il proprio giocatore che cambia i suoi punti
       gameSync.sendGameAction('LIFE_POINTS_CHANGED', {
         newLifePoints,
-        isPlayer: true // Sempre true perché questo giocatore sta cambiando i suoi punti
+        isPlayer: true
       });
     },
     handlePhaseChange: (newPhase: string) => {
       handlers.handlePhaseChange(newPhase);
-      // Sync phase change
       gameSync.sendGameAction('PHASE_CHANGED', {
         phase: newPhase
       });
     },
     handleDrawCard: () => {
       handlers.handleDrawCard();
-      // Sync card draw
       gameSync.sendGameAction('CARD_DRAWN', {
         playerName: gameState.gameData?.playerName || 'Player'
       });
-      // Aggiorna il conteggio delle carte in mano
       gameSync.sendGameAction('HAND_UPDATED', {
         handCount: gameState.playerHand.length + 1
       });
     },
     handleEndTurn: () => {
+      // Prima cambia il turno localmente
       handlers.handleEndTurn();
-      gameSync.sendGameAction('PHASE_CHANGED', {
-        phase: 'draw'
+      
+      // Poi invia l'evento di fine turno
+      gameSync.sendGameAction('TURN_ENDED', {
+        playerName: gameState.gameData?.playerName || 'Player'
       });
+      
       multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
     },
     handleCardMove: (card: any, fromZone: string, toZone: string, slotIndex?: number) => {
       handlers.handleCardMove(card, fromZone, toZone, slotIndex);
-      // Sync card movement
       gameSync.sendGameAction('CARD_MOVED', {
         card,
         fromZone,
         toZone,
         slotIndex
       });
-      // Se la carta viene dalla mano, aggiorna il conteggio
       if (fromZone === 'hand') {
         gameSync.sendGameAction('HAND_UPDATED', {
           handCount: gameState.playerHand.length - 1
@@ -106,14 +99,12 @@ const Index = () => {
       }
     },
     handleShowCard: (card: any) => {
-      // Nuova funzione per mostrare una carta specifica
       gameSync.sendGameAction('SHOW_CARD', {
         card,
         playerName: gameState.gameData?.playerName || 'Player'
       });
     },
     handleShowHand: () => {
-      // Nuova funzione per mostrare l'intera mano
       gameSync.sendGameAction('SHOW_HAND', {
         hand: gameState.playerHand,
         playerName: gameState.gameData?.playerName || 'Player'
@@ -121,7 +112,6 @@ const Index = () => {
     }
   };
 
-  // Handle game start - create or join session
   const handleGameStart = async (gameData: any) => {
     try {
       console.log('[INDEX] Starting game process', gameData);
@@ -144,7 +134,6 @@ const Index = () => {
         console.log('Session created/joined successfully, updating game state...');
         gameState.setGameData(gameData);
         
-        // IMPORTANTE: Per il guest, imposta gameStarted subito per andare nella waiting room
         if (!gameData.isHost) {
           console.log('[INDEX] Guest entering waiting room immediately');
           console.log('=== GUEST ENTERING WAITING ROOM IMMEDIATELY ===');
@@ -164,25 +153,19 @@ const Index = () => {
     }
   };
 
-  // Handle quando l'host è pronto e vuole entrare nella waiting room
   const handleHostEnterWaiting = () => {
     console.log('[INDEX] Host entering waiting room');
     console.log('=== HOST ENTERING WAITING ROOM ===');
     gameState.setGameStarted(true);
   };
 
-  // Handle player ready
   const handlePlayerReady = async () => {
     console.log('[INDEX] Player ready clicked');
     console.log('=== PLAYER READY CLICKED ===');
     
     try {
-      // Set player ready in local state
       gameState.setPlayerReady(true);
-      
-      // Update ready status in database
       await multiplayerHook.setPlayerReady(true);
-      
       console.log('[INDEX] Player marked as ready successfully');
       console.log('Player marked as ready successfully');
     } catch (error) {
@@ -191,27 +174,22 @@ const Index = () => {
     }
   };
 
-  // Handle when both players are ready - start the actual game
   const handleBothPlayersReady = () => {
     console.log('[INDEX] Both players ready - starting actual game');
     console.log('=== BOTH PLAYERS READY - STARTING ACTUAL GAME ===');
     
-    // Set both players ready and initialize the game
     gameState.setBothPlayersReady(true);
     
-    // Initialize the game
     if (gameState.initializeGame) {
       console.log('Initializing game...');
       gameState.initializeGame();
     }
     
-    // Sync the initial game state
     setTimeout(() => {
       gameSync.syncCompleteGameState();
     }, 1000);
   };
 
-  // Show error if there's a multiplayer error
   if (multiplayerHook.error) {
     console.error('[INDEX] Multiplayer error detected', { error: multiplayerHook.error });
     return (
@@ -237,7 +215,6 @@ const Index = () => {
     return <AuthComponent onAuth={setUser} />;
   }
 
-  // Show actual game when both players are ready
   if (gameState.gameStarted && gameState.bothPlayersReady) {
     console.log('[INDEX] Rendering game layout');
     console.log('=== RENDERING GAME LAYOUT ===');
@@ -250,7 +227,6 @@ const Index = () => {
     );
   }
 
-  // Show multiplayer setup
   console.log('[INDEX] Rendering multiplayer setup');
   console.log('=== RENDERING MULTIPLAYER SETUP ===');
   return (

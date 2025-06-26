@@ -96,9 +96,6 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
       case 'LIFE_POINTS_CHANGED':
         console.log('[GAME_SYNC] Applying LIFE_POINTS_CHANGED', action_data);
-        // L'avversario ha cambiato i suoi punti vita
-        // Se isPlayer è true nell'action_data, significa che l'avversario ha cambiato i suoi punti
-        // Per noi, i punti dell'avversario sono enemyLifePoints
         gameState.setEnemyLifePoints(action_data.newLifePoints);
         console.log('[GAME_SYNC] Enemy life points updated to:', action_data.newLifePoints);
         break;
@@ -115,28 +112,32 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
       case 'PHASE_CHANGED':
         console.log('[GAME_SYNC] Applying PHASE_CHANGED', action_data);
         gameState.setCurrentPhase(action_data.phase);
-        gameState.setIsPlayerTurn(!gameState.isPlayerTurn);
+        // IMPORTANTE: Cambia il turno quando cambia la fase
+        gameState.setIsPlayerTurn(action_data.phase === 'draw' ? true : false);
+        break;
+
+      case 'TURN_ENDED':
+        console.log('[GAME_SYNC] Applying TURN_ENDED', action_data);
+        // Quando l'avversario finisce il turno, diventa il nostro turno
+        gameState.setIsPlayerTurn(true);
+        gameState.setCurrentPhase('draw');
         break;
 
       case 'CARD_DRAWN':
         console.log('[GAME_SYNC] Applying CARD_DRAWN', action_data);
-        // L'avversario ha pescato una carta - aggiorna il conteggio delle sue carte
         gameState.setEnemyField((prev: any) => ({
           ...prev,
-          deck: prev.deck.slice(1) // Rimuovi una carta dal deck nemico
+          deck: prev.deck.slice(1)
         }));
-        // Aggiorna il conteggio delle carte in mano del nemico
         gameState.setEnemyHandCount((prev: number) => prev + 1);
         break;
 
       case 'CARD_MOVED':
         console.log('[GAME_SYNC] Applying CARD_MOVED', action_data);
-        // Gestisce il movimento delle carte dell'avversario
         gameState.setEnemyField((prev: any) => {
           const newField = { ...prev };
           const { card, fromZone, toZone, slotIndex } = action_data;
           
-          // Rimuovi dalla zona di origine
           if (fromZone === 'monsters') {
             newField.monsters = [...prev.monsters];
             const sourceIndex = prev.monsters.findIndex((m: any) => m && m.id === card.id);
@@ -147,7 +148,6 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
             if (sourceIndex !== -1) newField.spellsTraps[sourceIndex] = null;
           }
           
-          // Aggiungi alla zona di destinazione
           if (toZone === 'graveyard') {
             newField.graveyard = [...prev.graveyard, card];
           } else if (toZone === 'banished') {
@@ -165,9 +165,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
       case 'SHOW_CARD':
         console.log('[GAME_SYNC] Applying SHOW_CARD', action_data);
-        // Mostra una carta specifica dell'avversario
         gameState.setEnemyRevealedCard(action_data.card);
-        // Nascondi la carta dopo 5 secondi
         setTimeout(() => {
           gameState.setEnemyRevealedCard(null);
         }, 5000);
@@ -175,9 +173,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
       case 'SHOW_HAND':
         console.log('[GAME_SYNC] Applying SHOW_HAND', action_data);
-        // Mostra tutte le carte in mano dell'avversario
         gameState.setEnemyRevealedHand(action_data.hand);
-        // Nascondi le carte dopo 5 secondi
         setTimeout(() => {
           gameState.setEnemyRevealedHand(null);
         }, 5000);
@@ -199,6 +195,8 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
         return `ha pescato una carta`;
       case 'PHASE_CHANGED':
         return `ha cambiato fase a ${actionData.phase}`;
+      case 'TURN_ENDED':
+        return `ha finito il suo turno`;
       case 'CARD_MOVED':
         return `ha spostato ${actionData.card.name} da ${actionData.fromZone} a ${actionData.toZone}`;
       case 'SHOW_CARD':
@@ -264,7 +262,6 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           console.log('[GAME_SYNC] Received real-time action', payload.new);
           const action = payload.new as GameAction;
           
-          // Evita di processare la stessa azione due volte
           if (action.id !== lastProcessedAction) {
             applyReceivedAction(action);
             setLastProcessedAction(action.id);

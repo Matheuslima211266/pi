@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Users, LogOut } from 'lucide-react';
@@ -9,6 +8,8 @@ import GameCreationSection from './multiplayer/GameCreationSection';
 import GameStatusDisplay from './multiplayer/GameStatusDisplay';
 import WaitingForPlayersScreen from './multiplayer/WaitingForPlayersScreen';
 import StatusMessage from './multiplayer/StatusMessage';
+import DeckBuilder from './DeckBuilder';
+import sampleCardsData from '@/data/sampleCards.json';
 
 interface MultiplayerSetupProps {
   onGameStart: (gameData: any) => Promise<boolean>;
@@ -36,6 +37,9 @@ const MultiplayerSetup = ({
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [gameIdFromUrl, setGameIdFromUrl] = useState('');
+  const [showDeckBuilder, setShowDeckBuilder] = useState(false);
+  const [availableCards, setAvailableCards] = useState(sampleCardsData.cards);
+  const [currentDeck, setCurrentDeck] = useState<any>(null);
 
   useEffect(() => {
     console.log('[SETUP] MultiplayerSetup component rendered', {
@@ -48,7 +52,8 @@ const MultiplayerSetup = ({
       gameIdFromUrl,
       isHost,
       gameSessionCreated,
-      isJoiningGame
+      isJoiningGame,
+      showDeckBuilder
     });
   });
 
@@ -75,7 +80,7 @@ const MultiplayerSetup = ({
     
     if (!deckLoaded) {
       console.error('[SETUP] Host missing deck');
-      alert('Please upload a deck first');
+      alert('Please create or upload a deck first');
       return;
     }
 
@@ -141,7 +146,7 @@ const MultiplayerSetup = ({
     
     if (!deckLoaded) {
       console.error('[SETUP] Guest missing deck');
-      alert('Please upload a deck first');
+      alert('Please create or upload a deck first');
       return;
     }
 
@@ -170,7 +175,6 @@ const MultiplayerSetup = ({
         console.log('[SETUP] Guest successfully joined', { targetGameId });
         console.log('=== SUCCESSFULLY JOINED GAME ===', targetGameId);
         setIsHost(false);
-        // Non togliamo setIsJoiningGame(false) qui perché saremo reindirizzati alla waiting room
       }
     } catch (error) {
       console.error('[SETUP] Exception during guest join', error);
@@ -196,8 +200,17 @@ const MultiplayerSetup = ({
           const result = e.target?.result;
           if (typeof result === 'string') {
             const deckData = JSON.parse(result);
+            setCurrentDeck(deckData);
             onDeckLoad(deckData);
             setDeckLoaded(true);
+            
+            // Se il deck contiene carte, aggiungile alle disponibili
+            if (deckData.cards) {
+              const newCards = deckData.cards.filter((card: any) => 
+                !availableCards.some(existing => existing.id === card.id)
+              );
+              setAvailableCards([...availableCards, ...newCards]);
+            }
           }
         } catch (error) {
           console.error('Error loading deck:', error);
@@ -206,6 +219,13 @@ const MultiplayerSetup = ({
       };
       reader.readAsText(file);
     }
+  };
+
+  const handleDeckBuilderSave = (deckData: any) => {
+    setCurrentDeck(deckData);
+    onDeckLoad(deckData);
+    setDeckLoaded(true);
+    setShowDeckBuilder(false);
   };
 
   const handleSignOut = async () => {
@@ -241,6 +261,28 @@ const MultiplayerSetup = ({
     );
   }
 
+  // Show deck builder
+  if (showDeckBuilder) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 p-4">
+        <div className="mb-4 text-center">
+          <Button
+            onClick={() => setShowDeckBuilder(false)}
+            variant="outline"
+            className="text-white border-white hover:bg-white hover:text-black"
+          >
+            ← Torna al Setup
+          </Button>
+        </div>
+        <DeckBuilder
+          availableCards={availableCards}
+          onDeckSave={handleDeckBuilderSave}
+          initialDeck={currentDeck}
+        />
+      </div>
+    );
+  }
+
   // Show setup screen
   console.log('[SETUP] Showing setup screen');
   console.log('=== SHOWING SETUP SCREEN ===');
@@ -271,6 +313,23 @@ const MultiplayerSetup = ({
             deckLoaded={deckLoaded}
             onDeckUpload={handleDeckUpload}
           />
+
+          {/* Deck Builder Section */}
+          <div className="space-y-2">
+            <Button
+              onClick={() => setShowDeckBuilder(true)}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              🔧 Costruisci Deck
+            </Button>
+            {currentDeck && (
+              <div className="p-2 bg-purple-900/30 rounded border border-purple-400/50 text-center">
+                <span className="text-purple-400 text-sm font-semibold">
+                  {currentDeck.name} - {currentDeck.totalCards || (currentDeck.mainDeck?.length + currentDeck.extraDeck?.length) || currentDeck.cards?.length || 0} carte
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Messaggio speciale se c'è un gameId dall'URL */}
           {gameIdFromUrl && !gameState?.gameStarted && (
