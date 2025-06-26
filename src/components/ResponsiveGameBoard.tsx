@@ -13,8 +13,8 @@ const ResponsiveGameBoard = ({
   onDrawCard 
 }) => {
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Zona Avversario */}
+    <div className="battlefield-container">
+      {/* Zona Avversario - Prima riga: Magie/Trappole */}
       <div className="opponent-zone">
         <ResponsiveGameZones 
           field={enemyField}
@@ -25,18 +25,41 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          zoneType="spellsTraps"
+        />
+      </div>
+      
+      {/* Zona Avversario - Seconda riga: Mostri */}
+      <div className="opponent-zone">
+        <ResponsiveGameZones 
+          field={enemyField}
+          isEnemy={true}
+          onCardClick={onCardPreview}
+          onCardPlace={onCardPlace}
+          selectedCardFromHand={null}
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          onDrawCard={onDrawCard}
+          zoneType="monsters"
         />
       </div>
       
       {/* Zona Centrale - Field Spells */}
       <div className="center-zone">
-        <div className="field-spell-slot card-slot">
-          {/* Campo magico centrale */}
-          <div className="text-purple-400 text-xs">FIELD</div>
+        <div className="card-slot field-spell-zone field-spell-slot">
+          <div className="zone-label">Field Spell</div>
+          <div className="text-2xl">🏔️</div>
+        </div>
+        
+        <div className="battle-field-label">BATTLE FIELD</div>
+        
+        <div className="card-slot field-spell-zone field-spell-slot">
+          <div className="zone-label">Field Spell</div>
+          <div className="text-2xl">🏔️</div>
         </div>
       </div>
       
-      {/* Zona Giocatore */}
+      {/* Zona Giocatore - Prima riga: Mostri */}
       <div className="player-zone">
         <ResponsiveGameZones 
           field={playerField}
@@ -47,6 +70,22 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          zoneType="monsters"
+        />
+      </div>
+      
+      {/* Zona Giocatore - Seconda riga: Magie/Trappole */}
+      <div className="player-zone">
+        <ResponsiveGameZones 
+          field={playerField}
+          isEnemy={false}
+          onCardClick={onCardPreview}
+          onCardPlace={onCardPlace}
+          selectedCardFromHand={selectedCardFromHand}
+          onCardMove={onCardMove}
+          onCardPreview={onCardPreview}
+          onDrawCard={onDrawCard}
+          zoneType="spellsTraps"
         />
       </div>
       

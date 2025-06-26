@@ -15,6 +15,7 @@ const ResponsiveGameZoneSlot = ({
   onFieldCardAction, 
   onCardClick, 
   isEffectActivated,
+  zoneLabel,
   className = ""
 }) => {
   if (!card) {
@@ -23,8 +24,9 @@ const ResponsiveGameZoneSlot = ({
         className={`card-slot ${className} ${isHighlighted ? 'highlighted' : ''}`}
         onClick={(e) => onSlotClick(zoneName, slotIndex, e)}
       >
-        <div className="text-gray-400 text-center opacity-60">
-          {React.cloneElement(icon, { size: 20 })}
+        <div className="zone-label">{zoneLabel}</div>
+        <div className="text-xl opacity-60">
+          {icon}
         </div>
       </div>
     );
@@ -34,6 +36,7 @@ const ResponsiveGameZoneSlot = ({
     <ContextMenu>
       <ContextMenuTrigger>
         <div className={`card-slot ${className} relative`}>
+          <div className="zone-label">{zoneLabel}</div>
           <CardComponent
             card={card}
             onClick={() => onCardClick(card)}

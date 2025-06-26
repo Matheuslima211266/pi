@@ -93,6 +93,8 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
   }
 }
 
@@ -125,6 +127,33 @@
   padding: 1.5rem;
   margin-bottom: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  text-align: center;
+}
+
+.player-info {
+  margin-bottom: 1rem;
+}
+
+.player-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.life-points {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.game-info {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  color: #cbd5e0;
+  font-size: 0.9rem;
 }
 
 /* ==== AREA PRINCIPALE CAMPO ==== */
@@ -135,6 +164,21 @@
   padding: clamp(0.5rem, 2vw, 1.5rem);
   box-sizing: border-box;
   min-width: 0;
+}
+
+.game-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.game-id {
+  background: #f59e0b;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: bold;
 }
 
 /* ==== CONTAINER CAMPO DA GIOCO ==== */
@@ -174,6 +218,18 @@
   height: clamp(70px, 11.2vw, 112px);
 }
 
+.battle-field-label {
+  color: #cbd5e0;
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #4a5568;
+}
+
 /* ==== ZONA GIOCATORE (BOTTOM) ==== */
 .player-zone {
   display: grid;
@@ -197,6 +253,7 @@
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
+  font-size: clamp(1rem, 2vw, 1.5rem);
 }
 
 .card-slot:hover {
@@ -215,31 +272,43 @@
 .extra-deck-slot {
   background: rgba(138, 43, 226, 0.2);
   border-color: #8a2be2;
+  color: #da70d6;
 }
 
 .main-deck-slot {
   background: rgba(34, 139, 34, 0.2);
   border-color: #228b22;
+  color: #90ee90;
 }
 
 .graveyard-slot {
   background: rgba(139, 69, 19, 0.2);
   border-color: #8b4513;
+  color: #deb887;
 }
 
 .banished-slot {
   background: rgba(255, 20, 147, 0.2);
   border-color: #ff1493;
+  color: #ff69b4;
 }
 
 .monster-zone .card-slot {
   background: rgba(255, 140, 0, 0.1);
   border-color: #ff8c00;
+  color: #ffa500;
 }
 
 .spell-trap-zone .card-slot {
   background: rgba(30, 144, 255, 0.1);
   border-color: #1e90ff;
+  color: #87ceeb;
+}
+
+.field-spell-zone .card-slot {
+  background: rgba(0, 255, 127, 0.1);
+  border-color: #00ff7f;
+  color: #98fb98;
 }
 
 /* ==== ANIMAZIONI ==== */
@@ -248,9 +317,20 @@
   50% { opacity: 0.7; }
 }
 
-/* ==== RESPONSIVE BREAKPOINTS ==== */
+.zone-label {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: #a0aec0;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
 
-/* Tablet Landscape */
+/* ==== RESPONSIVE BREAKPOINTS ==== */
 @media (max-width: 1200px) and (min-width: 769px) {
   .sidebar {
     width: clamp(200px, 18vw, 280px);
@@ -263,7 +343,6 @@
   }
 }
 
-/* Tablet Portrait */
 @media (max-width: 768px) and (min-width: 481px) {
   .game-container {
     flex-direction: column;
@@ -303,7 +382,6 @@
   }
 }
 
-/* Mobile */
 @media (max-width: 480px) {
   .sidebar {
     height: clamp(100px, 15vh, 140px);
@@ -316,7 +394,17 @@
   }
   
   .card-slot {
-    width: clamp(40px, 7vw, 60px);
-    height: clamp(56px, 9.8vw, 84px);
+    width: clamp(40px, 7.5vw, 60px);
+    height: clamp(56px, 10.5vw, 84px);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+  }
+  
+  .opponent-zone,
+  .player-zone {
+    gap: clamp(0.15rem, 0.4vw, 0.25rem);
+  }
+  
+  .life-points {
+    font-size: 1.5rem;
   }
 }

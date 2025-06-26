@@ -53,31 +53,36 @@ const GameLayout = ({
   return (
     <div className="game-container">
       {/* Game ID Display */}
-      {gameData?.gameId && (
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30">
-          <div className="inline-flex items-center gap-2 bg-gold-600 text-black px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
-            <span>Game ID: {gameData.gameId}</span>
-            {gameData.isHost && <span className="text-xs">(Host)</span>}
+      <div className="game-header">
+        {gameData?.gameId && (
+          <div className="game-id">
+            Game ID: {gameData.gameId}
+            {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
           </div>
-        </div>
-      )}
+        )}
+      </div>
       
       {/* Sidebar con Life Points e Controlli */}
       <div className="sidebar">
-        <GameSidebar
-          enemyLifePoints={enemyLifePoints}
-          playerLifePoints={playerLifePoints}
-          currentPhase={currentPhase}
-          isPlayerTurn={isPlayerTurn}
-          timeRemaining={timeRemaining}
-          chatMessages={chatMessages}
-          onLifePointsChange={handleLifePointsChange}
-          onPhaseChange={handlePhaseChange}
-          onEndTurn={handleEndTurn}
-          onTimeUp={handleTimeUp}
-          onTimeChange={setTimeRemaining}
-          onSendMessage={handleSendMessage}
-        />
+        <div className="life-points-section">
+          <div className="player-info">
+            <div className="player-name">Avversario</div>
+            <div className="life-points">{enemyLifePoints}</div>
+          </div>
+        </div>
+        
+        <div className="life-points-section">
+          <div className="player-info">
+            <div className="player-name">Tu</div>
+            <div className="life-points">{playerLifePoints}</div>
+          </div>
+        </div>
+        
+        <div className="game-info">
+          <div><strong>Turno:</strong> {isPlayerTurn ? 'Tuo' : 'Avversario'}</div>
+          <div><strong>Fase:</strong> {currentPhase}</div>
+          <div><strong>Tempo:</strong> {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}</div>
+        </div>
         
         {/* Action Log e Dice/Coin nella sidebar */}
         <div className="flex-1 flex flex-col gap-4 mt-4">
@@ -101,18 +106,16 @@ const GameLayout = ({
         </div>
         
         {/* Campo da gioco principale */}
-        <div className="battlefield-container">
-          <ResponsiveGameBoard 
-            playerField={playerField}
-            enemyField={enemyField}
-            onAttack={handleAttack}
-            onCardPlace={handleCardPlace}
-            selectedCardFromHand={selectedCardFromHand}
-            onCardPreview={setPreviewCard}
-            onCardMove={handleCardMove}
-            onDrawCard={handleDrawCard}
-          />
-        </div>
+        <ResponsiveGameBoard 
+          playerField={playerField}
+          enemyField={enemyField}
+          onAttack={handleAttack}
+          onCardPlace={handleCardPlace}
+          selectedCardFromHand={selectedCardFromHand}
+          onCardPreview={setPreviewCard}
+          onCardMove={handleCardMove}
+          onDrawCard={handleDrawCard}
+        />
         
         {/* Player Hand - Parte inferiore */}
         <div className="h-24 flex items-center justify-center mt-2">
