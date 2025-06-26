@@ -13,15 +13,20 @@ export const useGameZoneActions = ({
   const handleSlotClick = (zoneName, slotIndex, event) => {
     console.log('Slot clicked:', zoneName, slotIndex, 'selectedCard:', selectedCardFromHand);
     
-    if (selectedCardFromHand) {
+    if (selectedCardFromHand && event) {
       event.preventDefault();
       event.stopPropagation();
+      
+      // Usa le coordinate del click per posizionare il menu
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
       
       setPlacementMenu({
         zoneName,
         slotIndex,
-        x: event.clientX,
-        y: event.clientY,
+        x: x,
+        y: y,
         card: selectedCardFromHand
       });
     }
@@ -57,8 +62,8 @@ export const useGameZoneActions = ({
         onCardPlace && onCardPlace(selectedCardFromHand, zoneName, 0, false);
         break;
         
-      case 'graveyard':
-        onCardMove && onCardMove(selectedCardFromHand, 'hand', 'graveyard');
+      case 'deadZone':
+        onCardMove && onCardMove(selectedCardFromHand, 'hand', 'deadZone');
         break;
         
       case 'banished':
@@ -91,59 +96,49 @@ export const useGameZoneActions = ({
     setPlacementMenu(null);
   };
 
-  const handleFieldCardAction = (card, action, destination) => {
-    let sourceZone = '';
-    let slotIndex = -1;
-    
-    // Trova da quale zona proviene la carta
-    if (field.monsters?.some((m, i) => m && m.id === card.id)) {
-      sourceZone = 'monsters';
-      slotIndex = field.monsters.findIndex(m => m && m.id === card.id);
-    } else if (field.spellsTraps?.some((s, i) => s && s.id === card.id)) {
-      sourceZone = 'spellsTraps';
-      slotIndex = field.spellsTraps.findIndex(s => s && s.id === card.id);
-    } else if (field.fieldSpell?.some((f, i) => f && f.id === card.id)) {
-      sourceZone = 'fieldSpell';
-      slotIndex = 0;
-    }
-
-    console.log(`Moving ${card.name} from ${sourceZone} to ${destination}`, { card, action, sourceZone, slotIndex });
+  const handleFieldCardAction = (action, card, zoneName, slotIndex) => {
+    console.log(`Field card action: ${action} on ${card.name} in ${zoneName} at slot ${slotIndex}`);
 
     switch (action) {
-      case 'toHand':
-        onCardMove && onCardMove(card, sourceZone, 'hand');
+      case 'destroy':
+        onCardMove && onCardMove(card, zoneName, 'deadZone');
         break;
-      case 'toGraveyard':
-        onCardMove && onCardMove(card, sourceZone, 'graveyard');
+      case 'banish':
+        onCardMove && onCardMove(card, zoneName, 'banished');
+        break;
+      case 'toHand':
+        onCardMove && onCardMove(card, zoneName, 'hand');
+        break;
+      case 'toDeadZone':
+        onCardMove && onCardMove(card, zoneName, 'deadZone');
         break;
       case 'toBanished':
-        onCardMove && onCardMove(card, sourceZone, 'banished');
+        onCardMove && onCardMove(card, zoneName, 'banished');
         break;
       case 'toBanishedFaceDown':
-        onCardMove && onCardMove(card, sourceZone, 'banishedFaceDown');
+        onCardMove && onCardMove(card, zoneName, 'banishedFaceDown');
         break;
       case 'toDeckTop':
-        onCardMove && onCardMove(card, sourceZone, 'deck_top');
+        onCardMove && onCardMove(card, zoneName, 'deck_top');
         break;
       case 'toDeckBottom':
-        onCardMove && onCardMove(card, sourceZone, 'deck_bottom');
+        onCardMove && onCardMove(card, zoneName, 'deck_bottom');
         break;
       case 'toDeckShuffle':
-        onCardMove && onCardMove(card, sourceZone, 'deck_shuffle');
+        onCardMove && onCardMove(card, zoneName, 'deck_shuffle');
         break;
       case 'toExtraDeck':
-        onCardMove && onCardMove(card, sourceZone, 'extraDeck');
+        onCardMove && onCardMove(card, zoneName, 'extraDeck');
         break;
       case 'changePosition':
-        // Cambia la posizione della carta (da attack a defense e viceversa)
         const newPosition = card.position === 'attack' ? 'defense' : 'attack';
         const updatedCard = { ...card, position: newPosition };
         console.log('Changing position from', card.position, 'to', newPosition);
-        onCardMove && onCardMove(updatedCard, sourceZone, 'flip_in_place', slotIndex);
+        onCardMove && onCardMove(updatedCard, zoneName, 'flip_in_place', slotIndex);
         break;
       case 'flipCard':
         const flippedCard = { ...card, faceDown: !card.faceDown };
-        onCardMove && onCardMove(flippedCard, sourceZone, 'flip_in_place', slotIndex);
+        onCardMove && onCardMove(flippedCard, zoneName, 'flip_in_place', slotIndex);
         break;
     }
   };

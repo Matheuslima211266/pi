@@ -116,17 +116,17 @@ const ResponsiveGameBoard = ({
         />
       </div>
       
-      {/* Zona Centrale con Field Spells e Graveyards */}
+      {/* Zona Centrale con Field Spells e Dead Zones */}
       <div className="center-zone">
-        {/* Gruppo Avversario: Graveyard + Field Spell */}
+        {/* Gruppo Avversario: Dead Zone + Field Spell */}
         <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
           <div 
-            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
-            onClick={(e) => handleZoneClick('graveyard', true, e)}
+            className="card-slot dead-zone-slot dead-zone-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('deadZone', true, e)}
           >
-            <div className="zone-label">Graveyard</div>
+            <div className="zone-label">Dead Zone</div>
             <div className="text-2xl">💀</div>
-            <div className="zone-count">{(enemyField.graveyard || []).length}</div>
+            <div className="zone-count">{(enemyField.deadZone || []).length}</div>
           </div>
           <div 
             className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
@@ -140,7 +140,7 @@ const ResponsiveGameBoard = ({
         
         <div className="battle-field-label">BATTLE FIELD</div>
         
-        {/* Gruppo Giocatore: Field Spell + Graveyard */}
+        {/* Gruppo Giocatore: Field Spell + Dead Zone */}
         <div className="center-group">
           <div 
             className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
@@ -151,12 +151,12 @@ const ResponsiveGameBoard = ({
             <div className="zone-count">{(playerField.fieldSpell || []).length}</div>
           </div>
           <div 
-            className="card-slot graveyard-slot graveyard-slot-center cursor-pointer" 
-            onClick={(e) => handleZoneClick('graveyard', false, e)}
+            className="card-slot dead-zone-slot dead-zone-slot-center cursor-pointer" 
+            onClick={(e) => handleZoneClick('deadZone', false, e)}
           >
-            <div className="zone-label">Graveyard</div>
+            <div className="zone-label">Dead Zone</div>
             <div className="text-2xl">💀</div>
-            <div className="zone-count">{(playerField.graveyard || []).length}</div>
+            <div className="zone-count">{(playerField.deadZone || []).length}</div>
           </div>
         </div>
       </div>
@@ -216,14 +216,14 @@ const ResponsiveGameBoard = ({
         />
       )}
       
-      {/* Zone Manager Modals - Fixed data passing */}
-      {expandedZone === 'graveyard' && (
+      {/* Zone Manager Modals - Dead Zone only */}
+      {expandedZone === 'deadZone' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={getZoneCards('graveyard', false)}
-              zoneName="graveyard"
+              cards={getZoneCards('deadZone', false)}
+              zoneName="deadZone"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
               isExpanded={true}
@@ -233,13 +233,13 @@ const ResponsiveGameBoard = ({
         </div>
       )}
       
-      {expandedZone === 'enemy_graveyard' && (
+      {expandedZone === 'enemy_deadZone' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <ZoneManager
-              cards={getZoneCards('graveyard', true)}
-              zoneName="graveyard"
+              cards={getZoneCards('deadZone', true)}
+              zoneName="deadZone"
               onCardMove={onCardMove}
               onCardPreview={onCardPreview}
               isExpanded={true}
