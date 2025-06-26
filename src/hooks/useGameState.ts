@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import sampleCardsData from '@/data/sampleCards.json';
 
@@ -20,7 +19,7 @@ export const useGameState = () => {
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    graveyard: [], // Assicuriamoci che sia sempre un array
+    deadZone: [], // Renamed from graveyard to deadZone
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -31,7 +30,7 @@ export const useGameState = () => {
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    graveyard: [], // Assicuriamoci che sia sempre un array
+    deadZone: [], // Renamed from graveyard to deadZone
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -65,25 +64,25 @@ export const useGameState = () => {
     return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   };
 
-  // Funzione helper per aggiungere carte al cimitero (per test)
-  const addCardToGraveyard = (card, isPlayer = true) => {
-    console.log('[useGameState] Adding card to graveyard:', card.name);
+  // Funzione helper per aggiungere carte alla Dead Zone (renamed from graveyard)
+  const addCardToDeadZone = (card, isPlayer = true) => {
+    console.log('[useGameState] Adding card to dead zone:', card.name);
     if (isPlayer) {
       setPlayerField(prev => {
-        const newGraveyard = [...(prev.graveyard || []), card];
-        console.log('[useGameState] Player graveyard updated:', newGraveyard.map(c => c.name));
+        const newDeadZone = [...(prev.deadZone || []), card];
+        console.log('[useGameState] Player dead zone updated:', newDeadZone.map(c => c.name));
         return {
           ...prev,
-          graveyard: newGraveyard
+          deadZone: newDeadZone
         };
       });
     } else {
       setEnemyField(prev => {
-        const newGraveyard = [...(prev.graveyard || []), card];
-        console.log('[useGameState] Enemy graveyard updated:', newGraveyard.map(c => c.name));
+        const newDeadZone = [...(prev.deadZone || []), card];
+        console.log('[useGameState] Enemy dead zone updated:', newDeadZone.map(c => c.name));
         return {
           ...prev,
-          graveyard: newGraveyard
+          deadZone: newDeadZone
         };
       });
     }
@@ -170,13 +169,13 @@ export const useGameState = () => {
       }
     });
 
-    // Aggiungi alcune carte di test al cimitero per verificare il funzionamento
-    const testGraveyardCards = shuffledHand.slice(0, 2).map(card => ({
+    // Aggiungi alcune carte di test alla Dead Zone per verificare il funzionamento
+    const testDeadZoneCards = shuffledHand.slice(0, 2).map(card => ({
       ...card,
-      id: generateUniqueCardId(card.id, 'graveyard_test', Date.now())
+      id: generateUniqueCardId(card.id, 'deadzone_test', Date.now())
     }));
 
-    console.log('[useGameState] Test graveyard cards:', testGraveyardCards.map(c => c.name));
+    console.log('[useGameState] Test dead zone cards:', testDeadZoneCards.map(c => c.name));
 
     setPlayerDeck(remainingDeck);
     setEnemyDeck(shuffleArray(enemyDeck).slice(0, 35));
@@ -186,7 +185,7 @@ export const useGameState = () => {
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: remainingDeck,
-      graveyard: testGraveyardCards, // Aggiungi carte di test
+      deadZone: testDeadZoneCards, // Renamed from graveyard
       banished: [],
       banishedFaceDown: []
     }));
@@ -195,15 +194,15 @@ export const useGameState = () => {
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: shuffleArray([...enemyDeck]).slice(0, 35),
-      graveyard: [testGraveyardCards[0]], // Aggiungi una carta di test anche al nemico
+      deadZone: [testDeadZoneCards[0]], // Renamed from graveyard
       banished: [],
       banishedFaceDown: []
     }));
 
-    console.log('[useGameState] Game initialized successfully with test graveyard cards');
+    console.log('[useGameState] Game initialized successfully with test dead zone cards');
   };
 
-  // Funzione per il mill (spostare carte dal deck al cimitero)
+  // Funzione per il mill (spostare carte dal deck alla Dead Zone)
   const millCards = (count = 1, isPlayer = true) => {
     console.log(`[useGameState] Milling ${count} cards for ${isPlayer ? 'player' : 'enemy'}`);
     
@@ -211,15 +210,15 @@ export const useGameState = () => {
       setPlayerField(prev => {
         const cardsToMill = prev.deck.slice(0, count);
         const remainingDeck = prev.deck.slice(count);
-        const newGraveyard = [...(prev.graveyard || []), ...cardsToMill];
+        const newDeadZone = [...(prev.deadZone || []), ...cardsToMill];
         
-        console.log('[useGameState] Cards milled to player graveyard:', cardsToMill.map(c => c.name));
-        console.log('[useGameState] New player graveyard size:', newGraveyard.length);
+        console.log('[useGameState] Cards milled to player dead zone:', cardsToMill.map(c => c.name));
+        console.log('[useGameState] New player dead zone size:', newDeadZone.length);
         
         return {
           ...prev,
           deck: remainingDeck,
-          graveyard: newGraveyard
+          deadZone: newDeadZone
         };
       });
       
@@ -228,12 +227,12 @@ export const useGameState = () => {
       setEnemyField(prev => {
         const cardsToMill = prev.deck.slice(0, count);
         const remainingDeck = prev.deck.slice(count);
-        const newGraveyard = [...(prev.graveyard || []), ...cardsToMill];
+        const newDeadZone = [...(prev.deadZone || []), ...cardsToMill];
         
         return {
           ...prev,
           deck: remainingDeck,
-          graveyard: newGraveyard
+          deadZone: newDeadZone
         };
       });
       
@@ -271,7 +270,7 @@ export const useGameState = () => {
     shuffleArray,
     initializeGame,
     generateUniqueCardId,
-    addCardToGraveyard,
+    addCardToDeadZone,  // Renamed from addCardToGraveyard
     moveCardBetweenZones,
     millCards
   };

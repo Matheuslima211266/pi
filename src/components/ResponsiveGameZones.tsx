@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PlacementMenu from './PlacementMenu';
 import ZoneActionMenu from './ZoneActionMenu';
@@ -22,7 +23,7 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
 
   console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones graveyard:', field?.graveyard);
+  console.log('ResponsiveGameZones deadZone:', field?.deadZone || field?.graveyard); // Support both names
 
   const {
     handleSlotClick,
@@ -59,6 +60,13 @@ const ResponsiveGameZones = ({
     handlePlacementChoice(choice, placementMenu);
   };
 
+  // Enhanced zone click handler to support deadZone
+  const enhancedHandleZoneClick = (zoneName, e) => {
+    // Convert graveyard to deadZone for consistency
+    const actualZoneName = zoneName === 'graveyard' ? 'deadZone' : zoneName;
+    handleZoneClick(actualZoneName, e);
+  };
+
   return (
     <>
       <ZoneSlotRenderer
@@ -71,7 +79,7 @@ const ResponsiveGameZones = ({
         handleFieldCardAction={handleFieldCardAction}
         handleCardClick={handleCardClick}
         isEffectActivated={isEffectActivated}
-        handleZoneClick={handleZoneClick}
+        handleZoneClick={enhancedHandleZoneClick}
       />
 
       {/* Menu di piazzamento */}
