@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Users, LogOut } from 'lucide-react';
@@ -19,6 +18,27 @@ interface MultiplayerSetupProps {
   gameState?: any;
 }
 
+// Funzione per salvare log nel database
+const saveDebugLog = async (level: string, message: string, data?: any) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    level,
+    message,
+    data: data ? JSON.stringify(data) : null
+  };
+  
+  console.log(`[${timestamp}] SETUP_${level.toUpperCase()}: ${message}`, data || '');
+  
+  try {
+    await supabase
+      .from('debug_logs')
+      .insert(logEntry);
+  } catch (err) {
+    console.error('Failed to save debug log:', err);
+  }
+};
+
 const MultiplayerSetup = ({ 
   onGameStart, 
   onDeckLoad, 
@@ -37,17 +57,19 @@ const MultiplayerSetup = ({
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [gameIdFromUrl, setGameIdFromUrl] = useState('');
 
-  console.log('=== MULTIPLAYER SETUP STATE ===', {
-    gameStarted: gameState?.gameStarted,
-    currentSession: !!gameState?.currentSession,
-    bothPlayersReady: gameState?.bothPlayersReady,
-    playerReady: gameState?.playerReady,
-    opponentReady: gameState?.opponentReady,
-    gameId,
-    gameIdFromUrl,
-    isHost,
-    gameSessionCreated,
-    isJoiningGame
+  useEffect(() => {
+    saveDebugLog('INFO', 'MultiplayerSetup component rendered', {
+      gameStarted: gameState?.gameStarted,
+      currentSession: !!gameState?.currentSession,
+      bothPlayersReady: gameState?.bothPlayersReady,
+      playerReady: gameState?.playerReady,
+      opponentReady: gameState?.opponentReady,
+      gameId,
+      gameIdFromUrl,
+      isHost,
+      gameSessionCreated,
+      isJoiningGame
+    });
   });
 
   // Check URL for game parameter
@@ -55,20 +77,24 @@ const MultiplayerSetup = ({
     const urlParams = new URLSearchParams(window.location.search);
     const gameFromUrl = urlParams.get('game');
     if (gameFromUrl) {
+      saveDebugLog('INFO', 'Game ID detected from URL', { gameFromUrl });
       console.log('Game ID detected from URL:', gameFromUrl);
       setGameIdFromUrl(gameFromUrl);
       setGameId(gameFromUrl);
-      // NON impostiamo isHost = false qui, lasciamo che l'utente completi il setup
     }
   }, []);
 
   const createGame = async () => {
+    await saveDebugLog('INFO', 'Host attempting to create game', { playerName, deckLoaded });
+    
     if (!playerName.trim()) {
+      await saveDebugLog('ERROR', 'Host missing player name');
       alert('Please enter your name first');
       return;
     }
     
     if (!deckLoaded) {
+      await saveDebugLog('ERROR', 'Host missing deck');
       alert('Please upload a deck first');
       return;
     }
@@ -77,6 +103,7 @@ const MultiplayerSetup = ({
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
     try {
+      await saveDebugLog('INFO', 'Creating game with ID', { newGameId, playerName });
       console.log('Creating game with ID:', newGameId);
       
       const gameData = {
@@ -87,17 +114,21 @@ const MultiplayerSetup = ({
       };
       
       const success = await onGameStart(gameData);
+      await saveDebugLog('INFO', 'Game creation result', { success, gameData });
       console.log('Game creation result:', success);
       
       if (success) {
         setGameId(newGameId);
         setIsHost(true);
         setGameSessionCreated(true);
+        await saveDebugLog('SUCCESS', 'Game created successfully', { gameId: newGameId });
         console.log('Game created successfully - showing link');
       } else {
+        await saveDebugLog('ERROR', 'Failed to create game session');
         alert('Failed to create game session. Please try again.');
       }
     } catch (error) {
+      await saveDebugLog('ERROR', 'Exception creating game', error);
       console.error('Error creating game:', error);
       alert('Failed to create game session. Please try again.');
     } finally {
@@ -108,41 +139,61 @@ const MultiplayerSetup = ({
   const joinGame = async () => {
     const targetGameId = gameId.trim().toUpperCase() || gameIdFromUrl;
     
+    await saveDebugLog('INFO', 'Guest attempting to join game', { 
+      originalGameId: gameId, 
+      targetGameId, 
+      playerName, 
+      deckLoaded,
+      gameIdFromUrl 
+    });
+    
     if (!targetGameId) {
+      await saveDebugLog('ERROR', 'Guest missing game ID');
       alert('Please enter a Game ID');
       return;
     }
     
     if (!playerName.trim()) {
+      await saveDebugLog('ERROR', 'Guest missing player name');
       alert('Please enter your name');
       return;
     }
     
     if (!deckLoaded) {
+      await saveDebugLog('ERROR', 'Guest missing deck');
       alert('Please upload a deck first');
       return;
     }
 
     setIsJoiningGame(true);
+    await saveDebugLog('INFO', 'Setting isJoiningGame to true, calling onGameStart', { targetGameId });
     console.log('=== ATTEMPTING TO JOIN GAME ===', targetGameId);
     
     try {
-      const success = await onGameStart({ 
+      const gameData = { 
         gameId: targetGameId,
         playerName: playerName.trim(), 
         isHost: false,
         deckLoaded: true 
-      });
+      };
+      
+      await saveDebugLog('INFO', 'Calling onGameStart for guest', gameData);
+      const success = await onGameStart(gameData);
+      
+      await saveDebugLog('INFO', 'onGameStart result for guest', { success, gameData });
       
       if (!success) {
+        await saveDebugLog('ERROR', 'Guest join failed - onGameStart returned false');
         alert('Failed to join game. Please check the Game ID and try again.');
         setIsJoiningGame(false);
       } else {
+        await saveDebugLog('SUCCESS', 'Guest successfully joined', { targetGameId });
         console.log('=== SUCCESSFULLY JOINED GAME ===', targetGameId);
         setIsHost(false);
         // Non togliamo setIsJoiningGame(false) qui perché saremo reindirizzati alla waiting room
       }
     } catch (error) {
+      await saveDebugLog('ERROR', 'Exception during guest join', error);
       console.error('Error joining game:', error);
       alert('Failed to join game. Please try again.');
       setIsJoiningGame(false);
@@ -191,6 +242,11 @@ const MultiplayerSetup = ({
 
   // Show waiting screen quando il gioco è iniziato e c'è una sessione attiva
   if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
+    saveDebugLog('INFO', 'Showing waiting screen', {
+      gameStarted: gameState.gameStarted,
+      hasCurrentSession: !!gameState.currentSession,
+      bothPlayersReady: gameState.bothPlayersReady
+    });
     console.log('=== SHOWING WAITING SCREEN ===');
     
     return (
@@ -206,6 +262,7 @@ const MultiplayerSetup = ({
   }
 
   // Show setup screen
+  saveDebugLog('INFO', 'Showing setup screen');
   console.log('=== SHOWING SETUP SCREEN ===');
   
   return (
