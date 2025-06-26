@@ -66,7 +66,7 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
               />
             </div>
             {selectedCard?.id === card.id && (
-              <div className="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+              <div className="absolute -top-1 -right-1 bg-yellow-400 text-black rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">
                 ✓
               </div>
             )}
@@ -131,49 +131,49 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
   };
 
   return (
-    <Card className="bg-slate-800/70 border-blue-400 p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Hand className="text-blue-400" size={20} />
-        <h3 className="text-lg font-semibold">La Tua Mano</h3>
-        <Badge variant="outline" className="ml-auto">
+    <Card className="bg-slate-800/70 border-blue-400 p-1">
+      <div className="flex items-center gap-1 mb-1">
+        <Hand className="text-blue-400" size={14} />
+        <h3 className="text-sm font-semibold">La Tua Mano</h3>
+        <Badge variant="outline" className="ml-auto text-xs py-0 px-1">
           {cards.length} carte
         </Badge>
         <Button
           onClick={handleShowHandToOpponent}
           size="sm"
           variant="outline"
-          className="ml-2"
+          className="ml-1 h-6 text-xs px-2"
         >
-          <Users className="mr-1 h-4 w-4" />
-          Mostra Mano
+          <Users className="mr-1 h-3 w-3" />
+          Mostra
         </Button>
       </div>
       
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {cards.map((card, index) => renderCardWithContextMenu(card, index))}
-        
-        {cards.length === 0 && (
-          <div className="w-full text-center py-8 text-gray-400">
-            <p>La tua mano è vuota</p>
-          </div>
-        )}
+      {/* Centered hand container */}
+      <div className="flex justify-center">
+        <div className="flex gap-1 overflow-x-auto pb-1 max-w-full">
+          {cards.map((card, index) => renderCardWithContextMenu(card, index))}
+          
+          {cards.length === 0 && (
+            <div className="w-full text-center py-4 text-gray-400">
+              <p className="text-sm">La tua mano è vuota</p>
+            </div>
+          )}
+        </div>
       </div>
       
       {selectedCard && (
-        <div className="mt-4 p-3 bg-blue-900/50 border border-blue-400 rounded">
+        <div className="mt-1 p-1 bg-blue-900/50 border border-blue-400 rounded">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Carta selezionata: <strong>{selectedCard.name}</strong></span>
-            <span className="text-xs text-gray-300">Clicca su una zona del campo per posizionarla</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            Doppio-click per vedere la carta in grande | Tasto destro per menu opzioni
+            <span className="text-xs">Selezionata: <strong>{selectedCard.name}</strong></span>
+            <span className="text-xs text-gray-300">Clicca una zona del campo</span>
           </div>
         </div>
       )}
       
       {!isPlayerTurn && (
-        <div className="mt-2 text-center">
-          <Badge variant="secondary">
+        <div className="mt-1 text-center">
+          <Badge variant="secondary" className="text-xs">
             Non è il tuo turno
           </Badge>
         </div>
