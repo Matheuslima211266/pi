@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -13,7 +14,7 @@ interface GameAction {
   processed: boolean;
 }
 
-export const useGameSync = (user: User | null, gameSessionId: string | null, gameState: any, setGameState: any) => {
+export const useGameSync = (user: User | null, gameSessionId: string | null, gameState: any) => {
   const [lastProcessedAction, setLastProcessedAction] = useState<string | null>(null);
 
   console.log('=== GAME SYNC HOOK ===', {
@@ -67,64 +68,90 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     switch (action_type) {
       case 'CARD_PLACED':
         console.log('[GAME_SYNC] Applying CARD_PLACED', action_data);
-        setGameState((prev: any) => ({
-          ...prev,
-          enemyField: {
-            ...prev.enemyField,
-            [action_data.zoneName]: prev.enemyField[action_data.zoneName].map((card: any, index: number) =>
-              index === action_data.slotIndex ? action_data.card : card
-            )
+        gameState.setEnemyField((prev: any) => {
+          const newField = { ...prev };
+          
+          if (action_data.zoneName === 'monsters') {
+            newField.monsters = [...prev.monsters];
+            newField.monsters[action_data.slotIndex] = action_data.card;
+          } else if (action_data.zoneName === 'spellsTraps') {
+            newField.spellsTraps = [...prev.spellsTraps];
+            newField.spellsTraps[action_data.slotIndex] = action_data.card;
+          } else if (action_data.zoneName === 'fieldSpell') {
+            newField.fieldSpell = [action_data.card];
           }
-        }));
+          
+          console.log('[GAME_SYNC] Enemy field updated:', newField);
+          return newField;
+        });
         break;
 
       case 'LIFE_POINTS_CHANGED':
         console.log('[GAME_SYNC] Applying LIFE_POINTS_CHANGED', action_data);
         if (action_data.isPlayer) {
-          setGameState((prev: any) => ({
-            ...prev,
-            enemyLifePoints: action_data.newLifePoints
-          }));
+          // L'avversario ha cambiato i suoi LP (che per noi sono enemyLifePoints)
+          gameState.setEnemyLifePoints(action_data.newLifePoints);
+          console.log('[GAME_SYNC] Enemy life points updated to:', action_data.newLifePoints);
         }
         break;
 
       case 'CHAT_MESSAGE':
         console.log('[GAME_SYNC] Applying CHAT_MESSAGE', action_data);
-        setGameState((prev: any) => ({
-          ...prev,
-          chatMessages: [...prev.chatMessages, {
-            id: Date.now(),
-            player: action_data.playerName,
-            message: action_data.message
-          }]
-        }));
+        gameState.setChatMessages((prev: any) => [...prev, {
+          id: Date.now(),
+          player: action_data.playerName,
+          message: action_data.message
+        }]);
         break;
 
       case 'PHASE_CHANGED':
         console.log('[GAME_SYNC] Applying PHASE_CHANGED', action_data);
-        setGameState((prev: any) => ({
-          ...prev,
-          currentPhase: action_data.phase,
-          isPlayerTurn: !prev.isPlayerTurn
-        }));
+        gameState.setCurrentPhase(action_data.phase);
+        gameState.setIsPlayerTurn(!gameState.isPlayerTurn);
         break;
 
       case 'CARD_DRAWN':
         console.log('[GAME_SYNC] Applying CARD_DRAWN', action_data);
         // L'avversario ha pescato una carta - aggiorna il conteggio delle sue carte
-        setGameState((prev: any) => ({
+        gameState.setEnemyField((prev: any) => ({
           ...prev,
-          enemyField: {
-            ...prev.enemyField,
-            deck: prev.enemyField.deck.slice(1) // Rimuovi una carta dal deck nemico
-          }
+          deck: prev.deck.slice(1) // Rimuovi una carta dal deck nemico
         }));
+        break;
+
+      case 'CARD_MOVED':
+        console.log('[GAME_SYNC] Applying CARD_MOVED', action_data);
+        // Gestisce il movimento delle carte dell'avversario
+        gameState.setEnemyField((prev: any) => {
+          const newField = { ...prev };
+          const { card, fromZone, toZone, slotIndex } = action_data;
+          
+          // Rimuovi dalla zona di origine
+          if (fromZone === 'monsters') {
+            newField.monsters = [...prev.monsters];
+            const sourceIndex = prev.monsters.findIndex((m: any) => m && m.id === card.id);
+            if (sourceIndex !== -1) newField.monsters[sourceIndex] = null;
+          } else if (fromZone === 'spellsTraps') {
+            newField.spellsTraps = [...prev.spellsTraps];
+            const sourceIndex = prev.spellsTraps.findIndex((s: any) => s && s.id === card.id);
+            if (sourceIndex !== -1) newField.spellsTraps[sourceIndex] = null;
+          }
+          
+          // Aggiungi alla zona di destinazione
+          if (toZone === 'graveyard') {
+            newField.graveyard = [...prev.graveyard, card];
+          } else if (toZone === 'banished') {
+            newField.banished = [...prev.banished, card];
+          }
+          
+          return newField;
+        });
         break;
 
       default:
         console.log('[GAME_SYNC] Unknown action type', action_type);
     }
-  }, [user?.id, setGameState]);
+  }, [user?.id, gameState]);
 
   // Sincronizza lo stato completo (versione semplificata)
   const syncCompleteGameState = useCallback(async () => {

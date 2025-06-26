@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import AuthComponent from '@/components/AuthComponent';
@@ -13,7 +12,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const gameState = useGameState();
   const multiplayerHook = useSupabaseMultiplayer(user!, gameState);
-  const gameSync = useGameSync(user, multiplayerHook.currentSession?.id || null, gameState, gameState);
+  const gameSync = useGameSync(user, multiplayerHook.currentSession?.id || null, gameState);
   const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
 
   useEffect(() => {
@@ -80,6 +79,16 @@ const Index = () => {
         phase: 'draw'
       });
       multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
+    },
+    handleCardMove: (card: any, fromZone: string, toZone: string, slotIndex?: number) => {
+      handlers.handleCardMove(card, fromZone, toZone, slotIndex);
+      // Sync card movement
+      gameSync.sendGameAction('CARD_MOVED', {
+        card,
+        fromZone,
+        toZone,
+        slotIndex
+      });
     }
   };
 
