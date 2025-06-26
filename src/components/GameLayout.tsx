@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
@@ -10,6 +9,7 @@ const GameLayout = ({
   gameState,
   handlers
 }) => {
+  
   const {
     playerField,
     enemyField,
@@ -71,7 +71,7 @@ const GameLayout = ({
         
         <div className="life-points-section">
           <div className="player-info">
-            <div class="player-name">Tu</div>
+            <div className="player-name">Tu</div>
             <div className="life-points">{playerLifePoints}</div>
           </div>
         </div>
