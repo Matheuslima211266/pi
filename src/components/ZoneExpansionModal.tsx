@@ -12,103 +12,107 @@ const ZoneExpansionModal = ({
 }) => {
   if (!expandedZone) return null;
 
-  console.log('ZoneExpansionModal - expandedZone:', expandedZone);
-  console.log('ZoneExpansionModal - field data:', field);
-  console.log('ZoneExpansionModal - graveyard cards:', field?.graveyard);
+  console.log('=== ZONE EXPANSION MODAL DEBUG ===');
+  console.log('expandedZone:', expandedZone);
+  console.log('field:', field);
+  console.log('field.graveyard:', field?.graveyard);
+  console.log('field.graveyard length:', field?.graveyard?.length);
+  console.log('field keys:', field ? Object.keys(field) : 'no field');
 
   const getZoneData = () => {
-    switch (expandedZone) {
-      case 'deck':
-        return {
-          cards: field.deck || [],
-          zoneName: 'deck',
-          displayName: 'Deck',
-          onDrawCard: onDrawCard,
-          isHidden: isEnemy,
-          allowActions: !isEnemy
-        };
-      case 'extraDeck':
-        return {
-          cards: field.extraDeck || [],
-          zoneName: 'extraDeck',
-          displayName: 'Extra Deck',
-          onDrawCard: null,
-          isHidden: false,
-          allowActions: !isEnemy
-        };
-      case 'graveyard':
-        return {
-          cards: field.graveyard || [],
-          zoneName: 'graveyard',
-          displayName: 'Cimitero',
-          onDrawCard: null,
-          isHidden: false,
-          allowActions: !isEnemy
-        };
-      case 'banished':
-        return {
-          cards: field.banished || [],
-          zoneName: 'banished',
-          displayName: 'Bandito',
-          onDrawCard: null,
-          isHidden: false,
-          allowActions: !isEnemy
-        };
-      case 'banishedFaceDown':
-        return {
-          cards: field.banishedFaceDown || [],
-          zoneName: 'banishedFaceDown',
-          displayName: 'Bandito Coperto',
-          onDrawCard: null,
-          isHidden: true,
-          allowActions: !isEnemy
-        };
-      case 'fieldSpell':
-        return {
-          cards: field.fieldSpell || [],
-          zoneName: 'fieldSpell',
-          displayName: 'Magia Campo',
-          onDrawCard: null,
-          isHidden: false,
-          allowActions: !isEnemy
-        };
-      default:
-        return {
-          cards: [],
-          zoneName: expandedZone,
-          displayName: expandedZone,
-          onDrawCard: null,
-          isHidden: false,
-          allowActions: false
-        };
-    }
+    const zoneData = {
+      deck: {
+        cards: field.deck || [],
+        zoneName: 'deck',
+        displayName: 'Deck',
+        onDrawCard: onDrawCard,
+        isHidden: isEnemy,
+        allowActions: !isEnemy
+      },
+      extraDeck: {
+        cards: field.extraDeck || [],
+        zoneName: 'extraDeck',
+        displayName: 'Extra Deck',
+        onDrawCard: null,
+        isHidden: false,
+        allowActions: !isEnemy
+      },
+      graveyard: {
+        cards: field.graveyard || [],
+        zoneName: 'graveyard',
+        displayName: 'Cimitero',
+        onDrawCard: null,
+        isHidden: false,
+        allowActions: !isEnemy
+      },
+      banished: {
+        cards: field.banished || [],
+        zoneName: 'banished',
+        displayName: 'Bandito',
+        onDrawCard: null,
+        isHidden: false,
+        allowActions: !isEnemy
+      },
+      banishedFaceDown: {
+        cards: field.banishedFaceDown || [],
+        zoneName: 'banishedFaceDown',
+        displayName: 'Bandito Coperto',
+        onDrawCard: null,
+        isHidden: true,
+        allowActions: !isEnemy
+      },
+      fieldSpell: {
+        cards: field.fieldSpell || [],
+        zoneName: 'fieldSpell',
+        displayName: 'Magia Campo',
+        onDrawCard: null,
+        isHidden: false,
+        allowActions: !isEnemy
+      }
+    };
+
+    const result = zoneData[expandedZone] || {
+      cards: [],
+      zoneName: expandedZone,
+      displayName: expandedZone,
+      onDrawCard: null,
+      isHidden: false,
+      allowActions: false
+    };
+
+    console.log('getZoneData result for', expandedZone, ':', result);
+    return result;
   };
 
   const zoneData = getZoneData();
 
   const handleCardClick = (card, index) => {
+    console.log('Card clicked in expansion modal:', card, 'at index:', index);
     if (onCardPreview && card) {
       onCardPreview(card);
     }
   };
 
   const handleCardAction = (action, card, index) => {
+    console.log('Card action in expansion modal:', action, card, index);
     if (!zoneData.allowActions || !card) return;
     
     switch (action) {
       case 'toHand':
+        console.log('Moving card to hand:', card.name);
         if (onCardMove) {
           onCardMove(card, zoneData.zoneName, 'hand');
         }
         break;
       case 'toField':
+        const targetZone = card.card_type === 'monster' ? 'monsters' : 'spellsTraps';
+        console.log('Moving card to field:', card.name, 'target zone:', targetZone);
         if (onCardMove) {
-          // Determina la zona di destinazione basata sul tipo di carta
-          const targetZone = card.card_type === 'monster' ? 'monsters' : 'spellsTraps';
           onCardMove(card, zoneData.zoneName, targetZone);
         }
         break;
       case 'toDeck':
+        console.log('Moving card to deck:', card.name);
         if (onCardMove) {
           onCardMove(card, zoneData.zoneName, 'deck');
         }
@@ -119,7 +123,7 @@ const ZoneExpansionModal = ({
         }
         break;
       default:
-        console.log(`Action ${action} on card in ${zoneData.zoneName}`);
+        console.log(`Unknown action ${action} on card in ${zoneData.zoneName}`);
     }
   };
 
@@ -128,10 +132,13 @@ const ZoneExpansionModal = ({
       <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-4xl max-h-[80vh] overflow-hidden">
         
-        {/* Header */}
+        {/* Header with debug info */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-white">
             {zoneData.displayName} ({zoneData.cards.length} carte)
+            <div className="text-xs text-gray-400 mt-1">
+              Zone: {expandedZone} | Cards array: {JSON.stringify(zoneData.cards.length)} 
+            </div>
           </h3>
           <button 
             onClick={() => setExpandedZone(null)}
@@ -141,11 +148,28 @@ const ZoneExpansionModal = ({
           </button>
         </div>
 
+        {/* Debug info */}
+        {expandedZone === 'graveyard' && (
+          <div className="mb-4 p-2 bg-gray-700 rounded text-xs text-yellow-300">
+            DEBUG GRAVEYARD: 
+            <br />Field exists: {field ? 'YES' : 'NO'}
+            <br />Graveyard exists: {field?.graveyard ? 'YES' : 'NO'}  
+            <br />Graveyard type: {typeof field?.graveyard}
+            <br />Graveyard length: {field?.graveyard?.length || 'undefined'}
+            <br />Raw graveyard: {JSON.stringify(field?.graveyard, null, 2)}
+          </div>
+        )}
+
         {/* Contenuto */}
         <div className="overflow-y-auto max-h-[60vh]">
           {zoneData.cards.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
               Nessuna carta in questa zona
+              {expandedZone === 'graveyard' && (
+                <div className="text-xs mt-2 text-red-400">
+                  GRAVEYARD DEBUG: Expected cards but found none
+                </div>
+              )}
             </div>
           ) : zoneData.isHidden ? (
             <div className="grid grid-cols-6 gap-2">
