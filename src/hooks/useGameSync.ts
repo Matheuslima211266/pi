@@ -33,7 +33,8 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     try {
       console.log('[GAME_SYNC] Sending action', { actionType, actionData });
       
-      const { error } = await supabase
+      // Use type assertion to work around the missing table type
+      const { error } = await (supabase as any)
         .from('game_actions_realtime')
         .insert({
           game_session_id: gameSessionId,
