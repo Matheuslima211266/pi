@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import sampleCardsData from '@/data/sampleCards.json';
 
@@ -57,7 +58,7 @@ export const useGameState = () => {
 
   // Funzione per generare ID unici per le carte (corretta)
   const generateUniqueCardId = (baseId, playerId, index = 0) => {
-    return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   };
 
   const initializeGame = () => {
