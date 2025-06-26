@@ -6,7 +6,11 @@ export const useZoneClickHandler = ({ isEnemy, onDrawCard, onDeckMill }) => {
   const [expandedZone, setExpandedZone] = useState(null);
 
   const handleZoneClick = (zoneName, event) => {
-    if (isEnemy) return;
+    if (isEnemy && (zoneName === 'deck' || zoneName === 'extraDeck')) {
+      // Per l'avversario, alcune zone possono solo essere visualizzate
+      setExpandedZone(zoneName);
+      return;
+    }
     
     event.stopPropagation();
     const rect = event.currentTarget.getBoundingClientRect();
@@ -24,13 +28,19 @@ export const useZoneClickHandler = ({ isEnemy, onDrawCard, onDeckMill }) => {
     
     switch (action) {
       case 'draw':
-        onDrawCard && onDrawCard();
+        if (zoneName === 'deck') {
+          onDrawCard && onDrawCard();
+        }
         break;
       case 'mill':
-        onDeckMill && onDeckMill(1);
+        if (zoneName === 'deck') {
+          onDeckMill && onDeckMill(1);
+        }
         break;
       case 'mill3':
-        onDeckMill && onDeckMill(3);
+        if (zoneName === 'deck') {
+          onDeckMill && onDeckMill(3);
+        }
         break;
       case 'shuffle':
         console.log(`Shuffle ${zoneName}`);
