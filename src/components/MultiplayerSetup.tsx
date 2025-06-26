@@ -14,10 +14,17 @@ interface MultiplayerSetupProps {
   onGameStart: (gameData: any) => Promise<boolean>;
   onDeckLoad: (deckData: any) => void;
   onPlayerReady?: () => void;
+  onBothPlayersReady?: () => void;
   gameState?: any;
 }
 
-const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }: MultiplayerSetupProps) => {
+const MultiplayerSetup = ({ 
+  onGameStart, 
+  onDeckLoad, 
+  onPlayerReady, 
+  onBothPlayersReady,
+  gameState 
+}: MultiplayerSetupProps) => {
   const [gameId, setGameId] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [deckLoaded, setDeckLoaded] = useState(false);
@@ -32,7 +39,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     const gameFromUrl = urlParams.get('game');
     if (gameFromUrl) {
       setGameId(gameFromUrl);
-      setIsHost(false); // If from URL, user is joining as guest
+      setIsHost(false);
       console.log('Game ID from URL:', gameFromUrl);
     }
   }, []);
@@ -68,7 +75,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
         setGameId(newGameId);
         setIsHost(true);
         setGameSessionCreated(true);
-        console.log('Game created successfully, showing link...');
+        console.log('Game created successfully');
       } else {
         alert('Failed to create game session. Please try again.');
       }
@@ -110,6 +117,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
         alert('Failed to join game. Please check the Game ID and try again.');
       } else {
         console.log('Successfully joined game');
+        setIsHost(false);
       }
     } catch (error) {
       console.error('Error joining game:', error);
@@ -150,20 +158,9 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     window.location.reload();
   };
 
-  // Handle game start after both players are ready
-  const handleGameStartFromWaiting = () => {
-    console.log('Starting game from waiting screen...');
-    if (gameState?.setBothPlayersReady) {
-      gameState.setBothPlayersReady(true);
-    }
-  };
-
-  // Show waiting screen when:
-  // 1. Game is started AND
-  // 2. We have a current session (opponent connected) AND  
-  // 3. Not both players ready yet
+  // Show waiting screen when game has started but not both players ready
   if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
-    console.log('Showing waiting screen', {
+    console.log('Showing waiting screen with state:', {
       gameStarted: gameState.gameStarted,
       currentSession: !!gameState.currentSession,
       bothPlayersReady: gameState.bothPlayersReady,
@@ -174,11 +171,11 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     return (
       <WaitingForPlayersScreen
         gameData={gameState.gameData}
-        playerReady={gameState.playerReady}
-        opponentReady={gameState.opponentReady}
+        playerReady={gameState.playerReady || false}
+        opponentReady={gameState.opponentReady || false}
         onPlayerReady={onPlayerReady}
         onSignOut={handleSignOut}
-        onGameStart={handleGameStartFromWaiting}
+        onGameStart={onBothPlayersReady}
       />
     );
   }

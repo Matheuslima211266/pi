@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -55,11 +54,6 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       if (error) {
         console.error('Error creating game session:', error);
         setError('Failed to create game session');
-        toast({
-          title: "Error",
-          description: "Failed to create game session",
-          variant: "destructive",
-        });
         return null;
       }
 
@@ -98,21 +92,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
       if (!existingSession) {
         setError('Game not found or already started');
-        toast({
-          title: "Error",
-          description: "Game not found or already started",
-          variant: "destructive",
-        });
         return null;
       }
 
       if (existingSession.guest_id) {
         setError('Game is already full');
-        toast({
-          title: "Error", 
-          description: "Game is already full",
-          variant: "destructive",
-        });
         return null;
       }
 
@@ -152,28 +136,39 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       setError('Failed to join game session');
       return null;
     }
-  }, [user, toast, gameState]);
+  }, [user, gameState]);
 
   // Update player ready status
   const setPlayerReady = useCallback(async (isReady: boolean) => {
-    if (!currentSession || !user) return;
+    if (!currentSession || !user) {
+      console.log('Cannot set player ready - no session or user');
+      return;
+    }
 
     const isHost = currentSession.host_id === user.id;
     const updateField = isHost ? 'host_ready' : 'guest_ready';
 
     try {
-      console.log('Setting player ready:', { isReady, isHost, updateField });
+      console.log('Setting player ready:', { isReady, isHost, updateField, sessionId: currentSession.id });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('game_sessions')
         .update({ [updateField]: isReady })
-        .eq('id', currentSession.id);
+        .eq('id', currentSession.id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Error updating ready status:', error);
         setError('Failed to update ready status');
       } else {
-        console.log('Player ready status updated successfully');
+        console.log('Player ready status updated successfully:', data);
+        const updatedSession = castToGameSession(data);
+        setCurrentSession(updatedSession);
+        
+        // Update opponent ready status
+        const newOpponentReady = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
+        setOpponentReady(newOpponentReady);
       }
     } catch (err) {
       console.error('Error in setPlayerReady:', err);
@@ -275,12 +270,19 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           const updatedSession = castToGameSession(payload.new);
           setCurrentSession(updatedSession);
           
-          // Update opponent ready status and connection status
+          // Update opponent ready status
           const isHost = updatedSession.host_id === user.id;
           const opponentReadyStatus = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
           setOpponentReady(opponentReadyStatus);
           
-          // If a guest joined (guest_id was added), notify that opponent connected
+          console.log('Updated ready states:', {
+            playerIsHost: isHost,
+            hostReady: updatedSession.host_ready,
+            guestReady: updatedSession.guest_ready,
+            opponentReady: opponentReadyStatus
+          });
+          
+          // If a guest joined, notify that opponent connected
           if (updatedSession.guest_id && gameState.setOpponentConnected) {
             gameState.setOpponentConnected(true);
           }
@@ -390,6 +392,13 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         const isHost = currentSession.host_id === user.id;
         const initialOpponentReady = isHost ? currentSession.guest_ready : currentSession.host_ready;
         setOpponentReady(initialOpponentReady);
+
+        console.log('Initial ready states set:', {
+          playerIsHost: isHost,
+          hostReady: currentSession.host_ready,
+          guestReady: currentSession.guest_ready,
+          initialOpponentReady
+        });
 
         // Load game actions
         const { data: actions } = await supabase

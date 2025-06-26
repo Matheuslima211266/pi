@@ -24,13 +24,21 @@ const WaitingForPlayersScreen = ({
 }: WaitingForPlayersScreenProps) => {
   const bothReady = playerReady && opponentReady;
 
+  console.log('WaitingForPlayersScreen render:', {
+    playerReady,
+    opponentReady,
+    bothReady,
+    gameData: gameData?.gameId
+  });
+
   // Auto-start game when both players are ready
   useEffect(() => {
     if (bothReady && onGameStart) {
-      console.log('Both players ready, starting game in 2 seconds...');
+      console.log('Both players ready, starting game in 3 seconds...');
       const timer = setTimeout(() => {
+        console.log('Executing game start...');
         onGameStart();
-      }, 2000);
+      }, 3000);
       
       return () => clearTimeout(timer);
     }
@@ -67,22 +75,25 @@ const WaitingForPlayersScreen = ({
             <div className="bg-slate-700 p-4 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">You ({gameData?.playerName})</span>
-                <span className={`text-sm ${playerReady ? 'text-green-400' : 'text-gray-400'}`}>
+                <span className={`text-sm font-semibold ${playerReady ? 'text-green-400' : 'text-yellow-400'}`}>
                   {playerReady ? '✅ Ready' : '⏳ Not Ready'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">Opponent</span>
-                <span className={`text-sm ${opponentReady ? 'text-green-400' : 'text-gray-400'}`}>
+                <span className={`text-sm font-semibold ${opponentReady ? 'text-green-400' : 'text-gray-400'}`}>
                   {opponentReady ? '✅ Ready' : '⏳ Waiting...'}
                 </span>
               </div>
             </div>
 
-            {!playerReady && (
+            {!playerReady && onPlayerReady && (
               <Button
-                onClick={onPlayerReady}
-                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  console.log('Player ready button clicked');
+                  onPlayerReady();
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
               >
                 <Play className="w-4 h-4 mr-2" />
                 I'm Ready!
@@ -93,18 +104,22 @@ const WaitingForPlayersScreen = ({
               <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
                 <p className="text-green-400 font-semibold">You are ready!</p>
                 <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
+                <div className="mt-2">
+                  <div className="animate-pulse text-yellow-400">●●●</div>
+                </div>
               </div>
             )}
 
             {bothReady && (
               <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400 animate-pulse">
-                <p className="text-blue-400 font-semibold text-lg">Both players ready!</p>
-                <p className="text-sm text-gray-300 mt-1">Starting game in 2 seconds...</p>
+                <p className="text-blue-400 font-semibold text-lg">🎮 Both players ready!</p>
+                <p className="text-sm text-gray-300 mt-1">Starting game in 3 seconds...</p>
                 <div className="mt-3">
-                  <div className="w-full bg-blue-800 rounded-full h-2">
-                    <div className="bg-blue-400 h-2 rounded-full animate-pulse"></div>
+                  <div className="w-full bg-blue-800 rounded-full h-3">
+                    <div className="bg-blue-400 h-3 rounded-full w-full animate-pulse"></div>
                   </div>
                 </div>
+                <p className="text-xs text-blue-300 mt-2">Get ready to duel!</p>
               </div>
             )}
           </div>

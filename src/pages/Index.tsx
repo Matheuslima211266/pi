@@ -14,22 +14,6 @@ const Index = () => {
   const multiplayerHook = useSupabaseMultiplayer(user!, gameState);
   const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
 
-  // Monitor when both players are ready
-  useEffect(() => {
-    if (multiplayerHook.currentSession && gameState.gameStarted && user) {
-      const isHost = multiplayerHook.currentSession.host_id === user.id;
-      const playerReady = isHost ? multiplayerHook.currentSession.host_ready : multiplayerHook.currentSession.guest_ready;
-      const opponentReady = isHost ? multiplayerHook.currentSession.guest_ready : multiplayerHook.currentSession.host_ready;
-      
-      console.log('Checking ready status:', { playerReady, opponentReady, bothReady: gameState.bothPlayersReady });
-      
-      if (playerReady && opponentReady && !gameState.bothPlayersReady) {
-        console.log('Both players ready, starting game!');
-        gameState.setBothPlayersReady(true);
-      }
-    }
-  }, [multiplayerHook.currentSession, gameState.gameStarted, user?.id, gameState.bothPlayersReady, gameState]);
-
   // Enhanced handlers that also log to database
   const enhancedHandlers = {
     ...handlers,
@@ -49,23 +33,21 @@ const Index = () => {
       console.log('Player ready button clicked');
       
       // Set player ready in local state
-      handlers.handlePlayerReady();
+      gameState.setPlayerReady(true);
       
       // Update ready status in database
       await multiplayerHook.setPlayerReady(true);
       
-      // Sync game state after a short delay
-      setTimeout(() => multiplayerHook.syncGameState(), 100);
+      console.log('Player marked as ready');
     }
   };
 
   // Enhanced game start handler
   const handleGameStart = async (gameData: any) => {
-    let session = null;
-    
     try {
       console.log('Starting game with data:', gameData);
       
+      let session = null;
       if (gameData.isHost) {
         console.log('Creating game session as host...');
         session = await multiplayerHook.createGameSession(gameData.gameId, gameData.playerName);
@@ -75,7 +57,7 @@ const Index = () => {
       }
       
       if (session) {
-        console.log('Game session successful, starting game...', session);
+        console.log('Game session successful, setting up game...', session);
         handlers.handleGameStart(gameData);
         return true;
       } else {
@@ -85,6 +67,17 @@ const Index = () => {
     } catch (error) {
       console.error('Error in handleGameStart:', error);
       return false;
+    }
+  };
+
+  // Handle when both players are ready and start the actual game
+  const handleBothPlayersReady = () => {
+    console.log('Both players are ready, initializing game...');
+    gameState.setBothPlayersReady(true);
+    
+    // Initialize the game
+    if (gameState.initializeGame) {
+      gameState.initializeGame();
     }
   };
 
@@ -113,43 +106,37 @@ const Index = () => {
     return <AuthComponent onAuth={setUser} />;
   }
 
-  // Calculate if both players are ready
-  const bothPlayersReady = multiplayerHook.currentSession ? 
-    multiplayerHook.currentSession.host_ready && multiplayerHook.currentSession.guest_ready :
-    false;
-
-  console.log('Current state:', {
+  console.log('Current game state:', {
     gameStarted: gameState.gameStarted,
-    bothPlayersReady,
-    currentSession: multiplayerHook.currentSession?.id,
-    opponentConnected: gameState.opponentConnected
+    bothPlayersReady: gameState.bothPlayersReady,
+    playerReady: gameState.playerReady,
+    currentSession: !!multiplayerHook.currentSession,
+    opponentReady: multiplayerHook.opponentReady
   });
 
-  // Show multiplayer setup if:
-  // 1. Game not started yet, OR
-  // 2. Game started but not both players ready
-  if (!gameState.gameStarted || (gameState.gameStarted && !bothPlayersReady)) {
+  // Show game when both players are ready
+  if (gameState.gameStarted && gameState.bothPlayersReady) {
     return (
-      <MultiplayerSetup 
-        onGameStart={handleGameStart}
-        onDeckLoad={handlers.handleDeckLoad}
-        onPlayerReady={enhancedHandlers.handlePlayerReady}
-        gameState={{
-          ...gameState,
-          opponentReady: multiplayerHook.opponentReady,
-          bothPlayersReady: bothPlayersReady,
-          currentSession: multiplayerHook.currentSession
-        }}
+      <GameLayout
+        gameData={gameState.gameData}
+        gameState={gameState}
+        handlers={enhancedHandlers}
       />
     );
   }
 
-  // Both players ready, show game
+  // Show multiplayer setup and waiting screen
   return (
-    <GameLayout
-      gameData={gameState.gameData}
-      gameState={gameState}
-      handlers={enhancedHandlers}
+    <MultiplayerSetup 
+      onGameStart={handleGameStart}
+      onDeckLoad={handlers.handleDeckLoad}
+      onPlayerReady={enhancedHandlers.handlePlayerReady}
+      onBothPlayersReady={handleBothPlayersReady}
+      gameState={{
+        ...gameState,
+        opponentReady: multiplayerHook.opponentReady,
+        currentSession: multiplayerHook.currentSession
+      }}
     />
   );
 };
