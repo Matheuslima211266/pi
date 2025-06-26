@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Upload, Download, Plus, Minus, Search, Save } from 'lucide-react';
+import CardPreview from '@/components/CardPreview';
 import * as XLSX from 'xlsx';
 
 interface DeckBuilderProps {
@@ -19,6 +20,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
   const [mainDeck, setMainDeck] = useState<any[]>(initialDeck?.mainDeck || []);
   const [extraDeck, setExtraDeck] = useState<any[]>(initialDeck?.extraDeck || []);
   const [searchTerm, setSearchTerm] = useState('');
+  const [previewCard, setPreviewCard] = useState<any>(null);
 
   // Separa le carte disponibili
   const { mainDeckCards, extraDeckCards } = useMemo(() => {
@@ -74,6 +76,69 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       newDeck.splice(cardIndex, 1);
       setTargetDeck(newDeck);
     }
+  };
+
+  // Import da JSON
+  const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const deckData = JSON.parse(e.target?.result as string);
+        if (deckData.name) setDeckName(deckData.name);
+        if (deckData.mainDeck) setMainDeck(deckData.mainDeck);
+        if (deckData.extraDeck) setExtraDeck(deckData.extraDeck);
+        alert('Deck importato con successo!');
+      } catch (error) {
+        alert('Errore nell\'importazione del file JSON');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  };
+
+  // Import da Excel
+  const importFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const newMainDeck: any[] = [];
+        const newExtraDeck: any[] = [];
+
+        jsonData.forEach((row: any) => {
+          // Trova la carta per nome
+          const card = availableCards.find(c => c.name === row.Nome);
+          if (card) {
+            const deckCard = { ...card, deckId: Date.now() + Math.random() };
+            if (row.Deck === 'Extra') {
+              newExtraDeck.push(deckCard);
+            } else {
+              newMainDeck.push(deckCard);
+            }
+          }
+        });
+
+        setMainDeck(newMainDeck);
+        setExtraDeck(newExtraDeck);
+        alert('Deck importato da Excel con successo!');
+      } catch (error) {
+        alert('Errore nell\'importazione del file Excel');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    // Reset input
+    event.target.value = '';
   };
 
   // Valida il deck
@@ -161,181 +226,249 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 space-y-4">
-      <Card className="p-4 bg-slate-800/90 border-purple-400">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <FileText className="text-purple-400" size={24} />
-            <h2 className="text-xl font-bold text-white">Deck Builder</h2>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={exportJSON} variant="outline" size="sm">
-              <Download size={16} />
-              JSON
-            </Button>
-            <Button onClick={exportExcel} variant="outline" size="sm">
-              <Download size={16} />
-              Excel
-            </Button>
-          </div>
+    <div className="w-full max-w-7xl mx-auto p-4">
+      <div className="flex gap-4">
+        {/* Card Preview - Left Side */}
+        <div className="w-80 flex-shrink-0">
+          {previewCard ? (
+            <CardPreview 
+              card={previewCard} 
+              onClose={() => setPreviewCard(null)} 
+            />
+          ) : (
+            <Card className="p-6 bg-slate-800/90 border-purple-400 h-96 flex items-center justify-center">
+              <div className="text-center text-gray-400">
+                <FileText size={48} className="mx-auto mb-4" />
+                <p>Seleziona una carta per vedere i dettagli</p>
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* Nome del deck */}
-        <div className="mb-4">
-          <Input
-            value={deckName}
-            onChange={(e) => setDeckName(e.target.value)}
-            placeholder="Nome del deck"
-            className="bg-slate-700 text-white border-slate-600"
-          />
-        </div>
+        {/* Main Deck Builder - Right Side */}
+        <div className="flex-1">
+          <Card className="p-4 bg-slate-800/90 border-purple-400">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="text-purple-400" size={24} />
+                <h2 className="text-xl font-bold text-white">Deck Builder</h2>
+              </div>
+              <div className="flex gap-2">
+                {/* Import Buttons */}
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      <Upload size={16} />
+                      JSON
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={importFromJSON}
+                    className="hidden"
+                  />
+                </label>
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      <Upload size={16} />
+                      Excel
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={importFromExcel}
+                    className="hidden"
+                  />
+                </label>
+                {/* Export Buttons */}
+                <Button onClick={exportJSON} variant="outline" size="sm">
+                  <Download size={16} />
+                  JSON
+                </Button>
+                <Button onClick={exportExcel} variant="outline" size="sm">
+                  <Download size={16} />
+                  Excel
+                </Button>
+              </div>
+            </div>
 
-        {/* Contatori deck */}
-        <div className="flex gap-4 mb-4">
-          <Badge className={`px-3 py-1 ${mainDeck.length >= 40 && mainDeck.length <= 60 ? 'bg-green-600' : 'bg-red-600'}`}>
-            Main Deck: {mainDeck.length}/60 (min: 40)
-          </Badge>
-          <Badge className={`px-3 py-1 ${extraDeck.length <= 15 ? 'bg-green-600' : 'bg-red-600'}`}>
-            Extra Deck: {extraDeck.length}/15
-          </Badge>
-        </div>
-
-        <Tabs defaultValue="builder" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-700">
-            <TabsTrigger value="builder" className="text-white">Costruisci</TabsTrigger>
-            <TabsTrigger value="main-deck" className="text-white">Main Deck</TabsTrigger>
-            <TabsTrigger value="extra-deck" className="text-white">Extra Deck</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="builder" className="space-y-4">
-            {/* Ricerca */}
-            <div className="flex items-center gap-2">
-              <Search className="text-gray-400" size={20} />
+            {/* Nome del deck */}
+            <div className="mb-4">
               <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Cerca carte..."
+                value={deckName}
+                onChange={(e) => setDeckName(e.target.value)}
+                placeholder="Nome del deck"
                 className="bg-slate-700 text-white border-slate-600"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Main Deck Cards */}
-              <Card className="p-4 bg-slate-700/50">
-                <h3 className="text-lg font-semibold text-white mb-3">Carte Main Deck</h3>
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {mainDeckCards.map(card => (
-                    <div key={card.id} className="flex items-center justify-between p-2 bg-slate-600/50 rounded">
-                      <div className="flex-1">
-                        <div className="text-white font-medium">{card.name}</div>
-                        <div className="text-gray-400 text-sm">{card.type}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {getCardCount(card.id, mainDeck)}/3
-                        </Badge>
-                        <Button
-                          size="sm"
-                          onClick={() => addCardToDeck(card)}
-                          disabled={getCardCount(card.id, mainDeck) >= 3}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Plus size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* Extra Deck Cards */}
-              <Card className="p-4 bg-slate-700/50">
-                <h3 className="text-lg font-semibold text-white mb-3">Carte Extra Deck</h3>
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {extraDeckCards.map(card => (
-                    <div key={card.id} className="flex items-center justify-between p-2 bg-slate-600/50 rounded">
-                      <div className="flex-1">
-                        <div className="text-white font-medium">{card.name}</div>
-                        <div className="text-gray-400 text-sm">{card.type}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {getCardCount(card.id, extraDeck)}/3
-                        </Badge>
-                        <Button
-                          size="sm"
-                          onClick={() => addCardToDeck(card, true)}
-                          disabled={getCardCount(card.id, extraDeck) >= 3}
-                          className="bg-purple-600 hover:bg-purple-700"
-                        >
-                          <Plus size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+            {/* Contatori deck */}
+            <div className="flex gap-4 mb-4">
+              <Badge className={`px-3 py-1 ${mainDeck.length >= 40 && mainDeck.length <= 60 ? 'bg-green-600' : 'bg-red-600'}`}>
+                Main Deck: {mainDeck.length}/60 (min: 40)
+              </Badge>
+              <Badge className={`px-3 py-1 ${extraDeck.length <= 15 ? 'bg-green-600' : 'bg-red-600'}`}>
+                Extra Deck: {extraDeck.length}/15
+              </Badge>
             </div>
-          </TabsContent>
 
-          <TabsContent value="main-deck">
-            <Card className="p-4 bg-slate-700/50">
-              <h3 className="text-lg font-semibold text-white mb-3">Main Deck ({mainDeck.length})</h3>
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {mainDeck.map(card => (
-                  <div key={card.deckId} className="flex items-center justify-between p-2 bg-slate-600/50 rounded">
-                    <div className="flex-1">
-                      <div className="text-white font-medium">{card.name}</div>
-                      <div className="text-gray-400 text-sm">{card.type}</div>
+            <Tabs defaultValue="builder" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-slate-700">
+                <TabsTrigger value="builder" className="text-white">Costruisci</TabsTrigger>
+                <TabsTrigger value="main-deck" className="text-white">Main Deck</TabsTrigger>
+                <TabsTrigger value="extra-deck" className="text-white">Extra Deck</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="builder" className="space-y-4">
+                {/* Ricerca */}
+                <div className="flex items-center gap-2">
+                  <Search className="text-gray-400" size={20} />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Cerca carte..."
+                    className="bg-slate-700 text-white border-slate-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Main Deck Cards */}
+                  <Card className="p-4 bg-slate-700/50">
+                    <h3 className="text-lg font-semibold text-white mb-3">Carte Main Deck</h3>
+                    <div className="max-h-96 overflow-y-auto space-y-2">
+                      {mainDeckCards.map(card => (
+                        <div 
+                          key={card.id} 
+                          className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                          onMouseEnter={() => setPreviewCard(card)}
+                        >
+                          <div className="flex-1">
+                            <div className="text-white font-medium">{card.name}</div>
+                            <div className="text-gray-400 text-sm">{card.type}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {getCardCount(card.id, mainDeck)}/3
+                            </Badge>
+                            <Button
+                              size="sm"
+                              onClick={() => addCardToDeck(card)}
+                              disabled={getCardCount(card.id, mainDeck) >= 3}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Plus size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => removeCardFromDeck(card.id)}
-                    >
-                      <Minus size={14} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
+                  </Card>
 
-          <TabsContent value="extra-deck">
-            <Card className="p-4 bg-slate-700/50">
-              <h3 className="text-lg font-semibold text-white mb-3">Extra Deck ({extraDeck.length})</h3>
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {extraDeck.map(card => (
-                  <div key={card.deckId} className="flex items-center justify-between p-2 bg-slate-600/50 rounded">
-                    <div className="flex-1">
-                      <div className="text-white font-medium">{card.name}</div>
-                      <div className="text-gray-400 text-sm">{card.type}</div>
+                  {/* Extra Deck Cards */}
+                  <Card className="p-4 bg-slate-700/50">
+                    <h3 className="text-lg font-semibold text-white mb-3">Carte Extra Deck</h3>
+                    <div className="max-h-96 overflow-y-auto space-y-2">
+                      {extraDeckCards.map(card => (
+                        <div 
+                          key={card.id} 
+                          className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                          onMouseEnter={() => setPreviewCard(card)}
+                        >
+                          <div className="flex-1">
+                            <div className="text-white font-medium">{card.name}</div>
+                            <div className="text-gray-400 text-sm">{card.type}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {getCardCount(card.id, extraDeck)}/3
+                            </Badge>
+                            <Button
+                              size="sm"
+                              onClick={() => addCardToDeck(card, true)}
+                              disabled={getCardCount(card.id, extraDeck) >= 3}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Plus size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => removeCardFromDeck(card.id, true)}
-                    >
-                      <Minus size={14} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </Card>
+                </div>
+              </TabsContent>
 
-        <div className="flex justify-end mt-4">
-          <Button
-            onClick={saveDeck}
-            className="bg-gold-600 hover:bg-gold-700 text-black font-semibold"
-            disabled={validateDeck().length > 0}
-          >
-            <Save size={16} />
-            Salva Deck
-          </Button>
+              <TabsContent value="main-deck">
+                <Card className="p-4 bg-slate-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">Main Deck ({mainDeck.length})</h3>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {mainDeck.map(card => (
+                      <div 
+                        key={card.deckId} 
+                        className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                        onMouseEnter={() => setPreviewCard(card)}
+                      >
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{card.name}</div>
+                          <div className="text-gray-400 text-sm">{card.type}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => removeCardFromDeck(card.id)}
+                        >
+                          <Minus size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="extra-deck">
+                <Card className="p-4 bg-slate-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">Extra Deck ({extraDeck.length})</h3>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {extraDeck.map(card => (
+                      <div 
+                        key={card.deckId} 
+                        className="flex items-center justify-between p-2 bg-slate-600/50 rounded cursor-pointer hover:bg-slate-600/70"
+                        onMouseEnter={() => setPreviewCard(card)}
+                      >
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{card.name}</div>
+                          <div className="text-gray-400 text-sm">{card.type}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => removeCardFromDeck(card.id, true)}
+                        >
+                          <Minus size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={saveDeck}
+                className="bg-gold-600 hover:bg-gold-700 text-black font-semibold"
+                disabled={validateDeck().length > 0}
+              >
+                <Save size={16} />
+                Salva Deck
+              </Button>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
