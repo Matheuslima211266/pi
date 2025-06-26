@@ -12,6 +12,10 @@ const ZoneExpansionModal = ({
 }) => {
   if (!expandedZone) return null;
 
+  console.log('ZoneExpansionModal - expandedZone:', expandedZone);
+  console.log('ZoneExpansionModal - field data:', field);
+  console.log('ZoneExpansionModal - graveyard cards:', field?.graveyard);
+
   const getZoneData = () => {
     switch (expandedZone) {
       case 'deck':
@@ -20,7 +24,7 @@ const ZoneExpansionModal = ({
           zoneName: 'deck',
           displayName: 'Deck',
           onDrawCard: onDrawCard,
-          isHidden: isEnemy, // Il deck dell'avversario dovrebbe essere nascosto
+          isHidden: isEnemy,
           allowActions: !isEnemy
         };
       case 'extraDeck':
@@ -29,14 +33,14 @@ const ZoneExpansionModal = ({
           zoneName: 'extraDeck',
           displayName: 'Extra Deck',
           onDrawCard: null,
-          isHidden: false, // L'extra deck può essere visto
+          isHidden: false,
           allowActions: !isEnemy
         };
       case 'graveyard':
         return {
           cards: field.graveyard || [],
           zoneName: 'graveyard',
-          displayName: 'Graveyard',
+          displayName: 'Cimitero',
           onDrawCard: null,
           isHidden: false,
           allowActions: !isEnemy
@@ -45,7 +49,7 @@ const ZoneExpansionModal = ({
         return {
           cards: field.banished || [],
           zoneName: 'banished',
-          displayName: 'Banished',
+          displayName: 'Bandito',
           onDrawCard: null,
           isHidden: false,
           allowActions: !isEnemy
@@ -54,16 +58,16 @@ const ZoneExpansionModal = ({
         return {
           cards: field.banishedFaceDown || [],
           zoneName: 'banishedFaceDown',
-          displayName: 'Banished Face-Down',
+          displayName: 'Bandito Coperto',
           onDrawCard: null,
-          isHidden: true, // Sempre nascosto
+          isHidden: true,
           allowActions: !isEnemy
         };
       case 'fieldSpell':
         return {
           cards: field.fieldSpell || [],
           zoneName: 'fieldSpell',
-          displayName: 'Field Spell',
+          displayName: 'Magia Campo',
           onDrawCard: null,
           isHidden: false,
           allowActions: !isEnemy
@@ -83,18 +87,30 @@ const ZoneExpansionModal = ({
   const zoneData = getZoneData();
 
   const handleCardClick = (card, index) => {
-    if (onCardPreview) {
+    if (onCardPreview && card) {
       onCardPreview(card);
     }
   };
 
   const handleCardAction = (action, card, index) => {
-    if (!zoneData.allowActions) return;
+    if (!zoneData.allowActions || !card) return;
     
     switch (action) {
-      case 'move':
+      case 'toHand':
         if (onCardMove) {
-          onCardMove(card, zoneData.zoneName, index);
+          onCardMove(card, zoneData.zoneName, 'hand');
+        }
+        break;
+      case 'toField':
+        if (onCardMove) {
+          // Determina la zona di destinazione basata sul tipo di carta
+          const targetZone = card.card_type === 'monster' ? 'monsters' : 'spellsTraps';
+          onCardMove(card, zoneData.zoneName, targetZone);
+        }
+        break;
+      case 'toDeck':
+        if (onCardMove) {
+          onCardMove(card, zoneData.zoneName, 'deck');
         }
         break;
       case 'draw':
@@ -147,7 +163,7 @@ const ZoneExpansionModal = ({
             <div className="grid grid-cols-6 gap-2">
               {zoneData.cards.map((card, index) => (
                 <div
-                  key={index}
+                  key={card?.id || index}
                   className="aspect-[2/3] bg-gray-700 border border-gray-500 rounded-lg p-2 cursor-pointer hover:bg-gray-600 transition-colors"
                   onClick={() => handleCardClick(card, index)}
                 >
@@ -165,28 +181,39 @@ const ZoneExpansionModal = ({
                           />
                         ) : (
                           <div className="text-2xl">
-                            {card.type === 'Monster' ? '🐉' : 
-                             card.type === 'Spell' ? '⚡' : 
-                             card.type === 'Trap' ? '🪤' : '🃏'}
+                            {card.card_type === 'monster' ? '🐉' : 
+                             card.card_type === 'spell' ? '⚡' : 
+                             card.card_type === 'trap' ? '🪤' : '🃏'}
                           </div>
                         )}
                       </div>
-                      {card.attack !== undefined && card.defense !== undefined && (
+                      {card.atk !== undefined && card.def !== undefined && (
                         <div className="text-xs text-gray-300 mt-1">
-                          ATK/{card.attack} DEF/{card.defense}
+                          ATK/{card.atk} DEF/{card.def}
                         </div>
                       )}
                       {zoneData.allowActions && (
-                        <div className="flex justify-between mt-2">
+                        <div className="flex flex-col gap-1 mt-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCardAction('move', card, index);
+                              handleCardAction('toHand', card, index);
                             }}
-                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-500"
+                            className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500"
                           >
-                            Sposta
+                            Alla Mano
                           </button>
+                          {zoneData.zoneName === 'graveyard' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCardAction('toField', card, index);
+                              }}
+                              className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-500"
+                            >
+                              Al Campo
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

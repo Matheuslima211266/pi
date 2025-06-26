@@ -56,9 +56,9 @@ export const useGameState = () => {
     return shuffled;
   };
 
-  // Funzione per generare ID unici per le carte
-  const generateUniqueCardId = (baseId, playerId) => {
-    return `${playerId}_${baseId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Funzione per generare ID unici per le carte (migliorata)
+  const generateUniqueCardId = (baseId, playerId, index = 0) => {
+    return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
   const initializeGame = () => {
@@ -66,32 +66,46 @@ export const useGameState = () => {
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Genera ID unici per ogni carta
-    const uniqueMainDeckCards = mainDeckCards.map(card => ({
-      ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
-    }));
+    // Genera un deck completo con ID unici per ogni copia
+    const fullDeck = [];
+    mainDeckCards.forEach((card, cardIndex) => {
+      // Assume che ogni carta possa avere fino a 3 copie
+      const copies = Math.min(3, Math.max(1, Math.floor(Math.random() * 3) + 1));
+      for (let i = 0; i < copies; i++) {
+        fullDeck.push({
+          ...card,
+          id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `${cardIndex}_${i}`)
+        });
+      }
+    });
     
-    const uniqueExtraDeckCards = extraDeckCards.map(card => ({
+    const uniqueExtraDeckCards = extraDeckCards.map((card, index) => ({
       ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player')
+      id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    const shuffledMainDeck = shuffleArray([...uniqueMainDeckCards]);
-    const shuffledHand = shuffleArray([...shuffledMainDeck.slice(0, 5)]);
+    const shuffledMainDeck = shuffleArray([...fullDeck]);
+    const shuffledHand = shuffledMainDeck.slice(0, 5);
+    const remainingDeck = shuffledMainDeck.slice(5);
 
-    setPlayerDeck(shuffledMainDeck.slice(0, 20));
-    setEnemyDeck(shuffledMainDeck.slice(20, 40));
+    setPlayerDeck(remainingDeck);
+    setEnemyDeck(shuffleArray([...fullDeck]).slice(0, 35)); // Deck nemico separato
     setPlayerHand(shuffledHand);
     setPlayerField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
-      deck: shuffledMainDeck.slice(5, 20)
+      deck: remainingDeck,
+      graveyard: [], // Assicuriamoci che il graveyard sia inizializzato
+      banished: [],
+      banishedFaceDown: []
     }));
     setEnemyField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
-      deck: shuffledMainDeck.slice(20, 40)
+      deck: shuffleArray([...fullDeck]).slice(0, 35),
+      graveyard: [], // Anche per il nemico
+      banished: [],
+      banishedFaceDown: []
     }));
   };
 

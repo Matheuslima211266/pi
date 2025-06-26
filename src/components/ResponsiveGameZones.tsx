@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PlacementMenu from './PlacementMenu';
 import ZoneActionMenu from './ZoneActionMenu';
@@ -23,6 +22,7 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
 
   console.log('ResponsiveGameZones field data:', field);
+  console.log('ResponsiveGameZones graveyard:', field?.graveyard);
 
   const {
     handleSlotClick,
