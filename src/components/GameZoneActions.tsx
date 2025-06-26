@@ -95,7 +95,6 @@ export const useGameZoneActions = ({
     let sourceZone = '';
     let slotIndex = -1;
     
-    // Trova da quale zona proviene la carta
     if (field.monsters?.some((m, i) => m && m.id === card.id)) {
       sourceZone = 'monsters';
       slotIndex = field.monsters.findIndex(m => m && m.id === card.id);
@@ -107,7 +106,7 @@ export const useGameZoneActions = ({
       slotIndex = 0;
     }
 
-    console.log(`Moving ${card.name} from ${sourceZone} to ${destination}`, { card, action, sourceZone, slotIndex });
+    console.log(`Moving ${card.name} from ${sourceZone} to ${destination}`);
 
     switch (action) {
       case 'toHand':
@@ -134,16 +133,9 @@ export const useGameZoneActions = ({
       case 'toExtraDeck':
         onCardMove && onCardMove(card, sourceZone, 'extraDeck');
         break;
-      case 'changePosition':
-        // Cambia la posizione della carta (da attack a defense e viceversa)
-        const newPosition = card.position === 'attack' ? 'defense' : 'attack';
-        const updatedCard = { ...card, position: newPosition };
-        console.log('Changing position from', card.position, 'to', newPosition);
-        onCardMove && onCardMove(updatedCard, sourceZone, 'flip_in_place', slotIndex);
-        break;
       case 'flipCard':
-        const flippedCard = { ...card, faceDown: !card.faceDown };
-        onCardMove && onCardMove(flippedCard, sourceZone, 'flip_in_place', slotIndex);
+        const updatedCard = { ...card, faceDown: !card.faceDown };
+        onCardMove && onCardMove(updatedCard, sourceZone, 'flip_in_place', slotIndex);
         break;
     }
   };
