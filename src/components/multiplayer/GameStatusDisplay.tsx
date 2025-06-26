@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Link, Copy } from 'lucide-react';
+import { Check, Link, Copy, AlertCircle } from 'lucide-react';
 
 interface GameStatusDisplayProps {
   gameId: string;
@@ -37,7 +37,7 @@ const GameStatusDisplay = ({
       
       {/* Show link and success message for host when game session is created */}
       {isHost && gameSessionCreated && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Button
             onClick={onCopyGameLink}
             variant="outline"
@@ -48,15 +48,19 @@ const GameStatusDisplay = ({
           </Button>
           
           <div className="bg-slate-700 p-3 rounded text-center">
-            <p className="text-xs text-gray-300 mb-2">Share this link:</p>
-            <div className="bg-slate-600 p-2 rounded text-xs text-white break-all">
+            <p className="text-xs text-gray-300 mb-2">Share this link with your opponent:</p>
+            <div className="bg-slate-600 p-2 rounded text-xs text-white break-all font-mono">
               {window.location.origin}?game={gameId}
             </div>
           </div>
           
           <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
-            <p className="text-green-400 font-semibold">Game created successfully!</p>
+            <p className="text-green-400 font-semibold">✅ Game created successfully!</p>
             <p className="text-sm text-gray-300 mt-1">Waiting for opponent to join...</p>
+            <div className="mt-2 flex items-center justify-center gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400" />
+              <p className="text-xs text-yellow-400">Don't press "Ready" until your opponent joins!</p>
+            </div>
           </div>
         </div>
       )}

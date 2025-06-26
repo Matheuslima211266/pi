@@ -1,9 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Play, LogOut } from 'lucide-react';
+import { Users, Play, LogOut, Clock } from 'lucide-react';
 
 interface WaitingForPlayersScreenProps {
   gameData: any;
@@ -22,6 +22,7 @@ const WaitingForPlayersScreen = ({
   onSignOut,
   onGameStart 
 }: WaitingForPlayersScreenProps) => {
+  const [countdown, setCountdown] = useState<number | null>(null);
   const bothReady = playerReady && opponentReady;
 
   console.log('WaitingForPlayersScreen render:', {
@@ -31,16 +32,25 @@ const WaitingForPlayersScreen = ({
     gameData: gameData?.gameId
   });
 
-  // Auto-start game when both players are ready
+  // Auto-start game when both players are ready with longer countdown
   useEffect(() => {
     if (bothReady && onGameStart) {
-      console.log('Both players ready, starting game in 3 seconds...');
-      const timer = setTimeout(() => {
-        console.log('Executing game start...');
-        onGameStart();
-      }, 3000);
+      console.log('Both players ready, starting countdown...');
+      setCountdown(10); // 10 seconds countdown
       
-      return () => clearTimeout(timer);
+      const interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            console.log('Executing game start...');
+            onGameStart();
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
     }
   }, [bothReady, onGameStart]);
 
@@ -110,16 +120,27 @@ const WaitingForPlayersScreen = ({
               </div>
             )}
 
-            {bothReady && (
-              <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400 animate-pulse">
-                <p className="text-blue-400 font-semibold text-lg">🎮 Both players ready!</p>
-                <p className="text-sm text-gray-300 mt-1">Starting game in 3 seconds...</p>
-                <div className="mt-3">
-                  <div className="w-full bg-blue-800 rounded-full h-3">
-                    <div className="bg-blue-400 h-3 rounded-full w-full animate-pulse"></div>
-                  </div>
+            {bothReady && countdown !== null && (
+              <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                  <p className="text-blue-400 font-semibold text-lg">Both players ready!</p>
                 </div>
-                <p className="text-xs text-blue-300 mt-2">Get ready to duel!</p>
+                <p className="text-sm text-gray-300 mb-3">Starting game in {countdown} seconds...</p>
+                <div className="w-full bg-blue-800 rounded-full h-3 mb-2">
+                  <div 
+                    className="bg-blue-400 h-3 rounded-full transition-all duration-1000"
+                    style={{ width: `${((10 - countdown) / 10) * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-blue-300">Get ready to duel!</p>
+              </div>
+            )}
+
+            {bothReady && countdown === null && (
+              <div className="text-center p-4 bg-purple-900/30 rounded-lg border border-purple-400">
+                <p className="text-purple-400 font-semibold text-lg">🎮 Starting Game...</p>
+                <p className="text-sm text-gray-300 mt-1">Loading duel arena...</p>
               </div>
             )}
           </div>
