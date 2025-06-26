@@ -19,7 +19,13 @@ const GameStatusDisplay = ({
   linkCopied, 
   onCopyGameLink 
 }: GameStatusDisplayProps) => {
-  if (!gameId) return null;
+  // DEBUG: Aggiungi console.log per vedere i valori
+  console.log('GameStatusDisplay props:', { gameId, isHost, gameSessionCreated, linkCopied });
+  
+  if (!gameId) {
+    console.log('No gameId, returning null');
+    return null;
+  }
 
   return (
     <div className="space-y-3">
@@ -30,6 +36,7 @@ const GameStatusDisplay = ({
         <p className="text-xs text-gray-400 mt-1">Game ID</p>
       </div>
       
+      {/* Mostra il link per l'host quando il gioco è creato */}
       {isHost && gameSessionCreated && (
         <div className="space-y-2">
           <Button
@@ -55,7 +62,8 @@ const GameStatusDisplay = ({
         </div>
       )}
 
-      {!isHost && (
+      {/* Mostra status per i guest */}
+      {!isHost && gameId && (
         <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
           <p className="text-blue-400 font-semibold">Joining game...</p>
           <p className="text-sm text-gray-300 mt-1">Please wait...</p>

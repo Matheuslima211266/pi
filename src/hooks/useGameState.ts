@@ -42,6 +42,7 @@ export const useGameState = () => {
   ]);
   const [bothPlayersReady, setBothPlayersReady] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [opponentConnected, setOpponentConnected] = useState(false);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -112,6 +113,7 @@ export const useGameState = () => {
     chatMessages, setChatMessages,
     bothPlayersReady, setBothPlayersReady,
     playerReady, setPlayerReady,
+    opponentConnected, setOpponentConnected,
     
     // Functions
     shuffleArray,

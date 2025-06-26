@@ -35,7 +35,7 @@ const Index = () => {
     }
   };
 
-  // Enhanced game start handler that returns success/failure
+  // Enhanced game start handler che gestisce correttamente il flusso
   const handleGameStart = async (gameData: any) => {
     let session = null;
     
@@ -48,8 +48,10 @@ const Index = () => {
       
       if (session) {
         handlers.handleGameStart(gameData);
+        console.log('Game started successfully, session:', session);
         return true;
       } else {
+        console.log('Failed to create/join session');
         return false;
       }
     } catch (error) {

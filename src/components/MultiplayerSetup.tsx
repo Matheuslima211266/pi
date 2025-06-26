@@ -31,6 +31,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     const gameFromUrl = urlParams.get('game');
     if (gameFromUrl) {
       setGameId(gameFromUrl);
+      setIsHost(false); // Se arriva da URL, non è l'host
     }
   }, []);
 
@@ -69,8 +70,15 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
       };
       
       const success = await onGameStart(gameData);
+      console.log('onGameStart result:', success);
+      
       if (success) {
         setGameSessionCreated(true);
+        console.log('Game session created successfully, showing link...', { 
+          gameId: newGameId, 
+          isHost: true, 
+          gameSessionCreated: true 
+        });
       } else {
         alert('Failed to create game session. Please try again.');
         setGameId('');
@@ -113,6 +121,8 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
       
       if (!success) {
         alert('Failed to join game. Please check the Game ID and try again.');
+      } else {
+        console.log('Successfully joined game');
       }
     } catch (error) {
       console.error('Error joining game:', error);
@@ -153,8 +163,9 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     window.location.reload();
   };
 
-  // If game is started but not all players are ready
-  if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
+  // CORREZIONE: Mostra il waiting screen SOLO quando entrambi i giocatori sono connessi
+  // ma non ancora entrambi pronti per iniziare
+  if (gameState?.gameStarted && gameState?.opponentConnected && !gameState?.bothPlayersReady) {
     return (
       <WaitingForPlayersScreen
         gameData={gameState?.gameData}

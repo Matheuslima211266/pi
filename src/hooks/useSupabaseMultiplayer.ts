@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -118,6 +119,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
       setGameSessionId(data.id);
       console.log('Successfully joined game session:', data);
+      
+      // Notifica che l'opponent si è connesso
+      gameState.setOpponentConnected(true);
+      
       return data;
     } catch (error: any) {
       console.error('Error joining game session:', error);
@@ -128,7 +133,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       });
       return null;
     }
-  }, [user, toast]);
+  }, [user, toast, gameState]);
 
   // Send chat message
   const sendChatMessage = useCallback(async (message: string, playerName: string) => {
@@ -173,6 +178,27 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   // Set up real-time subscriptions
   useEffect(() => {
     if (!gameSessionId) return;
+
+    // Subscribe to game session changes per vedere quando qualcuno si unisce
+    const gameSessionChannel = supabase
+      .channel('game_sessions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'game_sessions',
+          filter: `id=eq.${gameSessionId}`
+        },
+        (payload) => {
+          console.log('Game session update:', payload);
+          if (payload.new && typeof payload.new === 'object' && 'guest_id' in payload.new && payload.new.guest_id) {
+            // Un guest si è unito
+            gameState.setOpponentConnected(true);
+          }
+        }
+      )
+      .subscribe();
 
     // Subscribe to game states
     const gameStateChannel = supabase
@@ -261,6 +287,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       .subscribe();
 
     return () => {
+      supabase.removeChannel(gameSessionChannel);
       supabase.removeChannel(gameStateChannel);
       supabase.removeChannel(chatChannel);
       supabase.removeChannel(actionsChannel);
