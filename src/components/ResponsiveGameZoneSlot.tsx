@@ -18,7 +18,8 @@ const ResponsiveGameZoneSlot = ({
   const handleClick = () => {
     if (card) {
       onCardPreview?.(card);
-    } else if (onSlotClick) {
+    } else if (onSlotClick && isHighlighted) {
+      // Only allow slot clicks when highlighted (card selected from hand)
       onSlotClick(zoneName, slotIndex);
     }
   };

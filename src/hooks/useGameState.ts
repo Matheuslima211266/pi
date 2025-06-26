@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import sampleCardsData from '@/data/sampleCards.json';
 
@@ -137,49 +138,49 @@ export const useGameState = () => {
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Genera un deck completo con ID unici per ogni copia
-    const fullDeck = [];
-    mainDeckCards.forEach((card, cardIndex) => {
-      for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
-        const uniqueCard = {
-          ...card,
-          id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `${cardIndex}_copy${copyIndex}`)
-        };
-        fullDeck.push(uniqueCard);
-      }
-    });
+    // Create a normal 40-card deck (not 120!)
+    const normalDeckSize = Math.min(40, mainDeckCards.length);
+    const selectedCards = shuffleArray([...mainDeckCards]).slice(0, normalDeckSize);
+    
+    // Generate unique IDs for the selected cards
+    const playerMainDeck = selectedCards.map((card, index) => ({
+      ...card,
+      id: generateUniqueCardId(card.id, gameData?.playerName || 'player', index)
+    }));
     
     const uniqueExtraDeckCards = extraDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    const shuffledMainDeck = shuffleArray([...fullDeck]);
+    const shuffledMainDeck = shuffleArray([...playerMainDeck]);
     const shuffledHand = shuffledMainDeck.slice(0, 5);
     const remainingDeck = shuffledMainDeck.slice(5);
 
-    // Crea anche un deck separato per il nemico
-    const enemyDeck = [];
-    mainDeckCards.forEach((card, cardIndex) => {
-      for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
-        enemyDeck.push({
-          ...card,
-          id: generateUniqueCardId(card.id, 'enemy', `${cardIndex}_copy${copyIndex}`)
-        });
-      }
-    });
+    // Create enemy deck (also normal size)
+    const enemyMainDeck = selectedCards.map((card, index) => ({
+      ...card,
+      id: generateUniqueCardId(card.id, 'enemy', index)
+    }));
+    const shuffledEnemyDeck = shuffleArray([...enemyMainDeck]);
+    const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
+    const enemyRemainingDeck = shuffledEnemyDeck.slice(5);
 
-    // Aggiungi alcune carte di test alla Dead Zone per verificare il funzionamento
+    // Add some test cards to Dead Zone for verification
     const testDeadZoneCards = shuffledHand.slice(0, 2).map(card => ({
       ...card,
       id: generateUniqueCardId(card.id, 'deadzone_test', Date.now())
     }));
 
     console.log('[useGameState] Test dead zone cards:', testDeadZoneCards.map(c => c.name));
+    console.log('[useGameState] Player deck size:', remainingDeck.length);
+    console.log('[useGameState] Enemy deck size:', enemyRemainingDeck.length);
+    console.log('[useGameState] Enemy hand count:', enemyStartingHand.length);
 
     setPlayerDeck(remainingDeck);
-    setEnemyDeck(shuffleArray(enemyDeck).slice(0, 35));
+    setEnemyDeck(enemyRemainingDeck);
     setPlayerHand(shuffledHand);
+    setEnemyHandCount(enemyStartingHand.length); // Set correct enemy hand count
     
     setPlayerField(prev => ({ 
       ...prev, 
@@ -193,7 +194,7 @@ export const useGameState = () => {
     setEnemyField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
-      deck: shuffleArray([...enemyDeck]).slice(0, 35),
+      deck: enemyRemainingDeck,
       deadZone: [testDeadZoneCards[0]], // Renamed from graveyard
       banished: [],
       banishedFaceDown: []

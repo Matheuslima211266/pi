@@ -83,9 +83,9 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
             Show to Opponent
           </ContextMenuItem>
           
-          <ContextMenuItem onClick={() => handleCardMovement(card, 'graveyard')} className="text-white hover:bg-gray-700">
+          <ContextMenuItem onClick={() => handleCardMovement(card, 'deadZone')} className="text-white hover:bg-gray-700">
             <Skull className="mr-2 h-4 w-4" />
-            Send to Graveyard
+            Send to Dead Zone
           </ContextMenuItem>
 
           <ContextMenuSub>
