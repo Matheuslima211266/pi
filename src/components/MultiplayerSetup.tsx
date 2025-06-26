@@ -35,6 +35,7 @@ const MultiplayerSetup = ({
   const [gameSessionCreated, setGameSessionCreated] = useState(false);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
+  const [gameIdFromUrl, setGameIdFromUrl] = useState('');
 
   console.log('=== MULTIPLAYER SETUP STATE ===', {
     gameStarted: gameState?.gameStarted,
@@ -43,8 +44,10 @@ const MultiplayerSetup = ({
     playerReady: gameState?.playerReady,
     opponentReady: gameState?.opponentReady,
     gameId,
+    gameIdFromUrl,
     isHost,
-    gameSessionCreated
+    gameSessionCreated,
+    isJoiningGame
   });
 
   // Check URL for game parameter
@@ -52,9 +55,10 @@ const MultiplayerSetup = ({
     const urlParams = new URLSearchParams(window.location.search);
     const gameFromUrl = urlParams.get('game');
     if (gameFromUrl) {
+      console.log('Game ID detected from URL:', gameFromUrl);
+      setGameIdFromUrl(gameFromUrl);
       setGameId(gameFromUrl);
-      setIsHost(false);
-      console.log('Game ID from URL:', gameFromUrl);
+      // NON impostiamo isHost = false qui, lasciamo che l'utente completi il setup
     }
   }, []);
 
@@ -102,7 +106,9 @@ const MultiplayerSetup = ({
   };
 
   const joinGame = async () => {
-    if (!gameId.trim()) {
+    const targetGameId = gameId.trim().toUpperCase() || gameIdFromUrl;
+    
+    if (!targetGameId) {
       alert('Please enter a Game ID');
       return;
     }
@@ -118,11 +124,11 @@ const MultiplayerSetup = ({
     }
 
     setIsJoiningGame(true);
-    console.log('Attempting to join game:', gameId);
+    console.log('=== ATTEMPTING TO JOIN GAME ===', targetGameId);
     
     try {
       const success = await onGameStart({ 
-        gameId: gameId.trim().toUpperCase(),
+        gameId: targetGameId,
         playerName: playerName.trim(), 
         isHost: false,
         deckLoaded: true 
@@ -130,14 +136,15 @@ const MultiplayerSetup = ({
       
       if (!success) {
         alert('Failed to join game. Please check the Game ID and try again.');
+        setIsJoiningGame(false);
       } else {
-        console.log('Successfully joined game');
+        console.log('=== SUCCESSFULLY JOINED GAME ===', targetGameId);
         setIsHost(false);
+        // Non togliamo setIsJoiningGame(false) qui perché saremo reindirizzati alla waiting room
       }
     } catch (error) {
       console.error('Error joining game:', error);
       alert('Failed to join game. Please try again.');
-    } finally {
       setIsJoiningGame(false);
     }
   };
@@ -182,7 +189,7 @@ const MultiplayerSetup = ({
     }
   };
 
-  // Show waiting screen when game started and session exists but not both players ready
+  // Show waiting screen quando il gioco è iniziato e c'è una sessione attiva
   if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
     console.log('=== SHOWING WAITING SCREEN ===');
     
@@ -228,8 +235,23 @@ const MultiplayerSetup = ({
             onDeckUpload={handleDeckUpload}
           />
 
-          {/* Mostra la sezione di creazione del gioco se non c'è un gameId */}
-          {!gameId && (
+          {/* Messaggio speciale se c'è un gameId dall'URL */}
+          {gameIdFromUrl && !gameState?.gameStarted && (
+            <div className="p-4 bg-blue-900/40 rounded-lg border border-blue-400/50">
+              <p className="text-blue-400 font-semibold text-center mb-2">
+                🎮 Invitato a partecipare!
+              </p>
+              <p className="text-sm text-gray-300 text-center mb-3">
+                Game ID: <span className="font-mono text-white">{gameIdFromUrl}</span>
+              </p>
+              <p className="text-xs text-yellow-300 text-center">
+                ⚠️ Completa il setup sopra e poi clicca "Join Game"
+              </p>
+            </div>
+          )}
+
+          {/* Sezione di creazione/join del gioco */}
+          {!gameState?.gameStarted && (
             <GameCreationSection
               gameId={gameId}
               setGameId={setGameId}
@@ -238,11 +260,12 @@ const MultiplayerSetup = ({
               isCreatingGame={isCreatingGame}
               onCreateGame={createGame}
               onJoinGame={joinGame}
+              isJoiningGame={isJoiningGame}
             />
           )}
 
-          {/* Mostra il GameStatusDisplay quando c'è un gameId ma il gioco non è ancora iniziato */}
-          {gameId && !gameState?.gameStarted && (
+          {/* Mostra il GameStatusDisplay quando il gioco è stato creato ma non è ancora iniziato */}
+          {gameId && isHost && gameSessionCreated && !gameState?.gameStarted && (
             <GameStatusDisplay
               gameId={gameId}
               isHost={isHost}
@@ -261,13 +284,14 @@ const MultiplayerSetup = ({
             gameSessionCreated={gameSessionCreated}
           />
 
-          {/* Loading state */}
-          {(isCreatingGame || isJoiningGame) && (
+          {/* Loading state per join */}
+          {isJoiningGame && (
             <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
-              <p className="text-blue-400 font-semibold">
-                {isCreatingGame ? 'Creating game...' : 'Joining game...'}
-              </p>
+              <p className="text-blue-400 font-semibold">Joining game...</p>
               <p className="text-sm text-gray-300 mt-1">Please wait...</p>
+              <div className="mt-2">
+                <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto"></div>
+              </div>
             </div>
           )}
         </div>

@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Gamepad2, Users, Loader2 } from 'lucide-react';
 
 interface GameCreationSectionProps {
   gameId: string;
-  setGameId: (id: string) => void;
+  setGameId: (gameId: string) => void;
   playerName: string;
   deckLoaded: boolean;
   isCreatingGame: boolean;
   onCreateGame: () => void;
   onJoinGame: () => void;
+  isJoiningGame?: boolean;
 }
 
 const GameCreationSection = ({ 
@@ -21,38 +22,66 @@ const GameCreationSection = ({
   deckLoaded, 
   isCreatingGame, 
   onCreateGame, 
-  onJoinGame 
+  onJoinGame,
+  isJoiningGame = false
 }: GameCreationSectionProps) => {
-  if (gameId) return null;
+  const canCreateGame = playerName.trim() && deckLoaded && !isCreatingGame;
+  const canJoinGame = gameId.trim() && playerName.trim() && deckLoaded && !isJoiningGame;
 
   return (
-    <div className="space-y-2">
-      <Button
-        onClick={onCreateGame}
-        className="w-full bg-gold-600 hover:bg-gold-700 text-black"
-        disabled={!playerName.trim() || !deckLoaded || isCreatingGame}
-      >
-        <Share2 className="w-4 h-4 mr-2" />
-        {isCreatingGame ? 'Creating...' : 'Create Game'}
-      </Button>
-      
-      <div className="text-center text-gray-400">or</div>
-      
-      <div className="flex gap-2">
-        <Input
-          value={gameId}
-          onChange={(e) => setGameId(e.target.value.toUpperCase())}
-          placeholder="Game ID"
-          className="bg-slate-700 border-slate-600 text-white"
-        />
-        <Button
-          onClick={onJoinGame}
-          variant="outline"
-          className="border-gold-400 text-gold-400"
-          disabled={!gameId.trim() || !playerName.trim() || !deckLoaded}
-        >
-          Join
-        </Button>
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="flex justify-center">
+          <Button
+            onClick={onCreateGame}
+            disabled={!canCreateGame}
+            className="w-full bg-gold-600 hover:bg-gold-700 text-black font-semibold disabled:opacity-50"
+            size="lg"
+          >
+            {isCreatingGame ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Gamepad2 className="w-4 h-4 mr-2" />
+                Create New Game
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div className="text-center text-gray-400 text-sm">OR</div>
+
+        <div className="space-y-3">
+          <Input
+            placeholder="Enter Game ID"
+            value={gameId}
+            onChange={(e) => setGameId(e.target.value.toUpperCase())}
+            className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 text-center font-mono text-lg"
+            disabled={isJoiningGame}
+          />
+          
+          <Button
+            onClick={onJoinGame}
+            disabled={!canJoinGame}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50"
+            size="lg"
+          >
+            {isJoiningGame ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Joining...
+              </>
+            ) : (
+              <>
+                <Users className="w-4 h-4 mr-2" />
+                Join Game
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
