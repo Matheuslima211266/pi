@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ interface WaitingForPlayersScreenProps {
   opponentReady: boolean;
   onPlayerReady?: () => void;
   onSignOut: () => void;
+  onGameStart?: () => void;
 }
 
 const WaitingForPlayersScreen = ({ 
@@ -18,9 +19,22 @@ const WaitingForPlayersScreen = ({
   playerReady, 
   opponentReady, 
   onPlayerReady, 
-  onSignOut 
+  onSignOut,
+  onGameStart 
 }: WaitingForPlayersScreenProps) => {
   const bothReady = playerReady && opponentReady;
+
+  // Auto-start game when both players are ready
+  useEffect(() => {
+    if (bothReady && onGameStart) {
+      console.log('Both players ready, starting game in 2 seconds...');
+      const timer = setTimeout(() => {
+        onGameStart();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [bothReady, onGameStart]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -83,9 +97,14 @@ const WaitingForPlayersScreen = ({
             )}
 
             {bothReady && (
-              <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
-                <p className="text-blue-400 font-semibold">Both players ready!</p>
-                <p className="text-sm text-gray-300 mt-1">Starting game...</p>
+              <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400 animate-pulse">
+                <p className="text-blue-400 font-semibold text-lg">Both players ready!</p>
+                <p className="text-sm text-gray-300 mt-1">Starting game in 2 seconds...</p>
+                <div className="mt-3">
+                  <div className="w-full bg-blue-800 rounded-full h-2">
+                    <div className="bg-blue-400 h-2 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

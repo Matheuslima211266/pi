@@ -150,6 +150,14 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     window.location.reload();
   };
 
+  // Handle game start after both players are ready
+  const handleGameStartFromWaiting = () => {
+    console.log('Starting game from waiting screen...');
+    if (gameState?.setBothPlayersReady) {
+      gameState.setBothPlayersReady(true);
+    }
+  };
+
   // Show waiting screen when:
   // 1. Game is started AND
   // 2. We have a current session (opponent connected) AND  
@@ -158,7 +166,9 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     console.log('Showing waiting screen', {
       gameStarted: gameState.gameStarted,
       currentSession: !!gameState.currentSession,
-      bothPlayersReady: gameState.bothPlayersReady
+      bothPlayersReady: gameState.bothPlayersReady,
+      playerReady: gameState.playerReady,
+      opponentReady: gameState.opponentReady
     });
     
     return (
@@ -168,6 +178,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
         opponentReady={gameState.opponentReady}
         onPlayerReady={onPlayerReady}
         onSignOut={handleSignOut}
+        onGameStart={handleGameStartFromWaiting}
       />
     );
   }
