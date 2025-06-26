@@ -1,5 +1,6 @@
+
 import React from 'react';
-import PositionedGameBoard from '@/components/PositionedGameBoard';
+import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import PlayerHand from '@/components/PlayerHand';
 import EnemyHand from '@/components/EnemyHand';
 import ActionLog from '@/components/ActionLog';
@@ -50,7 +51,7 @@ const GameLayout = ({
   } = handlers;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
+    <div className="game-container">
       {/* Game ID Display */}
       {gameData?.gameId && (
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30">
@@ -61,10 +62,37 @@ const GameLayout = ({
         </div>
       )}
       
-      {/* Layout principale ottimizzato per 16:9 */}
-      <div className="h-full grid grid-cols-12 grid-rows-12">
-        {/* Enemy Hand - Riga superiore */}
-        <div className="col-span-9 row-span-1 flex items-center">
+      {/* Sidebar con Life Points e Controlli */}
+      <div className="sidebar">
+        <GameSidebar
+          enemyLifePoints={enemyLifePoints}
+          playerLifePoints={playerLifePoints}
+          currentPhase={currentPhase}
+          isPlayerTurn={isPlayerTurn}
+          timeRemaining={timeRemaining}
+          chatMessages={chatMessages}
+          onLifePointsChange={handleLifePointsChange}
+          onPhaseChange={handlePhaseChange}
+          onEndTurn={handleEndTurn}
+          onTimeUp={handleTimeUp}
+          onTimeChange={setTimeRemaining}
+          onSendMessage={handleSendMessage}
+        />
+        
+        {/* Action Log e Dice/Coin nella sidebar */}
+        <div className="flex-1 flex flex-col gap-4 mt-4">
+          <ActionLog actions={actionLog} />
+          <DiceAndCoin 
+            onDiceRoll={handleDiceRoll}
+            onCoinFlip={handleCoinFlip}
+          />
+        </div>
+      </div>
+      
+      {/* Area principale del campo */}
+      <div className="field-area">
+        {/* Enemy Hand - Parte superiore */}
+        <div className="h-20 flex items-center justify-center mb-2">
           <EnemyHand 
             handCount={enemyHandCount}
             revealedCard={enemyRevealedCard}
@@ -72,9 +100,9 @@ const GameLayout = ({
           />
         </div>
         
-        {/* Game Board - Area principale centrale */}
-        <div className="col-span-9 row-span-10">
-          <PositionedGameBoard 
+        {/* Campo da gioco principale */}
+        <div className="battlefield-container">
+          <ResponsiveGameBoard 
             playerField={playerField}
             enemyField={enemyField}
             onAttack={handleAttack}
@@ -86,8 +114,8 @@ const GameLayout = ({
           />
         </div>
         
-        {/* Player Hand - Riga inferiore */}
-        <div className="col-span-9 row-span-1 flex items-center">
+        {/* Player Hand - Parte inferiore */}
+        <div className="h-24 flex items-center justify-center mt-2">
           <PlayerHand 
             cards={playerHand}
             onPlayCard={gameState.setSelectedCardFromHand}
@@ -97,36 +125,6 @@ const GameLayout = ({
             onShowCard={handleShowCard}
             onShowHand={handleShowHand}
           />
-        </div>
-        
-        {/* Sidebar - Colonna destra completa */}
-        <div className="col-span-3 row-span-12 flex flex-col">
-          {/* Game Controls */}
-          <div className="flex-shrink-0 p-2">
-            <GameSidebar
-              enemyLifePoints={enemyLifePoints}
-              playerLifePoints={playerLifePoints}
-              currentPhase={currentPhase}
-              isPlayerTurn={isPlayerTurn}
-              timeRemaining={timeRemaining}
-              chatMessages={chatMessages}
-              onLifePointsChange={handleLifePointsChange}
-              onPhaseChange={handlePhaseChange}
-              onEndTurn={handleEndTurn}
-              onTimeUp={handleTimeUp}
-              onTimeChange={setTimeRemaining}
-              onSendMessage={handleSendMessage}
-            />
-          </div>
-          
-          {/* Action Log and Dice/Coin */}
-          <div className="flex-1 grid grid-rows-2 p-2 gap-2">
-            <ActionLog actions={actionLog} />
-            <DiceAndCoin 
-              onDiceRoll={handleDiceRoll}
-              onCoinFlip={handleCoinFlip}
-            />
-          </div>
         </div>
       </div>
       

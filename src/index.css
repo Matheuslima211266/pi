@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -99,5 +93,230 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ==== LAYOUT PRINCIPALE RESPONSIVE ==== */
+.game-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  min-height: 600px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  overflow: hidden;
+}
+
+/* ==== SIDEBAR LIFE POINTS ==== */
+.sidebar {
+  width: clamp(250px, 20vw, 350px);
+  min-width: 250px;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  border-right: 2px solid #4a5568;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.life-points-section {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ==== AREA PRINCIPALE CAMPO ==== */
+.field-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(0.5rem, 2vw, 1.5rem);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ==== CONTAINER CAMPO DA GIOCO ==== */
+.battlefield-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* ==== ZONA AVVERSARIO (TOP) ==== */
+.opponent-zone {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: clamp(0.25rem, 0.8vw, 0.5rem);
+  width: 100%;
+  max-width: min(90vw, 800px);
+  transform: rotate(180deg);
+}
+
+/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS) ==== */
+.center-zone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  width: 100%;
+  margin: clamp(0.5rem, 1.5vh, 1rem) 0;
+}
+
+.field-spell-slot {
+  width: clamp(50px, 8vw, 80px);
+  height: clamp(70px, 11.2vw, 112px);
+}
+
+/* ==== ZONA GIOCATORE (BOTTOM) ==== */
+.player-zone {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: clamp(0.25rem, 0.8vw, 0.5rem);
+  width: 100%;
+  max-width: min(90vw, 800px);
+}
+
+/* ==== SLOT CARTE GENERICI ==== */
+.card-slot {
+  aspect-ratio: 5/7;
+  width: clamp(60px, 10vw, 100px);
+  height: clamp(84px, 14vw, 140px);
+  border: 2px dashed #4a5568;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.card-slot:hover {
+  border-color: #63b3ed;
+  background: rgba(99, 179, 237, 0.1);
+  transform: scale(1.02);
+}
+
+.card-slot.highlighted {
+  border-color: #f6e05e;
+  background: rgba(246, 224, 94, 0.2);
+  animation: pulse 2s infinite;
+}
+
+/* ==== ZONE SPECIFICHE ==== */
+.extra-deck-slot {
+  background: rgba(138, 43, 226, 0.2);
+  border-color: #8a2be2;
+}
+
+.main-deck-slot {
+  background: rgba(34, 139, 34, 0.2);
+  border-color: #228b22;
+}
+
+.graveyard-slot {
+  background: rgba(139, 69, 19, 0.2);
+  border-color: #8b4513;
+}
+
+.banished-slot {
+  background: rgba(255, 20, 147, 0.2);
+  border-color: #ff1493;
+}
+
+.monster-zone .card-slot {
+  background: rgba(255, 140, 0, 0.1);
+  border-color: #ff8c00;
+}
+
+.spell-trap-zone .card-slot {
+  background: rgba(30, 144, 255, 0.1);
+  border-color: #1e90ff;
+}
+
+/* ==== ANIMAZIONI ==== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ==== RESPONSIVE BREAKPOINTS ==== */
+
+/* Tablet Landscape */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .sidebar {
+    width: clamp(200px, 18vw, 280px);
+    min-width: 200px;
+  }
+  
+  .card-slot {
+    width: clamp(50px, 9vw, 80px);
+    height: clamp(70px, 12.6vw, 112px);
+  }
+}
+
+/* Tablet Portrait */
+@media (max-width: 768px) and (min-width: 481px) {
+  .game-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: clamp(120px, 20vh, 180px);
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    border-right: none;
+    border-bottom: 2px solid #4a5568;
+  }
+  
+  .life-points-section {
+    margin: 0;
+    padding: 1rem;
+    flex: 1;
+    max-width: 300px;
+  }
+  
+  .field-area {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  .card-slot {
+    width: clamp(45px, 8vw, 70px);
+    height: clamp(63px, 11.2vw, 98px);
+  }
+  
+  .opponent-zone,
+  .player-zone {
+    max-width: min(95vw, 600px);
+    gap: clamp(0.2rem, 0.6vw, 0.4rem);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .sidebar {
+    height: clamp(100px, 15vh, 140px);
+    padding: 0.5rem;
+  }
+  
+  .life-points-section {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .card-slot {
+    width: clamp(40px, 7vw, 60px);
+    height: clamp(56px, 9.8vw, 84px);
   }
 }
