@@ -16,7 +16,7 @@ const CardComponent = ({
   const isMonster = card.card_type === 'monster' || card.atk !== undefined;
   const isDefensePosition = position === 'defense' || card.position === 'defense';
 
-  // Dimensioni più grandi per carte sul campo
+  // Dimensioni per carte sul campo
   const getCardDimensions = () => {
     if (isInHand) {
       return { width: 'w-20', height: 'h-28', imageHeight: 'h-16' };
@@ -119,65 +119,48 @@ const CardComponent = ({
         </div>
       )}
 
-      {/* Card Stats Section */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 flex flex-col justify-center items-center"
-        style={{
-          height: isInHand ? '45%' : (isSmall ? '45%' : '40%'),
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.95))'
-        }}
-      >
-        {/* Monster Stats */}
-        {isMonster && (
-          <div className={`flex justify-around w-full ${isInHand ? 'px-1' : 'px-4'}`}>
-            <div className="text-center">
-              <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')} mb-1`}>
-                ATK
-              </div>
-              <div 
-                className={`text-red-400 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-sm' : 'text-2xl')}`}
-                style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
-              >
-                {card.atk}
-              </div>
+      {/* Card Stats Section - Solo per mostri e solo ATK/DEF */}
+      {isMonster && (
+        <div 
+          className="absolute bottom-0 left-0 right-0 flex justify-around items-center"
+          style={{
+            height: isInHand ? '35%' : (isSmall ? '35%' : '40%'),
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.95))'
+          }}
+        >
+          <div className="text-center">
+            <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')} mb-1`}>
+              ATK
             </div>
-            <div className="text-center">
-              <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')} mb-1`}>
-                DEF
-              </div>
-              <div 
-                className={`text-blue-400 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-sm' : 'text-2xl')}`}
-                style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
-              >
-                {card.def}
-              </div>
+            <div 
+              className={`text-red-400 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-sm' : 'text-2xl')}`}
+              style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+            >
+              {card.atk}
             </div>
           </div>
-        )}
-
-        {/* Non-Monster Cards Info */}
-        {!isMonster && (
-          <div className="text-center px-2">
-            <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')}`}>
-              {card.card_type?.toUpperCase()}
+          <div className="text-center">
+            <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')} mb-1`}>
+              DEF
+            </div>
+            <div 
+              className={`text-blue-400 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-sm' : 'text-2xl')}`}
+              style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+            >
+              {card.def}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Card Name */}
-      <div 
-        className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 text-yellow-500 font-bold text-center max-w-full px-2 ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')}`}
-        style={{ 
-          textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          maxWidth: isInHand ? '70px' : (isSmall ? '80px' : '90%')
-        }}
-      >
-        {card.name}
-      </div>
+      {/* Non-Monster Cards - Mostra solo il tipo */}
+      {!isMonster && (
+        <div className="absolute bottom-0 left-0 right-0 h-[20%] bg-gradient-to-t from-black/90 to-transparent flex items-center justify-center">
+          <div className={`text-yellow-500 font-bold ${isInHand ? 'text-xs' : (isSmall ? 'text-xs' : 'text-sm')}`}>
+            {card.card_type?.toUpperCase()}
+          </div>
+        </div>
+      )}
 
       {/* Position indicator for monsters - Clickable */}
       {isMonster && !isSmall && !isInHand && onPositionChange && (
@@ -200,13 +183,6 @@ const CardComponent = ({
           <div className={`text-sm px-2 py-1 rounded ${isDefensePosition ? 'bg-blue-500' : 'bg-red-500'} text-white`}>
             {isDefensePosition ? 'DEF' : 'ATK'}
           </div>
-        </div>
-      )}
-
-      {/* Cost badge (if needed) */}
-      {showCost && card.cost && !isInHand && (
-        <div className="absolute top-2 left-2 bg-yellow-600 text-black text-sm font-bold px-2 py-1 rounded">
-          {card.cost}
         </div>
       )}
     </div>
