@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
 
@@ -12,7 +11,8 @@ const ZoneSlotRenderer = ({
   handleFieldCardAction,
   handleCardClick,
   isEffectActivated,
-  handleZoneClick
+  handleZoneClick,
+  enemyField
 }) => {
   const renderZoneSlots = () => {
     const slots = [];
@@ -52,6 +52,7 @@ const ZoneSlotRenderer = ({
               onCardClick={handleCardClick}
               isEffectActivated={isEffectActivated}
               zoneLabel="S/T"
+              enemyField={enemyField}
             />
           </div>
         );
@@ -104,6 +105,7 @@ const ZoneSlotRenderer = ({
               onCardClick={handleCardClick}
               isEffectActivated={isEffectActivated}
               zoneLabel="Monster"
+              enemyField={enemyField}
             />
           </div>
         );
@@ -154,6 +156,7 @@ const ZoneSlotRenderer = ({
             onCardClick={handleCardClick}
             isEffectActivated={isEffectActivated}
             zoneLabel="Field Spell"
+            enemyField={enemyField}
           />
         </div>
       );

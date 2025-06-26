@@ -35,7 +35,8 @@ const ImprovedCardPreview = ({ card, onClose }) => {
             alt={card.name}
             className="w-full h-48 object-cover rounded-lg border border-purple-300"
             onError={(e) => {
-              e.target.style.display = 'none';
+              const target = e.currentTarget as HTMLImageElement;
+              target.style.display = 'none';
             }}
           />
         </div>
