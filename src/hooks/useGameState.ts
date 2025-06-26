@@ -134,11 +134,17 @@ export const useGameState = () => {
 
   const initializeGame = () => {
     console.log('[useGameState] Initializing game...');
+    
+    // Usa i dati del deck del giocatore se disponibili, altrimenti usa i dati di esempio
     const allCards = playerDeckData?.cards || sampleCardsData.cards;
     const mainDeckCards = allCards.filter(card => !card.extra_deck);
     const extraDeckCards = allCards.filter(card => card.extra_deck);
 
-    // Use the actual deck data from the JSON instead of limiting to 40 cards
+    console.log('[useGameState] Total cards loaded:', allCards.length);
+    console.log('[useGameState] Main deck cards:', mainDeckCards.length);
+    console.log('[useGameState] Extra deck cards:', extraDeckCards.length);
+
+    // Crea il deck principale con tutte le carte dal JSON
     const playerMainDeck = mainDeckCards.map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', index)
@@ -153,8 +159,8 @@ export const useGameState = () => {
     const shuffledHand = shuffledMainDeck.slice(0, 5);
     const remainingDeck = shuffledMainDeck.slice(5);
 
-    // Create enemy deck with same cards as player
-    const enemyMainDeck = mainDeckCards.map((card, index) => ({
+    // Crea il deck nemico con le stesse carte del giocatore
+    const enemyMainDeck = mainDeckCards.slice(0, 40).map((card, index) => ({
       ...card,
       id: generateUniqueCardId(card.id, 'enemy', index)
     }));
@@ -162,15 +168,16 @@ export const useGameState = () => {
     const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
     const enemyRemainingDeck = shuffledEnemyDeck.slice(5);
 
-    // Add some test cards to Dead Zone for verification
+    // Aggiungi alcune carte di test alla Dead Zone per verifica
     const testDeadZoneCards = shuffledHand.slice(0, 2).map(card => ({
       ...card,
       id: generateUniqueCardId(card.id, 'deadzone_test', Date.now())
     }));
 
-    console.log('[useGameState] Test dead zone cards:', testDeadZoneCards.map(c => c.name));
-    console.log('[useGameState] Player deck size:', remainingDeck.length);
-    console.log('[useGameState] Enemy deck size:', enemyRemainingDeck.length);
+    console.log('[useGameState] Final deck sizes:');
+    console.log('[useGameState] Player deck:', remainingDeck.length);
+    console.log('[useGameState] Enemy deck:', enemyRemainingDeck.length);
+    console.log('[useGameState] Player hand:', shuffledHand.length);
     console.log('[useGameState] Enemy hand count:', enemyStartingHand.length);
 
     setPlayerDeck(remainingDeck);
@@ -196,7 +203,7 @@ export const useGameState = () => {
       banishedFaceDown: []
     }));
 
-    console.log('[useGameState] Game initialized successfully with test dead zone cards');
+    console.log('[useGameState] Game initialized successfully');
   };
 
   // Funzione per il mill (spostare carte dal deck alla Dead Zone)

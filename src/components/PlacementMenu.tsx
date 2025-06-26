@@ -50,15 +50,19 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     }
   };
 
+  // Calcola la posizione del menu per centrarlo meglio
+  const menuStyle = {
+    position: 'fixed',
+    left: Math.min(placementMenu.x, window.innerWidth - 200),
+    top: Math.min(placementMenu.y, window.innerHeight - 300),
+    zIndex: 50
+  };
+
   return (
     <>
       <div 
-        className="fixed bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg z-50 min-w-40"
-        style={{ 
-          left: `${placementMenu.x}px`, 
-          top: `${placementMenu.y}px`,
-          transform: 'translate(-50%, -50%)'
-        }}
+        className="bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg min-w-40"
+        style={menuStyle}
       >
         <div className="text-sm font-semibold mb-2 text-gray-300">
           {placementMenu.card?.name}
