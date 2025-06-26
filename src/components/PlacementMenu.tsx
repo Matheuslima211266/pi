@@ -59,7 +59,7 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
 
   // Calcola la posizione del menu vicino al cursore
   const menuStyle = {
-    position: 'fixed',
+    position: 'fixed' as const,
     left: Math.max(10, Math.min(placementMenu.x - 100, window.innerWidth - 220)),
     top: Math.max(10, Math.min(placementMenu.y - 50, window.innerHeight - 200)),
     zIndex: 1000

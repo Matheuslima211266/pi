@@ -33,7 +33,7 @@ const ResponsiveGameZoneSlot = ({
   return (
     <div 
       className={`
-        relative w-full h-full
+        relative w-full h-full min-w-[80px] min-h-[120px]
         border-2 rounded-lg cursor-pointer transition-all duration-200
         ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
         ${isHighlighted ? 'border-blue-400 bg-blue-900/50 shadow-lg shadow-blue-400/50' : ''}
@@ -43,21 +43,23 @@ const ResponsiveGameZoneSlot = ({
     >
       {card ? (
         <div className="relative w-full h-full">
-          <CardComponent 
-            card={card}
-            onClick={() => onCardPreview?.(card)}
-            isPlayable={true}
-            isSmall={true}
-            showCost={false}
-            isInHand={false}
-            isFaceDown={card.faceDown}
-            position={card.position || 'attack'}
-            onPositionChange={(card, newPosition) => {
-              if (onFieldCardAction) {
-                onFieldCardAction('changePosition', { ...card, position: newPosition }, zoneName, slotIndex);
-              }
-            }}
-          />
+          <div className="w-full h-full">
+            <CardComponent 
+              card={card}
+              onClick={() => onCardPreview?.(card)}
+              isPlayable={true}
+              isSmall={false}
+              showCost={false}
+              isInHand={false}
+              isFaceDown={card.faceDown}
+              position={card.position || 'attack'}
+              onPositionChange={(card, newPosition) => {
+                if (onFieldCardAction) {
+                  onFieldCardAction('changePosition', { ...card, position: newPosition }, zoneName, slotIndex);
+                }
+              }}
+            />
+          </div>
           
           {/* Menu popup per azioni rapide */}
           <div className="absolute top-1 right-1 opacity-0 hover:opacity-100 transition-opacity z-10">
