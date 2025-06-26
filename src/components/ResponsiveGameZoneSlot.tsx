@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { ArrowUp, Skull, Ban, BookOpen, Star, Eye } from 'lucide-react';
 import CardComponent from './CardComponent';
 
 const ResponsiveGameZoneSlot = ({ 
@@ -15,101 +13,102 @@ const ResponsiveGameZoneSlot = ({
   onFieldCardAction, 
   onCardClick, 
   isEffectActivated,
-  zoneLabel,
-  className = ""
+  zoneLabel 
 }) => {
-  if (!card) {
-    return (
-      <div 
-        className={`card-slot ${className} ${isHighlighted ? 'highlighted' : ''}`}
-        onClick={(e) => onSlotClick(zoneName, slotIndex, e)}
-      >
-        <div className="zone-label">{zoneLabel}</div>
-        <div className="text-xl opacity-60">
-          {icon}
-        </div>
-      </div>
-    );
-  }
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (card) {
+      onCardPreview?.(card);
+    } else if (onSlotClick && isHighlighted) {
+      // Passa le coordinate del click per il menu di posizionamento
+      onSlotClick(zoneName, slotIndex, e);
+    }
+  };
+
+  const handleCardAction = (action) => {
+    if (card && onFieldCardAction) {
+      onFieldCardAction(action, card, zoneName, slotIndex);
+    }
+  };
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <div className={`card-slot ${className} relative`}>
-          <div className="zone-label">{zoneLabel}</div>
-          <CardComponent
+    <div 
+      className={`
+        relative w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40
+        border-2 rounded-lg cursor-pointer transition-all duration-200
+        ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
+        ${isHighlighted ? 'border-blue-400 bg-blue-900/50 animate-pulse shadow-lg shadow-blue-400/50' : ''}
+        ${isEffectActivated ? 'ring-2 ring-purple-400 animate-pulse' : ''}
+      `}
+      onClick={handleClick}
+    >
+      {card ? (
+        <div className="relative w-full h-full">
+          <CardComponent 
             card={card}
-            onClick={() => onCardClick(card)}
+            onClick={() => onCardPreview?.(card)}
+            isPlayable={true}
             isSmall={true}
-            showCost={true}
+            showCost={false}
+            isInHand={false}
             isFaceDown={card.faceDown}
+            position={card.position || 'attack'}
+            onPositionChange={(card, newPosition) => {
+              if (onFieldCardAction) {
+                onFieldCardAction('changePosition', { ...card, position: newPosition }, zoneName, slotIndex);
+              }
+            }}
           />
-          {isEffectActivated(card) && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg shadow-yellow-400/40"></div>
+          
+          {/* Menu popup per azioni rapide */}
+          <div className="absolute top-0 right-0 opacity-0 hover:opacity-100 transition-opacity">
+            <div className="bg-black/80 rounded p-1 space-y-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCardAction('destroy');
+                }}
+                className="text-red-400 text-xs hover:text-red-300 block"
+                title="Destroy"
+              >
+                💥
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCardAction('banish');
+                }}
+                className="text-purple-400 text-xs hover:text-purple-300 block"
+                title="Banish"
+              >
+                🚫
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCardAction('toHand');
+                }}
+                className="text-green-400 text-xs hover:text-green-300 block"
+                title="To Hand"
+              >
+                📋
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="text-slate-400 text-2xl mb-2">
+            {typeof icon === 'string' ? icon : '⭐'}
+          </div>
+          {zoneLabel && (
+            <div className="text-xs text-slate-400 font-medium text-center px-1">
+              {zoneLabel}
+            </div>
           )}
         </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="w-48 bg-gray-800 border-gray-600 z-50">
-        <ContextMenuItem onClick={() => onCardPreview(card)} className="text-white hover:bg-gray-700">
-          <Eye className="mr-2 h-4 w-4" />
-          View Card
-        </ContextMenuItem>
-        
-        <ContextMenuItem onClick={() => onFieldCardAction(card, 'toHand', 'hand')} className="text-white hover:bg-gray-700">
-          <ArrowUp className="mr-2 h-4 w-4" />
-          Return to Hand
-        </ContextMenuItem>
-        
-        <ContextMenuItem onClick={() => onFieldCardAction(card, 'toGraveyard', 'graveyard')} className="text-white hover:bg-gray-700">
-          <Skull className="mr-2 h-4 w-4" />
-          Send to Graveyard
-        </ContextMenuItem>
-
-        <ContextMenuSub>
-          <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
-            <Ban className="mr-2 h-4 w-4" />
-            Banish Card
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="bg-gray-800 border-gray-600">
-            <ContextMenuItem onClick={() => onFieldCardAction(card, 'toBanished', 'banished')} className="text-white hover:bg-gray-700">
-              Banish Face-up
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onFieldCardAction(card, 'toBanishedFaceDown', 'banishedFaceDown')} className="text-white hover:bg-gray-700">
-              Banish Face-down
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-
-        <ContextMenuSub>
-          <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Return to Deck
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="bg-gray-800 border-gray-600">
-            <ContextMenuItem onClick={() => onFieldCardAction(card, 'toDeckTop', 'deck_top')} className="text-white hover:bg-gray-700">
-              Top of Deck
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onFieldCardAction(card, 'toDeckBottom', 'deck_bottom')} className="text-white hover:bg-gray-700">
-              Bottom of Deck
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onFieldCardAction(card, 'toDeckShuffle', 'deck_shuffle')} className="text-white hover:bg-gray-700">
-              Shuffle into Deck
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-
-        <ContextMenuItem onClick={() => onFieldCardAction(card, 'toExtraDeck', 'extraDeck')} className="text-white hover:bg-gray-700">
-          <Star className="mr-2 h-4 w-4" />
-          Add to Extra Deck
-        </ContextMenuItem>
-
-        {(zoneName === 'spellsTraps' || zoneName === 'monsters') && (
-          <ContextMenuItem onClick={() => onFieldCardAction(card, 'flipCard', 'flip')} className="text-white hover:bg-gray-700">
-            {card.faceDown ? '🔄 Flip Face-up' : '🔒 Set Face-down'}
-          </ContextMenuItem>
-        )}
-      </ContextMenuContent>
-    </ContextMenu>
+      )}
+    </div>
   );
 };
 

@@ -108,7 +108,7 @@
   overflow: hidden;
 }
 
-/* ==== SIDEBAR LIFE POINTS ==== */
+/* ==== SIDEBAR LIFE POINTS - SCROLLABLE ==== */
 .sidebar {
   width: clamp(250px, 20vw, 350px);
   min-width: 250px;
@@ -117,43 +117,26 @@
   border-right: 2px solid #4a5568;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.life-points-section {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  text-align: center;
+.sidebar::-webkit-scrollbar {
+  width: 8px;
 }
 
-.player-info {
-  margin-bottom: 1rem;
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.player-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
 }
 
-.life-points {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #4ade80;
-  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-}
-
-.game-info {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 1rem;
-  color: #cbd5e0;
-  font-size: 0.9rem;
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* ==== AREA PRINCIPALE CAMPO ==== */
@@ -188,7 +171,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: clamp(0.5rem, 1.5vw, 1rem);
+  gap: clamp(0.3rem, 1vw, 0.8rem);
   max-width: 100%;
   max-height: 100%;
 }
@@ -199,23 +182,34 @@
   grid-template-columns: repeat(7, 1fr);
   gap: clamp(0.25rem, 0.8vw, 0.5rem);
   width: 100%;
-  max-width: min(90vw, 800px);
+  max-width: min(95vw, 900px);
   transform: rotate(180deg);
 }
 
-/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS) ==== */
+/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS + GRAVEYARDS) ==== */
 .center-zone {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(0.5rem, 2vw, 1rem);
   width: 100%;
-  margin: clamp(0.5rem, 1.5vh, 1rem) 0;
+  margin: clamp(0.3rem, 1vh, 0.8rem) 0;
+}
+
+.center-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vw, 0.8rem);
 }
 
 .field-spell-slot {
   width: clamp(50px, 8vw, 80px);
   height: clamp(70px, 11.2vw, 112px);
+}
+
+.graveyard-slot-center {
+  width: clamp(45px, 7vw, 70px);
+  height: clamp(63px, 9.8vw, 98px);
 }
 
 .battle-field-label {
@@ -236,14 +230,51 @@
   grid-template-columns: repeat(7, 1fr);
   gap: clamp(0.25rem, 0.8vw, 0.5rem);
   width: 100%;
-  max-width: min(90vw, 800px);
+  max-width: min(95vw, 900px);
+}
+
+/* ==== ZONE MANI ==== */
+.hand-zone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(0.2rem, 0.5vw, 0.3rem);
+  width: 100%;
+  max-width: min(95vw, 900px);
+  padding: clamp(0.3rem, 1vh, 0.6rem) 0;
+}
+
+.opponent-hand {
+  transform: rotate(180deg);
+}
+
+.hand-card {
+  width: clamp(35px, 6vw, 55px);
+  height: clamp(49px, 8.4vw, 77px);
+  background: rgba(75, 85, 99, 0.8);
+  border: 2px solid #6b7280;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+  color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.hand-card:hover {
+  border-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.2);
+  transform: translateY(-2px);
 }
 
 /* ==== SLOT CARTE GENERICI ==== */
 .card-slot {
   aspect-ratio: 5/7;
-  width: clamp(60px, 10vw, 100px);
-  height: clamp(84px, 14vw, 140px);
+  width: clamp(55px, 9vw, 90px);
+  height: clamp(77px, 12.6vw, 126px);
   border: 2px dashed #4a5568;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.3);
@@ -293,6 +324,12 @@
   color: #ff69b4;
 }
 
+.banished-facedown-slot {
+  background: rgba(128, 0, 128, 0.2);
+  border-color: #800080;
+  color: #dda0dd;
+}
+
 .monster-zone .card-slot {
   background: rgba(255, 140, 0, 0.1);
   border-color: #ff8c00;
@@ -311,6 +348,15 @@
   color: #98fb98;
 }
 
+/* ==== DEFENSE POSITION CARDS ==== */
+.card-defense-position {
+  transform: rotate(90deg);
+}
+
+.card-defense-position.card-slot {
+  transform: rotate(90deg) scale(1.02);
+}
+
 /* ==== ANIMAZIONI ==== */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -322,7 +368,7 @@
   top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   color: #a0aec0;
   background: rgba(0, 0, 0, 0.8);
   padding: 2px 6px;
@@ -338,8 +384,13 @@
   }
   
   .card-slot {
-    width: clamp(50px, 9vw, 80px);
-    height: clamp(70px, 12.6vw, 112px);
+    width: clamp(45px, 8vw, 75px);
+    height: clamp(63px, 11.2vw, 105px);
+  }
+
+  .hand-card {
+    width: clamp(30px, 5.5vw, 50px);
+    height: clamp(42px, 7.7vw, 70px);
   }
 }
 
@@ -356,13 +407,8 @@
     align-items: center;
     border-right: none;
     border-bottom: 2px solid #4a5568;
-  }
-  
-  .life-points-section {
-    margin: 0;
-    padding: 1rem;
-    flex: 1;
-    max-width: 300px;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   
   .field-area {
@@ -371,14 +417,23 @@
   }
   
   .card-slot {
-    width: clamp(45px, 8vw, 70px);
-    height: clamp(63px, 11.2vw, 98px);
+    width: clamp(40px, 7vw, 65px);
+    height: clamp(56px, 9.8vw, 91px);
+  }
+
+  .hand-card {
+    width: clamp(25px, 5vw, 45px);
+    height: clamp(35px, 7vw, 63px);
   }
   
   .opponent-zone,
   .player-zone {
-    max-width: min(95vw, 600px);
+    max-width: min(98vw, 700px);
     gap: clamp(0.2rem, 0.6vw, 0.4rem);
+  }
+
+  .hand-zone {
+    max-width: min(98vw, 700px);
   }
 }
 
@@ -388,23 +443,112 @@
     padding: 0.5rem;
   }
   
-  .life-points-section {
-    padding: 0.75rem;
-    font-size: 0.9rem;
-  }
-  
   .card-slot {
-    width: clamp(40px, 7.5vw, 60px);
-    height: clamp(56px, 10.5vw, 84px);
+    width: clamp(35px, 6.5vw, 55px);
+    height: clamp(49px, 9.1vw, 77px);
     font-size: clamp(0.8rem, 1.5vw, 1rem);
+  }
+
+  .hand-card {
+    width: clamp(22px, 4.5vw, 40px);
+    height: clamp(31px, 6.3vw, 56px);
+    font-size: clamp(0.7rem, 1.2vw, 1rem);
   }
   
   .opponent-zone,
-  .player-zone {
+  .player-zone,
+  .hand-zone {
     gap: clamp(0.15rem, 0.4vw, 0.25rem);
   }
+
+  .battlefield-container {
+    gap: clamp(0.2rem, 0.8vw, 0.5rem);
+  }
+
+  .center-zone {
+    gap: clamp(0.3rem, 1vw, 0.6rem);
+  }
+
+  .center-group {
+    gap: clamp(0.3rem, 0.8vw, 0.5rem);
+  }
+}
+
+/* ==== SIDEBAR SECTIONS - FIXED SPACING ==== */
+.sidebar-section {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Compatta i componenti nella sidebar */
+.sidebar .sidebar-section .p-4 {
+  padding: 0.75rem !important;
+}
+
+.sidebar .sidebar-section .h-64 {
+  height: 12rem !important;
+}
+
+.sidebar .sidebar-section .h-48 {
+  height: 10rem !important;
+}
+
+/* Riduce le dimensioni dei titoli nella sidebar */
+.sidebar .sidebar-section h3 {
+  font-size: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Compatta i controlli life points */
+.sidebar .sidebar-section .text-4xl {
+  font-size: 1.8rem !important;
+}
+
+.sidebar .sidebar-section .grid-cols-3 {
+  gap: 0.25rem !important;
+}
+
+.sidebar .sidebar-section .grid-cols-3 button {
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+/* Compatta le fasi di gioco */
+.sidebar .sidebar-section .space-y-4 {
+  gap: 0.5rem !important;
+}
+
+.sidebar .sidebar-section .gap-1 {
+  gap: 0.25rem !important;
+}
+
+/* Compatta timer */
+.sidebar .sidebar-section .text-center {
+  margin-bottom: 0.5rem !important;
+}
+
+/* Responsive per sidebar */
+@media (max-width: 768px) and (min-width: 481px) {
+  .sidebar {
+    display: none; /* Nascondi sidebar su tablet per ora */
+  }
   
-  .life-points {
-    font-size: 1.5rem;
+  .field-area {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    display: none; /* Nascondi sidebar su mobile per ora */
+  }
+  
+  .field-area {
+    width: 100%;
   }
 }

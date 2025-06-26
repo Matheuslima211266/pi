@@ -1,3 +1,4 @@
+
 export const useGameHandlers = (gameState, syncGameState) => {
   const {
     gameData,
@@ -80,6 +81,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
         newField.fieldSpell = [{ ...card, faceDown: isFaceDown }];
       }
 
+      console.log('Updated field after card placement:', newField);
       return newField;
     });
 
@@ -95,7 +97,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
   };
 
   const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
-    console.log(`Moving card ${card.name} from ${fromZone} to ${toZone}`);
+    console.log(`Moving card ${card.name} from ${fromZone} to ${toZone}`, { card, fromZone, toZone, slotIndex });
     
     if (toZone === 'flip_in_place') {
       if (fromZone === 'monsters') {
@@ -103,6 +105,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
           const newField = { ...prev };
           newField.monsters = [...prev.monsters];
           newField.monsters[slotIndex] = card;
+          console.log('Updated field after flip in place:', newField);
           return newField;
         });
       } else if (fromZone === 'spellsTraps') {
@@ -110,6 +113,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
           const newField = { ...prev };
           newField.spellsTraps = [...prev.spellsTraps];
           newField.spellsTraps[slotIndex] = card;
+          console.log('Updated field after flip in place:', newField);
           return newField;
         });
       }
@@ -128,6 +132,11 @@ export const useGameHandlers = (gameState, syncGameState) => {
     // Remove from source zone
     if (fromZone === 'hand') {
       setPlayerHand(hand => hand.filter(c => c.id !== card.id));
+    } else if (fromZone === 'deck') {
+      setPlayerField(prev => ({
+        ...prev,
+        deck: prev.deck.filter(c => c.id !== card.id)
+      }));
     } else {
       setPlayerField(prev => {
         const newField = { ...prev };
@@ -150,8 +159,6 @@ export const useGameHandlers = (gameState, syncGameState) => {
           newField.banishedFaceDown = prev.banishedFaceDown.filter(c => c.id !== card.id);
         } else if (fromZone === 'extraDeck') {
           newField.extraDeck = prev.extraDeck.filter(c => c.id !== card.id);
-        } else if (fromZone === 'deck') {
-          newField.deck = prev.deck.filter(c => c.id !== card.id);
         }
 
         return newField;
@@ -167,32 +174,45 @@ export const useGameHandlers = (gameState, syncGameState) => {
 
         if (toZone === 'monsters') {
           newField.monsters = [...prev.monsters];
-          if (slotIndex !== null) {
+          if (slotIndex !== null && slotIndex >= 0) {
             newField.monsters[slotIndex] = card;
+          } else {
+            // Find first empty slot
+            const emptyIndex = newField.monsters.findIndex(slot => slot === null);
+            if (emptyIndex !== -1) {
+              newField.monsters[emptyIndex] = card;
+            }
           }
         } else if (toZone === 'spellsTraps') {
           newField.spellsTraps = [...prev.spellsTraps];
-          if (slotIndex !== null) {
+          if (slotIndex !== null && slotIndex >= 0) {
             newField.spellsTraps[slotIndex] = card;
+          } else {
+            // Find first empty slot
+            const emptyIndex = newField.spellsTraps.findIndex(slot => slot === null);
+            if (emptyIndex !== -1) {
+              newField.spellsTraps[emptyIndex] = card;
+            }
           }
         } else if (toZone === 'fieldSpell') {
           newField.fieldSpell = [card];
         } else if (toZone === 'graveyard') {
-          newField.graveyard = [...prev.graveyard, card];
+          newField.graveyard = [...(prev.graveyard || []), card];
         } else if (toZone === 'banished') {
-          newField.banished = [...prev.banished, card];
+          newField.banished = [...(prev.banished || []), card];
         } else if (toZone === 'banishedFaceDown') {
-          newField.banishedFaceDown = [...prev.banishedFaceDown, card];
+          newField.banishedFaceDown = [...(prev.banishedFaceDown || []), card];
         } else if (toZone === 'extraDeck') {
-          newField.extraDeck = [...prev.extraDeck, card];
+          newField.extraDeck = [...(prev.extraDeck || []), card];
         } else if (toZone === 'deck_top') {
-          newField.deck = [card, ...prev.deck];
+          newField.deck = [card, ...(prev.deck || [])];
         } else if (toZone === 'deck_bottom') {
-          newField.deck = [...prev.deck, card];
+          newField.deck = [...(prev.deck || []), card];
         } else if (toZone === 'deck_shuffle') {
-          newField.deck = shuffleArray([...prev.deck, card]);
+          newField.deck = shuffleArray([...(prev.deck || []), card]);
         }
 
+        console.log(`Updated field after moving ${card.name} from ${fromZone} to ${toZone}:`, newField);
         return newField;
       });
     }
@@ -201,6 +221,38 @@ export const useGameHandlers = (gameState, syncGameState) => {
       id: Date.now() + Math.random(),
       player: gameData?.playerName || 'Player',
       action: `moved ${card.name} from ${fromZone} to ${toZone}`,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setActionLog(prev => [...prev, newAction]);
+    
+    setTimeout(() => syncGameState(), 100);
+  };
+
+  const handleDeckMill = (millCount = 1) => {
+    if ((playerField.deck || []).length === 0) {
+      const newAction = {
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
+        action: 'deck is empty - cannot mill cards',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setActionLog(prev => [...prev, newAction]);
+      return;
+    }
+
+    const deckCards = playerField.deck || [];
+    const cardsToMill = deckCards.slice(0, Math.min(millCount, deckCards.length));
+    
+    setPlayerField(prev => ({
+      ...prev,
+      deck: prev.deck.slice(millCount),
+      graveyard: [...(prev.graveyard || []), ...cardsToMill]
+    }));
+
+    const newAction = {
+      id: Date.now() + Math.random(),
+      player: gameData?.playerName || 'Player',
+      action: `milled ${cardsToMill.length} card${cardsToMill.length > 1 ? 's' : ''} from deck to graveyard`,
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
@@ -339,6 +391,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
     handleDeckLoad,
     handleCardPlace,
     handleCardMove,
+    handleDeckMill,
     handleDrawCard,
     handleCardClick,
     handlePhaseChange,

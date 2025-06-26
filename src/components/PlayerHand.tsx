@@ -83,9 +83,9 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
             Show to Opponent
           </ContextMenuItem>
           
-          <ContextMenuItem onClick={() => handleCardMovement(card, 'graveyard')} className="text-white hover:bg-gray-700">
+          <ContextMenuItem onClick={() => handleCardMovement(card, 'deadZone')} className="text-white hover:bg-gray-700">
             <Skull className="mr-2 h-4 w-4" />
-            Send to Graveyard
+            Send to Dead Zone
           </ContextMenuItem>
 
           <ContextMenuSub>
@@ -131,18 +131,18 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
   };
 
   return (
-    <Card className="bg-slate-800/70 border-blue-400 p-1">
-      <div className="flex items-center gap-1 mb-1">
+    <Card className="bg-slate-800 border-blue-400 p-1">
+      <div className="flex items-center gap-1 mb-1 bg-slate-900/90 p-1 rounded">
         <Hand className="text-blue-400" size={14} />
-        <h3 className="text-sm font-semibold">La Tua Mano</h3>
-        <Badge variant="outline" className="ml-auto text-xs py-0 px-1">
+        <h3 className="text-sm font-semibold text-white">La Tua Mano</h3>
+        <Badge variant="outline" className="ml-auto text-xs py-0 px-1 bg-slate-900 text-white border-slate-600">
           {cards.length} carte
         </Badge>
         <Button
           onClick={handleShowHandToOpponent}
           size="sm"
           variant="outline"
-          className="ml-1 h-6 text-xs px-2"
+          className="ml-1 h-6 text-xs px-2 bg-slate-700 text-white border-slate-600 hover:bg-slate-600"
         >
           <Users className="mr-1 h-3 w-3" />
           Mostra
@@ -163,9 +163,9 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
       </div>
       
       {selectedCard && (
-        <div className="mt-1 p-1 bg-blue-900/50 border border-blue-400 rounded">
+        <div className="mt-1 p-1 bg-blue-900/90 border border-blue-400 rounded">
           <div className="flex items-center justify-between">
-            <span className="text-xs">Selezionata: <strong>{selectedCard.name}</strong></span>
+            <span className="text-xs text-white">Selezionata: <strong>{selectedCard.name}</strong></span>
             <span className="text-xs text-gray-300">Clicca una zona del campo</span>
           </div>
         </div>
@@ -173,7 +173,7 @@ const PlayerHand = ({ cards, onPlayCard, isPlayerTurn, onCardPreview, onCardMove
       
       {!isPlayerTurn && (
         <div className="mt-1 text-center">
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs bg-slate-700 text-white">
             Non è il tuo turno
           </Badge>
         </div>
