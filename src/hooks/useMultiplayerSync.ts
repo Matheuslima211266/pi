@@ -24,14 +24,18 @@ export const useMultiplayerSync = (gameState) => {
     setCurrentPhase,
     setIsPlayerTurn,
     setTimeRemaining,
-    setBothPlayersReady
+    setBothPlayersReady,
+    setPlayerReady
   } = gameState;
 
   const syncLockRef = useRef(false);
   const lastSyncTimeRef = useRef(Date.now());
+  const opponentReadyRef = useRef(false);
 
   const syncGameState = () => {
     if (!gameData?.gameId || syncLockRef.current) return;
+    
+    console.log('Syncing game state, playerReady:', playerReady, 'bothPlayersReady:', bothPlayersReady);
     
     syncLockRef.current = true;
     
@@ -47,12 +51,11 @@ export const useMultiplayerSync = (gameState) => {
         isPlayerTurn,
         timeRemaining,
         playerReady,
+        bothPlayersReady,
         lastUpdate: Date.now(),
         playerId,
         playerName: gameData.playerName
       };
-      
-      console.log('Syncing game state:', gameStateData);
       
       const stateKey = `yugiduel_state_${gameData.gameId}`;
       const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
@@ -60,13 +63,7 @@ export const useMultiplayerSync = (gameState) => {
       allStates[playerId] = gameStateData;
       localStorage.setItem(stateKey, JSON.stringify(allStates));
       
-      // Controlla se entrambi i giocatori sono pronti
-      const opponentId = gameData.isHost ? 'guest' : 'host';
-      const opponentState = allStates[opponentId];
-      
-      if (opponentState && opponentState.playerReady && playerReady) {
-        setBothPlayersReady(true);
-      }
+      console.log('State saved:', allStates);
       
       lastSyncTimeRef.current = Date.now();
     } catch (error) {
@@ -86,9 +83,11 @@ export const useMultiplayerSync = (gameState) => {
       const opponentId = gameData.isHost ? 'guest' : 'host';
       const opponentState = allStates[opponentId];
       
+      console.log('Loading states - My ID:', gameData.isHost ? 'host' : 'guest', 'All states:', allStates);
+      
       if (opponentState && 
           opponentState.lastUpdate && 
-          opponentState.lastUpdate > lastSyncTimeRef.current + 100) {
+          opponentState.lastUpdate > lastSyncTimeRef.current + 50) {
         
         console.log('Loading opponent state:', opponentState);
         
@@ -128,19 +127,28 @@ export const useMultiplayerSync = (gameState) => {
           });
         }
         
-        // Sincronizza fase e turno
-        if (opponentState.currentPhase) {
-          setCurrentPhase(opponentState.currentPhase);
-        }
-        if (typeof opponentState.isPlayerTurn === 'boolean') {
-          setIsPlayerTurn(opponentState.isPlayerTurn);
-        }
-        if (typeof opponentState.timeRemaining === 'number') {
-          setTimeRemaining(opponentState.timeRemaining);
+        // Sincronizza fase e turno solo se il gioco è iniziato
+        if (bothPlayersReady && opponentState.bothPlayersReady) {
+          if (opponentState.currentPhase) {
+            setCurrentPhase(opponentState.currentPhase);
+          }
+          if (typeof opponentState.isPlayerTurn === 'boolean') {
+            setIsPlayerTurn(opponentState.isPlayerTurn);
+          }
+          if (typeof opponentState.timeRemaining === 'number') {
+            setTimeRemaining(opponentState.timeRemaining);
+          }
         }
         
-        // Controlla se entrambi i giocatori sono pronti
-        if (opponentState.playerReady && playerReady) {
+        // IMPORTANTE: Controlla se l'avversario è pronto
+        const opponentIsReady = Boolean(opponentState.playerReady);
+        opponentReadyRef.current = opponentIsReady;
+        
+        console.log('Opponent ready:', opponentIsReady, 'My ready:', playerReady);
+        
+        // Se entrambi sono pronti, avvia il gioco
+        if (opponentIsReady && playerReady && !bothPlayersReady) {
+          console.log('Both players ready! Starting game...');
           setBothPlayersReady(true);
         }
         
@@ -151,23 +159,31 @@ export const useMultiplayerSync = (gameState) => {
     }
   };
 
-  // Sync effect - più frequente
+  // Sync effect - sincronizza ogni 200ms
   useEffect(() => {
     if (gameData?.gameId) {
       const interval = setInterval(() => {
         syncGameState();
-      }, 300);
+      }, 200);
       return () => clearInterval(interval);
     }
-  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages, timeRemaining, playerReady]);
+  }, [gameData, playerField, enemyField, playerHand, playerLifePoints, enemyLifePoints, currentPhase, isPlayerTurn, actionLog, chatMessages, timeRemaining, playerReady, bothPlayersReady]);
 
-  // Load effect - più frequente
+  // Load effect - carica ogni 150ms per essere più reattivo
   useEffect(() => {
     if (gameData?.gameId) {
-      const interval = setInterval(loadGameState, 200);
+      const interval = setInterval(loadGameState, 150);
       return () => clearInterval(interval);
     }
   }, [gameData]);
+
+  // Effect per controllare se entrambi i giocatori sono pronti
+  useEffect(() => {
+    if (playerReady && opponentReadyRef.current && !bothPlayersReady) {
+      console.log('Setting both players ready!');
+      setBothPlayersReady(true);
+    }
+  }, [playerReady, bothPlayersReady]);
 
   return { syncGameState };
 };

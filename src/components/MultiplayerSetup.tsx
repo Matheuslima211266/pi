@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   const [deckLoaded, setDeckLoaded] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [opponentReady, setOpponentReady] = useState(false);
 
   // Check for game ID in URL on component mount
   useEffect(() => {
@@ -28,6 +28,31 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
       setGameId(gameFromUrl);
     }
   }, []);
+
+  // Controlla periodicamente lo stato dell'avversario
+  useEffect(() => {
+    if (gameState?.gameData?.gameId && gameState?.gameStarted) {
+      const checkOpponentStatus = () => {
+        try {
+          const stateKey = `yugiduel_state_${gameState.gameData.gameId}`;
+          const allStates = JSON.parse(localStorage.getItem(stateKey) || '{}');
+          const opponentId = gameState.gameData.isHost ? 'guest' : 'host';
+          const opponentState = allStates[opponentId];
+          
+          console.log('Checking opponent status:', opponentState);
+          
+          if (opponentState && opponentState.playerReady) {
+            setOpponentReady(true);
+          }
+        } catch (error) {
+          console.error('Error checking opponent status:', error);
+        }
+      };
+
+      const interval = setInterval(checkOpponentStatus, 500);
+      return () => clearInterval(interval);
+    }
+  }, [gameState?.gameData?.gameId, gameState?.gameStarted]);
 
   const createGame = () => {
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -115,6 +140,8 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
 
   // Se il gioco è già iniziato ma non tutti i giocatori sono pronti
   if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
+    console.log('Waiting screen - My ready:', gameState?.playerReady, 'Both ready:', gameState?.bothPlayersReady, 'Opponent ready:', opponentReady);
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
@@ -142,7 +169,9 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Opponent</span>
-                  <span className="text-sm text-gray-400">⏳ Waiting...</span>
+                  <span className={`text-sm ${opponentReady ? 'text-green-400' : 'text-gray-400'}`}>
+                    {opponentReady ? '✅ Ready' : '⏳ Waiting...'}
+                  </span>
                 </div>
               </div>
 
@@ -156,10 +185,17 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
                 </Button>
               )}
 
-              {gameState?.playerReady && (
+              {gameState?.playerReady && !opponentReady && (
                 <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
                   <p className="text-green-400 font-semibold">You are ready!</p>
                   <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
+                </div>
+              )}
+
+              {gameState?.playerReady && opponentReady && (
+                <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
+                  <p className="text-blue-400 font-semibold">Both players ready!</p>
+                  <p className="text-sm text-gray-300 mt-1">Starting game...</p>
                 </div>
               )}
             </div>
