@@ -9,7 +9,162 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          game_session_id: string
+          id: string
+          message: string
+          player_id: string
+          player_name: string
+          timestamp: string
+        }
+        Insert: {
+          game_session_id: string
+          id?: string
+          message: string
+          player_id: string
+          player_name: string
+          timestamp?: string
+        }
+        Update: {
+          game_session_id?: string
+          id?: string
+          message?: string
+          player_id?: string
+          player_name?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_game_session_id_fkey"
+            columns: ["game_session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_actions: {
+        Row: {
+          action: string
+          game_session_id: string
+          id: string
+          player_id: string
+          player_name: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          game_session_id: string
+          id?: string
+          player_id: string
+          player_name: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          game_session_id?: string
+          id?: string
+          player_id?: string
+          player_name?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_actions_game_session_id_fkey"
+            columns: ["game_session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_sessions: {
+        Row: {
+          created_at: string
+          game_id: string
+          guest_id: string | null
+          guest_name: string | null
+          host_id: string | null
+          host_name: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          guest_id?: string | null
+          guest_name?: string | null
+          host_id?: string | null
+          host_name: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          guest_id?: string | null
+          guest_name?: string | null
+          host_id?: string | null
+          host_name?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_states: {
+        Row: {
+          current_phase: string | null
+          game_session_id: string
+          id: string
+          is_player_turn: boolean | null
+          last_update: string
+          player_field: Json | null
+          player_hand_count: number | null
+          player_id: string
+          player_life_points: number | null
+          player_ready: boolean | null
+          time_remaining: number | null
+        }
+        Insert: {
+          current_phase?: string | null
+          game_session_id: string
+          id?: string
+          is_player_turn?: boolean | null
+          last_update?: string
+          player_field?: Json | null
+          player_hand_count?: number | null
+          player_id: string
+          player_life_points?: number | null
+          player_ready?: boolean | null
+          time_remaining?: number | null
+        }
+        Update: {
+          current_phase?: string | null
+          game_session_id?: string
+          id?: string
+          is_player_turn?: boolean | null
+          last_update?: string
+          player_field?: Json | null
+          player_hand_count?: number | null
+          player_id?: string
+          player_life_points?: number | null
+          player_ready?: boolean | null
+          time_remaining?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_states_game_session_id_fkey"
+            columns: ["game_session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
