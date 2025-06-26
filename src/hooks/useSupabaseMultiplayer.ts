@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -16,27 +17,6 @@ interface GameSession {
   created_at: string;
   updated_at: string;
 }
-
-// Funzione per salvare log nel database
-const saveDebugLog = async (level: string, message: string, data?: any) => {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    level,
-    message,
-    data: data ? JSON.stringify(data) : null
-  };
-  
-  console.log(`[${timestamp}] ${level.toUpperCase()}: ${message}`, data || '');
-  
-  try {
-    await supabase
-      .from('debug_logs')
-      .insert(logEntry);
-  } catch (err) {
-    console.error('Failed to save debug log:', err);
-  }
-};
 
 export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   const [currentSession, setCurrentSession] = useState<GameSession | null>(null);
@@ -66,16 +46,16 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
   // Create game session (for host)
   const createGameSession = useCallback(async (gameId: string, playerName: string) => {
-    await saveDebugLog('INFO', 'HOST: Starting createGameSession', { gameId, playerName, userId: user?.id });
+    console.log('[MULTIPLAYER] HOST: Starting createGameSession', { gameId, playerName, userId: user?.id });
     
     if (!user) {
-      await saveDebugLog('ERROR', 'HOST: No user for createGameSession');
+      console.error('[MULTIPLAYER] HOST: No user for createGameSession');
       console.error('No user for createGameSession');
       return null;
     }
 
     try {
-      await saveDebugLog('INFO', 'HOST: Inserting new game session', { gameId, playerName, userId: user.id });
+      console.log('[MULTIPLAYER] HOST: Inserting new game session', { gameId, playerName, userId: user.id });
       
       const { data, error } = await supabase
         .from('game_sessions')
@@ -91,20 +71,20 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .single();
 
       if (error) {
-        await saveDebugLog('ERROR', 'HOST: Error creating game session', error);
+        console.error('[MULTIPLAYER] HOST: Error creating game session', error);
         console.error('Error creating game session:', error);
         setError('Failed to create game session');
         return null;
       }
 
-      await saveDebugLog('SUCCESS', 'HOST: Game session created successfully', data);
+      console.log('[MULTIPLAYER] HOST: Game session created successfully', data);
       console.log('Game session created successfully:', data);
       const gameSession = castToGameSession(data);
       setCurrentSession(gameSession);
       setError(null);
       return gameSession;
     } catch (err) {
-      await saveDebugLog('ERROR', 'HOST: Exception in createGameSession', err);
+      console.error('[MULTIPLAYER] HOST: Exception in createGameSession', err);
       console.error('Error in createGameSession:', err);
       setError('Failed to create game session');
       return null;
@@ -113,10 +93,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
   // Join game session (for guest) - SUPER DETAILED VERSION
   const joinGameSession = useCallback(async (gameId: string, playerName: string) => {
-    await saveDebugLog('INFO', 'GUEST: ========== STARTING JOIN PROCESS ==========', { gameId, playerName, userId: user?.id });
+    console.log('[MULTIPLAYER] GUEST: ========== STARTING JOIN PROCESS ==========', { gameId, playerName, userId: user?.id });
     
     if (!user) {
-      await saveDebugLog('ERROR', 'GUEST: No user authenticated');
+      console.error('[MULTIPLAYER] GUEST: No user authenticated');
       console.error('No user for joinGameSession');
       setError('User not authenticated');
       return null;
@@ -124,7 +104,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
     try {
       const upperGameId = gameId.toUpperCase();
-      await saveDebugLog('INFO', 'GUEST: Step 1 - Preparing to search for game', { 
+      console.log('[MULTIPLAYER] GUEST: Step 1 - Preparing to search for game', { 
         originalGameId: gameId,
         upperGameId,
         playerName, 
@@ -132,28 +112,28 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       });
       
       // Step 1: Search for the game session
-      await saveDebugLog('INFO', 'GUEST: Step 2 - Executing database search query');
+      console.log('[MULTIPLAYER] GUEST: Step 2 - Executing database search query');
       
       const { data: sessions, error: searchError } = await supabase
         .from('game_sessions')
         .select('*')
         .eq('game_id', upperGameId);
 
-      await saveDebugLog('INFO', 'GUEST: Step 3 - Search query completed', { 
+      console.log('[MULTIPLAYER] GUEST: Step 3 - Search query completed', { 
         foundSessions: sessions?.length || 0,
         sessions: sessions,
         searchError: searchError 
       });
 
       if (searchError) {
-        await saveDebugLog('ERROR', 'GUEST: Database search error', searchError);
+        console.error('[MULTIPLAYER] GUEST: Database search error', searchError);
         console.error('Search error:', searchError);
         setError('Failed to search for game session');
         return null;
       }
 
       if (!sessions || sessions.length === 0) {
-        await saveDebugLog('ERROR', 'GUEST: No sessions found', { gameId: upperGameId });
+        console.error('[MULTIPLAYER] GUEST: No sessions found', { gameId: upperGameId });
         console.error('No sessions found for game ID:', upperGameId);
         setError('Game ID not found. Please check the ID and try again.');
         return null;
@@ -161,7 +141,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
       // Check for multiple sessions with same game_id
       if (sessions.length > 1) {
-        await saveDebugLog('WARN', 'GUEST: Multiple sessions found with same game_id', { 
+        console.warn('[MULTIPLAYER] GUEST: Multiple sessions found with same game_id', { 
           gameId: upperGameId, 
           sessionsCount: sessions.length,
           sessions: sessions 
@@ -169,20 +149,20 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       const existingSession = sessions[0];
-      await saveDebugLog('INFO', 'GUEST: Step 4 - Found target session', existingSession);
+      console.log('[MULTIPLAYER] GUEST: Step 4 - Found target session', existingSession);
 
       // Step 2: Validation checks
-      await saveDebugLog('INFO', 'GUEST: Step 5 - Starting validation checks');
+      console.log('[MULTIPLAYER] GUEST: Step 5 - Starting validation checks');
       
       if (existingSession.host_id === user.id) {
-        await saveDebugLog('ERROR', 'GUEST: User is trying to join their own game', { userId: user.id, hostId: existingSession.host_id });
+        console.error('[MULTIPLAYER] GUEST: User is trying to join their own game', { userId: user.id, hostId: existingSession.host_id });
         console.error('Cannot join your own game');
         setError('Cannot join your own game');
         return null;
       }
 
       if (existingSession.guest_id && existingSession.guest_id !== user.id) {
-        await saveDebugLog('ERROR', 'GUEST: Game already has a different guest', { 
+        console.error('[MULTIPLAYER] GUEST: Game already has a different guest', { 
           existingGuestId: existingSession.guest_id, 
           currentUserId: user.id 
         });
@@ -193,7 +173,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
       // Step 3: Check if already joined
       if (existingSession.guest_id === user.id) {
-        await saveDebugLog('INFO', 'GUEST: User already joined this session', existingSession);
+        console.log('[MULTIPLAYER] GUEST: User already joined this session', existingSession);
         console.log('Already joined this session');
         const gameSession = castToGameSession(existingSession);
         setCurrentSession(gameSession);
@@ -202,7 +182,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       // Step 4: Join the game
-      await saveDebugLog('INFO', 'GUEST: Step 6 - Attempting to join game by updating session');
+      console.log('[MULTIPLAYER] GUEST: Step 6 - Attempting to join game by updating session');
       
       const updateData = {
         guest_id: user.id,
@@ -211,7 +191,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         updated_at: new Date().toISOString()
       };
       
-      await saveDebugLog('INFO', 'GUEST: Step 7 - Update data prepared', updateData);
+      console.log('[MULTIPLAYER] GUEST: Step 7 - Update data prepared', updateData);
       
       const { data: updatedSession, error: updateError } = await supabase
         .from('game_sessions')
@@ -220,27 +200,27 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .select()
         .single();
 
-      await saveDebugLog('INFO', 'GUEST: Step 8 - Update query completed', { 
+      console.log('[MULTIPLAYER] GUEST: Step 8 - Update query completed', { 
         updatedSession, 
         updateError,
         sessionId: existingSession.id 
       });
 
       if (updateError) {
-        await saveDebugLog('ERROR', 'GUEST: Update failed', updateError);
+        console.error('[MULTIPLAYER] GUEST: Update failed', updateError);
         console.error('Update error:', updateError);
         setError(`Failed to join game session: ${updateError.message}`);
         return null;
       }
 
       if (!updatedSession) {
-        await saveDebugLog('ERROR', 'GUEST: No updated session returned from database');
+        console.error('[MULTIPLAYER] GUEST: No updated session returned from database');
         console.error('No updated session returned');
         setError('Failed to join game session - no response');
         return null;
       }
 
-      await saveDebugLog('SUCCESS', 'GUEST: ========== SUCCESSFULLY JOINED GAME ==========', updatedSession);
+      console.log('[MULTIPLAYER] GUEST: ========== SUCCESSFULLY JOINED GAME ==========', updatedSession);
       console.log('=== GUEST SUCCESSFULLY JOINED ===', updatedSession);
       
       const gameSession = castToGameSession(updatedSession);
@@ -255,7 +235,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       
       return gameSession;
     } catch (err) {
-      await saveDebugLog('ERROR', 'GUEST: Exception during join process', {
+      console.error('[MULTIPLAYER] GUEST: Exception during join process', {
         error: err,
         message: err instanceof Error ? err.message : 'Unknown error',
         stack: err instanceof Error ? err.stack : undefined
@@ -268,10 +248,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
   // Update player ready status
   const setPlayerReady = useCallback(async (isReady: boolean) => {
-    await saveDebugLog('INFO', 'Setting player ready status', { isReady, currentSession: !!currentSession, userId: user?.id });
+    console.log('[MULTIPLAYER] Setting player ready status', { isReady, currentSession: !!currentSession, userId: user?.id });
     
     if (!currentSession || !user) {
-      await saveDebugLog('ERROR', 'Cannot set player ready - missing session or user', { hasSession: !!currentSession, hasUser: !!user });
+      console.error('[MULTIPLAYER] Cannot set player ready - missing session or user', { hasSession: !!currentSession, hasUser: !!user });
       console.log('Cannot set player ready - no session or user');
       return;
     }
@@ -280,7 +260,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     const updateField = isHost ? 'host_ready' : 'guest_ready';
 
     try {
-      await saveDebugLog('INFO', 'Updating ready status in database', { 
+      console.log('[MULTIPLAYER] Updating ready status in database', { 
         isReady, 
         isHost, 
         updateField, 
@@ -296,11 +276,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .single();
 
       if (error) {
-        await saveDebugLog('ERROR', 'Failed to update ready status', error);
+        console.error('[MULTIPLAYER] Failed to update ready status', error);
         console.error('Error updating ready status:', error);
         setError('Failed to update ready status');
       } else {
-        await saveDebugLog('SUCCESS', 'Ready status updated successfully', data);
+        console.log('[MULTIPLAYER] Ready status updated successfully', data);
         console.log('=== PLAYER READY STATUS UPDATED ===', data);
         const updatedSession = castToGameSession(data);
         setCurrentSession(updatedSession);
@@ -309,11 +289,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         const newOpponentReady = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
         setOpponentReady(newOpponentReady);
         
-        await saveDebugLog('INFO', 'Updated opponent ready status', { newOpponentReady });
+        console.log('[MULTIPLAYER] Updated opponent ready status', { newOpponentReady });
         console.log('Updated opponent ready status:', newOpponentReady);
       }
     } catch (err) {
-      await saveDebugLog('ERROR', 'Exception in setPlayerReady', err);
+      console.error('[MULTIPLAYER] Exception in setPlayerReady', err);
       console.error('Error in setPlayerReady:', err);
       setError('Failed to update ready status');
     }
@@ -332,11 +312,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           action: action
         });
       if (error) {
-        await saveDebugLog('ERROR', 'Failed to log game action', { error, action, playerName });
+        console.error('[MULTIPLAYER] Failed to log game action', { error, action, playerName });
         console.error('Error logging game action:', error);
       }
     } catch (err) {
-      await saveDebugLog('ERROR', 'Exception in logGameAction', err);
+      console.error('[MULTIPLAYER] Exception in logGameAction', err);
       console.error('Error in logGameAction:', err);
     }
   }, [currentSession, user]);
@@ -354,11 +334,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           message: message
         });
       if (error) {
-        await saveDebugLog('ERROR', 'Failed to send chat message', { error, message, playerName });
+        console.error('[MULTIPLAYER] Failed to send chat message', { error, message, playerName });
         console.error('Error sending chat message:', error);
       }
     } catch (err) {
-      await saveDebugLog('ERROR', 'Exception in sendChatMessage', err);
+      console.error('[MULTIPLAYER] Exception in sendChatMessage', err);
       console.error('Error in sendChatMessage:', err);
     }
   }, [currentSession, user]);
@@ -382,11 +362,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           last_update: new Date().toISOString()
         });
       if (error) {
-        await saveDebugLog('ERROR', 'Failed to sync game state', error);
+        console.error('[MULTIPLAYER] Failed to sync game state', error);
         console.error('Error syncing game state:', error);
       }
     } catch (error) {
-      await saveDebugLog('ERROR', 'Exception in syncGameState', error);
+      console.error('[MULTIPLAYER] Exception in syncGameState', error);
       console.error('Error syncing game state:', error);
     }
   }, [currentSession, user, gameState]);

@@ -7,28 +7,6 @@ import GameLayout from '@/components/GameLayout';
 import { useGameState } from '@/hooks/useGameState';
 import { useSupabaseMultiplayer } from '@/hooks/useSupabaseMultiplayer';
 import { useGameHandlers } from '@/hooks/useGameHandlers';
-import { supabase } from '@/integrations/supabase/client';
-
-// Funzione per salvare log nel database
-const saveDebugLog = async (level: string, message: string, data?: any) => {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    level,
-    message,
-    data: data ? JSON.stringify(data) : null
-  };
-  
-  console.log(`[${timestamp}] INDEX_${level.toUpperCase()}: ${message}`, data || '');
-  
-  try {
-    await supabase
-      .from('debug_logs')
-      .insert(logEntry);
-  } catch (err) {
-    console.error('Failed to save debug log:', err);
-  }
-};
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -37,7 +15,7 @@ const Index = () => {
   const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
 
   useEffect(() => {
-    saveDebugLog('INFO', 'Index component rendered', {
+    console.log('[INDEX] Component rendered', {
       gameStarted: gameState.gameStarted,
       bothPlayersReady: gameState.bothPlayersReady,
       currentSession: !!multiplayerHook.currentSession,
@@ -67,21 +45,21 @@ const Index = () => {
   // Handle game start - create or join session
   const handleGameStart = async (gameData: any) => {
     try {
-      await saveDebugLog('INFO', 'Starting game process', gameData);
+      console.log('[INDEX] Starting game process', gameData);
       console.log('=== STARTING GAME ===', gameData);
       
       let session = null;
       if (gameData.isHost) {
-        await saveDebugLog('INFO', 'Creating game session as host');
+        console.log('[INDEX] Creating game session as host');
         console.log('Creating game session as host...');
         session = await multiplayerHook.createGameSession(gameData.gameId, gameData.playerName);
       } else {
-        await saveDebugLog('INFO', 'Joining game session as guest');
+        console.log('[INDEX] Joining game session as guest');
         console.log('Joining game session as guest...');
         session = await multiplayerHook.joinGameSession(gameData.gameId, gameData.playerName);
       }
       
-      await saveDebugLog('INFO', 'Session creation/join result', { success: !!session, session });
+      console.log('[INDEX] Session creation/join result', { success: !!session, session });
       
       if (session) {
         console.log('Session created/joined successfully, updating game state...');
@@ -89,19 +67,19 @@ const Index = () => {
         
         // IMPORTANTE: Per il guest, imposta gameStarted subito per andare nella waiting room
         if (!gameData.isHost) {
-          await saveDebugLog('INFO', 'Guest entering waiting room immediately');
+          console.log('[INDEX] Guest entering waiting room immediately');
           console.log('=== GUEST ENTERING WAITING ROOM IMMEDIATELY ===');
           gameState.setGameStarted(true);
         }
         
         return true;
       } else {
-        await saveDebugLog('ERROR', 'Failed to create/join game session');
+        console.error('[INDEX] Failed to create/join game session');
         console.error('Failed to create/join game session');
         return false;
       }
     } catch (error) {
-      await saveDebugLog('ERROR', 'Exception in handleGameStart', error);
+      console.error('[INDEX] Exception in handleGameStart', error);
       console.error('Error in handleGameStart:', error);
       return false;
     }
@@ -109,14 +87,14 @@ const Index = () => {
 
   // Handle quando l'host è pronto e vuole entrare nella waiting room
   const handleHostEnterWaiting = () => {
-    saveDebugLog('INFO', 'Host entering waiting room');
+    console.log('[INDEX] Host entering waiting room');
     console.log('=== HOST ENTERING WAITING ROOM ===');
     gameState.setGameStarted(true);
   };
 
   // Handle player ready
   const handlePlayerReady = async () => {
-    await saveDebugLog('INFO', 'Player ready clicked');
+    console.log('[INDEX] Player ready clicked');
     console.log('=== PLAYER READY CLICKED ===');
     
     try {
@@ -126,17 +104,17 @@ const Index = () => {
       // Update ready status in database
       await multiplayerHook.setPlayerReady(true);
       
-      await saveDebugLog('SUCCESS', 'Player marked as ready successfully');
+      console.log('[INDEX] Player marked as ready successfully');
       console.log('Player marked as ready successfully');
     } catch (error) {
-      await saveDebugLog('ERROR', 'Error setting player ready', error);
+      console.error('[INDEX] Error setting player ready', error);
       console.error('Error setting player ready:', error);
     }
   };
 
   // Handle when both players are ready - start the actual game
   const handleBothPlayersReady = () => {
-    saveDebugLog('INFO', 'Both players ready - starting actual game');
+    console.log('[INDEX] Both players ready - starting actual game');
     console.log('=== BOTH PLAYERS READY - STARTING ACTUAL GAME ===');
     
     // Set both players ready and initialize the game
@@ -151,7 +129,7 @@ const Index = () => {
 
   // Show error if there's a multiplayer error
   if (multiplayerHook.error) {
-    saveDebugLog('ERROR', 'Multiplayer error detected', { error: multiplayerHook.error });
+    console.error('[INDEX] Multiplayer error detected', { error: multiplayerHook.error });
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
         <div className="bg-red-900/30 border border-red-400 rounded-lg p-6 text-center">
@@ -177,7 +155,7 @@ const Index = () => {
 
   // Show actual game when both players are ready
   if (gameState.gameStarted && gameState.bothPlayersReady) {
-    saveDebugLog('INFO', 'Rendering game layout');
+    console.log('[INDEX] Rendering game layout');
     console.log('=== RENDERING GAME LAYOUT ===');
     return (
       <GameLayout
@@ -189,7 +167,7 @@ const Index = () => {
   }
 
   // Show multiplayer setup
-  saveDebugLog('INFO', 'Rendering multiplayer setup');
+  console.log('[INDEX] Rendering multiplayer setup');
   console.log('=== RENDERING MULTIPLAYER SETUP ===');
   return (
     <MultiplayerSetup 

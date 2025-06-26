@@ -44,6 +44,33 @@ export type Database = {
           },
         ]
       }
+      debug_logs: {
+        Row: {
+          created_at: string
+          data: string | null
+          id: string
+          level: string
+          message: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          level: string
+          message: string
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          level?: string
+          message?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       game_actions: {
         Row: {
           action: string
