@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
+import { Star, BookOpen, Skull, Ban } from 'lucide-react';
+import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
 import PlacementMenu from './PlacementMenu';
-import ZoneActionMenu from './ZoneActionMenu';
-import ZoneSlotRenderer from './ZoneSlotRenderer';
-import ZoneExpansionModal from './ZoneExpansionModal';
-import { useZoneClickHandler } from './ZoneClickHandler';
+import ZoneManager from './ZoneManager';
 import { useGameZoneActions } from './GameZoneActions';
 
 const ResponsiveGameZones = ({ 
@@ -15,14 +15,11 @@ const ResponsiveGameZones = ({
   onCardMove, 
   onCardPreview, 
   onDrawCard,
-  onDeckMill,
   zoneType 
 }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
   const [placementMenu, setPlacementMenu] = useState(null);
-
-  console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones graveyard:', field?.graveyard);
+  const [expandedZone, setExpandedZone] = useState(null);
 
   const {
     handleSlotClick,
@@ -42,37 +39,197 @@ const ResponsiveGameZones = ({
     setActivatedEffects
   });
 
-  const {
-    zoneActionMenu,
-    setZoneActionMenu,
-    expandedZone,
-    setExpandedZone,
-    handleZoneClick,
-    handleZoneAction
-  } = useZoneClickHandler({
-    isEnemy,
-    onDrawCard,
-    onDeckMill
-  });
-
   const handlePlacementChoiceWrapper = (choice) => {
     handlePlacementChoice(choice, placementMenu);
   };
 
+  const handleZoneToggle = (zoneName) => {
+    setExpandedZone(expandedZone === zoneName ? null : zoneName);
+  };
+
+  const renderZoneSlots = () => {
+    const slots = [];
+    
+    if (zoneType === 'spellsTraps') {
+      // Prima riga: Extra Deck/Deck, Spell/Trap slots, Banished Face-down
+      if (isEnemy) {
+        // Extra Deck per avversario (nascosto)
+        slots.push(
+          <div key="extra-deck" className="card-slot extra-deck-slot" onClick={() => handleZoneToggle('extraDeck')}>
+            <div className="zone-label">Extra Deck</div>
+            <div className="text-xl">⭐</div>
+            {expandedZone === 'extraDeck' && (
+              <ZoneManager
+                cards={field.extraDeck || []}
+                zoneName="extraDeck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isHidden={isEnemy}
+                isCompact={true}
+              />
+            )}
+          </div>
+        );
+      } else {
+        // Extra Deck per giocatore
+        slots.push(
+          <div key="extra-deck" className="card-slot extra-deck-slot" onClick={() => handleZoneToggle('extraDeck')}>
+            <div className="zone-label">Extra Deck</div>
+            <div className="text-xl">⭐</div>
+            {expandedZone === 'extraDeck' && (
+              <ZoneManager
+                cards={field.extraDeck || []}
+                zoneName="extraDeck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isCompact={true}
+              />
+            )}
+          </div>
+        );
+      }
+
+      // Zona Spell/Trap (5 slot)
+      const spellTrapCards = field.spellsTraps || [];
+      for (let i = 0; i < 5; i++) {
+        const card = spellTrapCards[i];
+        const isHighlighted = selectedCardFromHand && !card && !isEnemy;
+        
+        slots.push(
+          <div key={`spell-trap-${i}`} className="spell-trap-zone">
+            <ResponsiveGameZoneSlot
+              card={card}
+              zoneName="spellsTraps"
+              slotIndex={i}
+              icon="⚡"
+              isHighlighted={isHighlighted}
+              onSlotClick={handleSlotClick}
+              onCardPreview={onCardPreview}
+              onFieldCardAction={handleFieldCardAction}
+              onCardClick={handleCardClick}
+              isEffectActivated={isEffectActivated}
+              zoneLabel="S/T"
+            />
+          </div>
+        );
+      }
+
+      // Banished Face-down
+      slots.push(
+        <div key="banished-facedown" className="card-slot banished-facedown-slot" onClick={() => handleZoneToggle('banishedFaceDown')}>
+          <div className="zone-label">Banish FD</div>
+          <div className="text-xl">🔒</div>
+          {expandedZone === 'banishedFaceDown' && (
+            <ZoneManager
+              cards={field.banishedFaceDown || []}
+              zoneName="banishedFaceDown"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+              isCompact={true}
+            />
+          )}
+        </div>
+      );
+    } else if (zoneType === 'monsters') {
+      // Seconda riga: Deck, Monster slots, Banished
+      if (!isEnemy) {
+        // Deck per giocatore
+        slots.push(
+          <div key="deck" className="card-slot main-deck-slot" onClick={() => handleZoneToggle('deck')}>
+            <div className="zone-label">Deck</div>
+            <div className="text-xl">🃏</div>
+            {expandedZone === 'deck' && (
+              <ZoneManager
+                cards={field.deck || []}
+                zoneName="deck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                onDrawCard={onDrawCard}
+                isCompact={true}
+              />
+            )}
+          </div>
+        );
+      } else {
+        // Deck per avversario
+        slots.push(
+          <div key="deck" className="card-slot main-deck-slot" onClick={() => handleZoneToggle('deck')}>
+            <div className="zone-label">Deck</div>
+            <div className="text-xl">🃏</div>
+            {expandedZone === 'deck' && (
+              <ZoneManager
+                cards={field.deck || []}
+                zoneName="deck"
+                onCardMove={onCardMove}
+                onCardPreview={onCardPreview}
+                isExpanded={true}
+                onToggleExpand={() => setExpandedZone(null)}
+                isCompact={true}
+              />
+            )}
+          </div>
+        );
+      }
+
+      // Zona Monster (5 slot)
+      const monsterCards = field.monsters || [];
+      for (let i = 0; i < 5; i++) {
+        const card = monsterCards[i];
+        const isHighlighted = selectedCardFromHand && !card && !isEnemy;
+        
+        slots.push(
+          <div key={`monster-${i}`} className="monster-zone">
+            <ResponsiveGameZoneSlot
+              card={card}
+              zoneName="monsters"
+              slotIndex={i}
+              icon="🐉"
+              isHighlighted={isHighlighted}
+              onSlotClick={handleSlotClick}
+              onCardPreview={onCardPreview}
+              onFieldCardAction={handleFieldCardAction}
+              onCardClick={handleCardClick}
+              isEffectActivated={isEffectActivated}
+              zoneLabel="Monster"
+            />
+          </div>
+        );
+      }
+
+      // Banished
+      slots.push(
+        <div key="banished" className="card-slot banished-slot" onClick={() => handleZoneToggle('banished')}>
+          <div className="zone-label">Banished</div>
+          <div className="text-xl">🚫</div>
+          {expandedZone === 'banished' && (
+            <ZoneManager
+              cards={field.banished || []}
+              zoneName="banished"
+              onCardMove={onCardMove}
+              onCardPreview={onCardPreview}
+              isExpanded={true}
+              onToggleExpand={() => setExpandedZone(null)}
+              isCompact={true}
+            />
+          )}
+        </div>
+      );
+    }
+
+    return slots;
+  };
+
   return (
     <>
-      <ZoneSlotRenderer
-        field={field}
-        isEnemy={isEnemy}
-        selectedCardFromHand={selectedCardFromHand}
-        zoneType={zoneType}
-        handleSlotClick={handleSlotClick}
-        onCardPreview={onCardPreview}
-        handleFieldCardAction={handleFieldCardAction}
-        handleCardClick={handleCardClick}
-        isEffectActivated={isEffectActivated}
-        handleZoneClick={handleZoneClick}
-      />
+      {renderZoneSlots()}
 
       {/* Menu di piazzamento */}
       <PlacementMenu
@@ -81,26 +238,10 @@ const ResponsiveGameZones = ({
         onClose={() => setPlacementMenu(null)}
       />
 
-      {/* Zone Action Menu */}
-      {zoneActionMenu && (
-        <ZoneActionMenu
-          zoneName={zoneActionMenu.zoneName}
-          onAction={handleZoneAction}
-          onClose={() => setZoneActionMenu(null)}
-          position={zoneActionMenu.position}
-        />
-      )}
-
       {/* Zone Manager espanse */}
-      <ZoneExpansionModal
-        expandedZone={expandedZone}
-        field={field}
-        isEnemy={isEnemy}
-        onCardMove={onCardMove}
-        onCardPreview={onCardPreview}
-        onDrawCard={onDrawCard}
-        setExpandedZone={setExpandedZone}
-      />
+      {expandedZone && (
+        <div className="fixed inset-0 bg-black/50 z-30" onClick={() => setExpandedZone(null)} />
+      )}
     </>
   );
 };
