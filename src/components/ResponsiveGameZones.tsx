@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, BookOpen, Skull, Ban } from 'lucide-react';
 import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
@@ -22,6 +23,8 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
   const [expandedZone, setExpandedZone] = useState(null);
   const [zoneActionMenu, setZoneActionMenu] = useState(null);
+
+  console.log('ResponsiveGameZones field data:', field);
 
   const {
     handleSlotClick,
@@ -98,6 +101,7 @@ const ResponsiveGameZones = ({
           >
             <div className="zone-label">Extra Deck</div>
             <div className="text-xl">⭐</div>
+            <div className="zone-count">{(field.extraDeck || []).length}</div>
           </div>
         );
       } else {
@@ -110,6 +114,7 @@ const ResponsiveGameZones = ({
           >
             <div className="zone-label">Extra Deck</div>
             <div className="text-xl">⭐</div>
+            <div className="zone-count">{(field.extraDeck || []).length}</div>
           </div>
         );
       }
@@ -148,6 +153,7 @@ const ResponsiveGameZones = ({
         >
           <div className="zone-label">Banish FD</div>
           <div className="text-xl">🔒</div>
+          <div className="zone-count">{(field.banishedFaceDown || []).length}</div>
         </div>
       );
     } else if (zoneType === 'monsters') {
@@ -162,6 +168,7 @@ const ResponsiveGameZones = ({
           >
             <div className="zone-label">Deck</div>
             <div className="text-xl">🃏</div>
+            <div className="zone-count">{(field.deck || []).length}</div>
           </div>
         );
       } else {
@@ -174,6 +181,7 @@ const ResponsiveGameZones = ({
           >
             <div className="zone-label">Deck</div>
             <div className="text-xl">🃏</div>
+            <div className="zone-count">{(field.deck || []).length}</div>
           </div>
         );
       }
@@ -212,6 +220,7 @@ const ResponsiveGameZones = ({
         >
           <div className="zone-label">Banished</div>
           <div className="text-xl">🚫</div>
+          <div className="zone-count">{(field.banished || []).length}</div>
         </div>
       );
     }
@@ -219,9 +228,24 @@ const ResponsiveGameZones = ({
     return slots;
   };
 
+  // Add graveyard zone that was missing
+  const graveyardZone = (
+    <div 
+      key="graveyard" 
+      className="card-slot graveyard-slot cursor-pointer"
+      onClick={(e) => handleZoneClick('graveyard', e)}
+    >
+      <div className="zone-label">Graveyard</div>
+      <div className="text-xl">💀</div>
+      <div className="zone-count">{(field.graveyard || []).length}</div>
+    </div>
+  );
+
   return (
     <>
       {renderZoneSlots()}
+      {/* Add graveyard zone */}
+      {zoneType === 'monsters' && graveyardZone}
 
       {/* Menu di piazzamento */}
       <PlacementMenu
@@ -240,7 +264,7 @@ const ResponsiveGameZones = ({
         />
       )}
 
-      {/* Zone Manager espanse - FIXED: Ora passano onCardMove correttamente */}
+      {/* Zone Manager espanse - Fixed to pass correct data */}
       {expandedZone && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />

@@ -1,3 +1,4 @@
+
 export const useGameHandlers = (gameState, syncGameState) => {
   const {
     gameData,
@@ -80,6 +81,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
         newField.fieldSpell = [{ ...card, faceDown: isFaceDown }];
       }
 
+      console.log('Updated field after card placement:', newField);
       return newField;
     });
 
@@ -103,6 +105,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
           const newField = { ...prev };
           newField.monsters = [...prev.monsters];
           newField.monsters[slotIndex] = card;
+          console.log('Updated field after flip in place:', newField);
           return newField;
         });
       } else if (fromZone === 'spellsTraps') {
@@ -110,6 +113,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
           const newField = { ...prev };
           newField.spellsTraps = [...prev.spellsTraps];
           newField.spellsTraps[slotIndex] = card;
+          console.log('Updated field after flip in place:', newField);
           return newField;
         });
       }
@@ -193,21 +197,22 @@ export const useGameHandlers = (gameState, syncGameState) => {
         } else if (toZone === 'fieldSpell') {
           newField.fieldSpell = [card];
         } else if (toZone === 'graveyard') {
-          newField.graveyard = [...prev.graveyard, card];
+          newField.graveyard = [...(prev.graveyard || []), card];
         } else if (toZone === 'banished') {
-          newField.banished = [...prev.banished, card];
+          newField.banished = [...(prev.banished || []), card];
         } else if (toZone === 'banishedFaceDown') {
-          newField.banishedFaceDown = [...prev.banishedFaceDown, card];
+          newField.banishedFaceDown = [...(prev.banishedFaceDown || []), card];
         } else if (toZone === 'extraDeck') {
-          newField.extraDeck = [...prev.extraDeck, card];
+          newField.extraDeck = [...(prev.extraDeck || []), card];
         } else if (toZone === 'deck_top') {
-          newField.deck = [card, ...prev.deck];
+          newField.deck = [card, ...(prev.deck || [])];
         } else if (toZone === 'deck_bottom') {
-          newField.deck = [...prev.deck, card];
+          newField.deck = [...(prev.deck || []), card];
         } else if (toZone === 'deck_shuffle') {
-          newField.deck = shuffleArray([...prev.deck, card]);
+          newField.deck = shuffleArray([...(prev.deck || []), card]);
         }
 
+        console.log(`Updated field after moving ${card.name} from ${fromZone} to ${toZone}:`, newField);
         return newField;
       });
     }
@@ -224,7 +229,7 @@ export const useGameHandlers = (gameState, syncGameState) => {
   };
 
   const handleDeckMill = (millCount = 1) => {
-    if (playerField.deck.length === 0) {
+    if ((playerField.deck || []).length === 0) {
       const newAction = {
         id: Date.now() + Math.random(),
         player: gameData?.playerName || 'Player',
@@ -235,12 +240,13 @@ export const useGameHandlers = (gameState, syncGameState) => {
       return;
     }
 
-    const cardsToMill = playerField.deck.slice(0, Math.min(millCount, playerField.deck.length));
+    const deckCards = playerField.deck || [];
+    const cardsToMill = deckCards.slice(0, Math.min(millCount, deckCards.length));
     
     setPlayerField(prev => ({
       ...prev,
       deck: prev.deck.slice(millCount),
-      graveyard: [...prev.graveyard, ...cardsToMill]
+      graveyard: [...(prev.graveyard || []), ...cardsToMill]
     }));
 
     const newAction = {
