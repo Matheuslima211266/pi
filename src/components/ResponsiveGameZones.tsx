@@ -17,7 +17,8 @@ const ResponsiveGameZones = ({
   onCardPreview, 
   onDrawCard,
   onDeckMill,
-  zoneType 
+  zoneType,
+  enemyField 
 }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
   const [placementMenu, setPlacementMenu] = useState(null);
@@ -80,6 +81,7 @@ const ResponsiveGameZones = ({
         handleCardClick={handleCardClick}
         isEffectActivated={isEffectActivated}
         handleZoneClick={enhancedHandleZoneClick}
+        enemyField={enemyField}
       />
 
       {/* Menu di piazzamento */}

@@ -18,7 +18,7 @@ const ResponsiveGameZoneSlot = ({
   onCardClick, 
   isEffectActivated,
   zoneLabel,
-  enemyField // Aggiungo il campo nemico per poter attaccare
+  enemyField
 }) => {
   const [showAttackMenu, setShowAttackMenu] = useState(false);
   const [showEditATK, setShowEditATK] = useState(false);
@@ -40,52 +40,64 @@ const ResponsiveGameZoneSlot = ({
     }
   };
 
-  const handleAttack = (targetCard = null) => {
+  const handleDirectAttack = () => {
     if (!card) return;
+    
+    const attackingATK = card.atk || 0;
+    const damage = attackingATK;
+    const battleResult = `${card.name} attacca direttamente! Danni: ${damage}`;
+
+    const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${damage} danni ai life points avversari?`);
+    
+    if (shouldDealDamage && damage > 0) {
+      console.log(`Dealing ${damage} damage to opponent`);
+      // Here you should call a function to reduce opponent's life points
+      // onDealDamage?.(damage);
+    }
+
+    setShowAttackMenu(false);
+  };
+
+  const handleAttackMonster = (targetCard) => {
+    if (!card || !targetCard) return;
     
     const attackingATK = card.atk || 0;
     let damage = 0;
     let battleResult = '';
 
-    if (targetCard) {
-      const targetDEF = targetCard.position === 'defense' ? (targetCard.def || 0) : (targetCard.atk || 0);
-      const isTargetDefense = targetCard.position === 'defense';
-      
-      if (isTargetDefense) {
-        // Attacco contro mostro in difesa
-        if (attackingATK > targetDEF) {
-          damage = attackingATK - targetDEF;
-          battleResult = `${card.name} distrugge ${targetCard.name} in difesa! Danni: ${damage}`;
-        } else if (attackingATK < targetDEF) {
-          damage = targetDEF - attackingATK;
-          battleResult = `${targetCard.name} resiste! ${card.name} subisce ${damage} danni`;
-        } else {
-          battleResult = `Battaglia pari! Nessun danno`;
-        }
+    const targetDEF = targetCard.position === 'defense' ? (targetCard.def || 0) : (targetCard.atk || 0);
+    const isTargetDefense = targetCard.position === 'defense';
+    
+    if (isTargetDefense) {
+      // Attacco contro mostro in difesa
+      if (attackingATK > targetDEF) {
+        damage = attackingATK - targetDEF;
+        battleResult = `${card.name} distrugge ${targetCard.name} in difesa! Danni: ${damage}`;
+      } else if (attackingATK < targetDEF) {
+        damage = targetDEF - attackingATK;
+        battleResult = `${targetCard.name} resiste! ${card.name} subisce ${damage} danni`;
       } else {
-        // Attacco contro mostro in attacco
-        if (attackingATK > targetCard.atk) {
-          damage = attackingATK - (targetCard.atk || 0);
-          battleResult = `${card.name} distrugge ${targetCard.name}! Danni: ${damage}`;
-        } else if (attackingATK < (targetCard.atk || 0)) {
-          damage = (targetCard.atk || 0) - attackingATK;
-          battleResult = `${targetCard.name} vince! ${card.name} viene distrutto. Danni: ${damage}`;
-        } else {
-          battleResult = `Battaglia pari! Entrambi i mostri vengono distrutti`;
-        }
+        battleResult = `Battaglia pari! Nessun danno`;
       }
     } else {
-      // Attacco diretto
-      damage = attackingATK;
-      battleResult = `${card.name} attacca direttamente! Danni: ${damage}`;
+      // Attacco contro mostro in attacco
+      if (attackingATK > targetCard.atk) {
+        damage = attackingATK - (targetCard.atk || 0);
+        battleResult = `${card.name} distrugge ${targetCard.name}! Danni: ${damage}`;
+      } else if (attackingATK < (targetCard.atk || 0)) {
+        damage = (targetCard.atk || 0) - attackingATK;
+        battleResult = `${targetCard.name} vince! ${card.name} viene distrutto. Danni: ${damage}`;
+      } else {
+        battleResult = `Battaglia pari! Entrambi i mostri vengono distrutti`;
+      }
     }
 
-    const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${damage} danni ai life points avversari?`);
+    const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${damage} danni ai life points ${damage > 0 ? 'avversari' : 'tuoi'}?`);
     
     if (shouldDealDamage && damage > 0) {
-      // Qui dovresti chiamare una funzione per ridurre i life points dell'avversario
-      console.log(`Dealing ${damage} damage to opponent`);
-      // onDealDamage?.(damage); // Implementare questa funzione nel componente genitore
+      console.log(`Dealing ${damage} damage`);
+      // Here you should call a function to reduce life points
+      // onDealDamage?.(damage, damage > 0 ? isTargetDefense : false);
     }
 
     setShowAttackMenu(false);
@@ -148,21 +160,29 @@ const ResponsiveGameZoneSlot = ({
               View Card
             </ContextMenuItem>
 
-            {/* Opzioni posizione per mostri */}
+            {/* Fixed position options for monsters */}
             {zoneName === 'monsters' && (
               <>
-                <ContextMenuItem onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'attack' }, zoneName, slotIndex)} className="text-white hover:bg-gray-700">
-                  <Sword className="mr-2 h-4 w-4" />
-                  Set Attack Position
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' }, zoneName, slotIndex)} className="text-white hover:bg-gray-700">
+                <ContextMenuItem 
+                  onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' }, zoneName, slotIndex)} 
+                  className="text-white hover:bg-gray-700"
+                  disabled={card.position === 'defense'}
+                >
                   <Shield className="mr-2 h-4 w-4" />
                   Set Defense Position
+                </ContextMenuItem>
+                <ContextMenuItem 
+                  onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'attack' }, zoneName, slotIndex)} 
+                  className="text-white hover:bg-gray-700"
+                  disabled={card.position === 'attack'}
+                >
+                  <Sword className="mr-2 h-4 w-4" />
+                  Set Attack Position
                 </ContextMenuItem>
               </>
             )}
 
-            {/* Menu Attacco per mostri */}
+            {/* Attack menu for monsters */}
             {zoneName === 'monsters' && !card.faceDown && (
               <ContextMenuSub>
                 <ContextMenuSubTrigger className="text-white hover:bg-gray-700">
@@ -170,13 +190,13 @@ const ResponsiveGameZoneSlot = ({
                   Attack
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent className="bg-gray-800 border-gray-600">
-                  <ContextMenuItem onClick={() => handleAttack()} className="text-white hover:bg-gray-700">
+                  <ContextMenuItem onClick={handleDirectAttack} className="text-white hover:bg-gray-700">
                     Direct Attack
                   </ContextMenuItem>
                   {getEnemyMonsters().map((enemyMonster, index) => (
                     <ContextMenuItem 
                       key={`enemy-${index}`}
-                      onClick={() => handleAttack(enemyMonster)} 
+                      onClick={() => handleAttackMonster(enemyMonster)} 
                       className="text-white hover:bg-gray-700"
                     >
                       Attack {enemyMonster.name}
@@ -186,7 +206,7 @@ const ResponsiveGameZoneSlot = ({
               </ContextMenuSub>
             )}
 
-            {/* Edit ATK per mostri */}
+            {/* Edit ATK for monsters */}
             {zoneName === 'monsters' && (
               <ContextMenuItem onClick={() => setShowEditATK(true)} className="text-white hover:bg-gray-700">
                 <Edit className="mr-2 h-4 w-4" />
