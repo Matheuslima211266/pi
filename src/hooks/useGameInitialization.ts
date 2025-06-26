@@ -48,12 +48,6 @@ export const useGameInitialization = ({
     const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
     const enemyRemainingDeck = shuffledEnemyDeck.slice(5);
 
-    // Add some test cards to Dead Zone for verification
-    const testDeadZoneCards = shuffledHand.slice(0, 2).map((card: any) => ({
-      ...card,
-      id: generateUniqueCardId(card.id, 'deadzone_test', Date.now())
-    }));
-
     console.log('[useGameInitialization] Final deck sizes:');
     console.log('[useGameInitialization] Player deck:', remainingDeck.length);
     console.log('[useGameInitialization] Enemy deck:', enemyRemainingDeck.length);
@@ -69,7 +63,6 @@ export const useGameInitialization = ({
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: remainingDeck,
-      deadZone: testDeadZoneCards,
       banished: [],
       banishedFaceDown: []
     }));
@@ -78,7 +71,6 @@ export const useGameInitialization = ({
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: enemyRemainingDeck,
-      deadZone: [testDeadZoneCards[0]],
       banished: [],
       banishedFaceDown: []
     }));

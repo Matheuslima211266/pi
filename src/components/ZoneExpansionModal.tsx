@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const ZoneExpansionModal = ({ 
@@ -14,9 +15,6 @@ const ZoneExpansionModal = ({
   console.log('=== ZONE EXPANSION MODAL DEBUG ===');
   console.log('expandedZone:', expandedZone);
   console.log('field:', field);
-  console.log('field.graveyard:', field?.graveyard);
-  console.log('field.graveyard length:', field?.graveyard?.length);
-  console.log('field keys:', field ? Object.keys(field) : 'no field');
 
   const getZoneData = () => {
     // Assicuriamoci che ogni zona abbia sempre un array valido
@@ -47,22 +45,6 @@ const ZoneExpansionModal = ({
         cards: safeGetZoneCards('extraDeck'),
         zoneName: 'extraDeck',
         displayName: 'Extra Deck',
-        onDrawCard: null,
-        isHidden: false,
-        allowActions: !isEnemy
-      },
-      deadZone: {
-        cards: safeGetZoneCards('deadZone') || safeGetZoneCards('graveyard'), // Fallback for compatibility
-        zoneName: 'deadZone',
-        displayName: 'Dead Zone',
-        onDrawCard: null,
-        isHidden: false,
-        allowActions: !isEnemy
-      },
-      graveyard: { // Keep for backward compatibility
-        cards: safeGetZoneCards('deadZone') || safeGetZoneCards('graveyard'),
-        zoneName: 'deadZone',
-        displayName: 'Dead Zone',
         onDrawCard: null,
         isHidden: false,
         allowActions: !isEnemy
@@ -232,7 +214,7 @@ const ZoneExpansionModal = ({
                 📋 Mano
               </button>
               
-              {zoneData.zoneName === 'deadZone' && (
+              {zoneData.zoneName === 'banished' && (
                 <>
                   <button
                     onClick={(e) => {
@@ -243,16 +225,6 @@ const ZoneExpansionModal = ({
                     title="Summon to field"
                   >
                     ⚔️ Field
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardAction('toBanished', card, index);
-                    }}
-                    className="w-full text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-500 transition-colors"
-                    title="Banish"
-                  >
-                    🚫 Banish
                   </button>
                 </>
               )}
@@ -307,23 +279,6 @@ const ZoneExpansionModal = ({
           </button>
         </div>
 
-        {/* Debug info per sviluppo */}
-        {process.env.NODE_ENV === 'development' && (expandedZone === 'deadZone' || expandedZone === 'graveyard') && (
-          <div className="p-2 bg-gray-900 text-xs text-yellow-300 border-b border-gray-600">
-            <details>
-              <summary className="cursor-pointer hover:text-yellow-200">🐛 Debug Info (click to expand)</summary>
-              <div className="mt-2 space-y-1">
-                <div>Field exists: {field ? '✅ YES' : '❌ NO'}</div>
-                <div>Dead Zone exists: {field?.deadZone ? '✅ YES' : '❌ NO'}</div>
-                <div>Dead Zone type: {typeof field?.deadZone}</div>
-                <div>Dead Zone length: {field?.deadZone?.length || 'undefined'}</div>
-                <div>Cards after filter: {zoneData.cards.length}</div>
-                <div>First card: {zoneData.cards[0]?.name || 'none'}</div>
-              </div>
-            </details>
-          </div>
-        )}
-
         {/* Contenuto principale */}
         <div className="p-4 overflow-y-auto max-h-[calc(85vh-140px)]">
           {zoneData.cards.length === 0 ? (
@@ -331,10 +286,7 @@ const ZoneExpansionModal = ({
               <div className="text-4xl mb-4">📭</div>
               <div className="text-lg">Nessuna carta in questa zona</div>
               <div className="text-sm mt-2">
-                {expandedZone === 'graveyard' ? 
-                  'Le carte distrutte appariranno qui' : 
-                  `La zona ${zoneData.displayName} è vuota`
-                }
+                La zona {zoneData.displayName} è vuota
               </div>
             </div>
           ) : (
@@ -385,11 +337,11 @@ const ZoneExpansionModal = ({
                 </>
               )}
               
-              {zoneData.zoneName === 'deadZone' && (
+              {zoneData.zoneName === 'banished' && (
                 <button
                   onClick={() => {
-                    console.log('Shuffle dead zone into deck');
-                    // Implementa la logica per rimescolare la dead zone nel deck
+                    console.log('Shuffle banished into deck');
+                    // Implementa la logica per rimescolare banished nel deck
                   }}
                   className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition-colors"
                 >

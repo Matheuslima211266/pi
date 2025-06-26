@@ -8,30 +8,6 @@ export const useCardOperations = ({
   setEnemyField, 
   setPlayerHand 
 }) => {
-  // Helper function to add cards to the Dead Zone
-  const addCardToDeadZone = (card: any, isPlayer = true) => {
-    console.log('[useCardOperations] Adding card to dead zone:', card.name);
-    if (isPlayer) {
-      setPlayerField((prev: any) => {
-        const newDeadZone = [...(prev.deadZone || []), card];
-        console.log('[useCardOperations] Player dead zone updated:', newDeadZone.map((c: any) => c.name));
-        return {
-          ...prev,
-          deadZone: newDeadZone
-        };
-      });
-    } else {
-      setEnemyField((prev: any) => {
-        const newDeadZone = [...(prev.deadZone || []), card];
-        console.log('[useCardOperations] Enemy dead zone updated:', newDeadZone.map((c: any) => c.name));
-        return {
-          ...prev,
-          deadZone: newDeadZone
-        };
-      });
-    }
-  };
-
   // Function to move cards between zones
   const moveCardBetweenZones = (card: any, fromZone: string, toZone: string, isPlayer = true) => {
     console.log(`[useCardOperations] Moving card ${card.name} from ${fromZone} to ${toZone}`);
@@ -75,7 +51,7 @@ export const useCardOperations = ({
     });
   };
 
-  // Function for milling cards (deck to Dead Zone)
+  // Function for milling cards (deck to banished)
   const millCards = (count = 1, isPlayer = true) => {
     console.log(`[useCardOperations] Milling ${count} cards for ${isPlayer ? 'player' : 'enemy'}`);
     
@@ -83,34 +59,33 @@ export const useCardOperations = ({
       setPlayerField((prev: any) => {
         const cardsToMill = prev.deck.slice(0, count);
         const remainingDeck = prev.deck.slice(count);
-        const newDeadZone = [...(prev.deadZone || []), ...cardsToMill];
+        const newBanished = [...(prev.banished || []), ...cardsToMill];
         
-        console.log('[useCardOperations] Cards milled to player dead zone:', cardsToMill.map((c: any) => c.name));
-        console.log('[useCardOperations] New player dead zone size:', newDeadZone.length);
+        console.log('[useCardOperations] Cards milled to player banished:', cardsToMill.map((c: any) => c.name));
+        console.log('[useCardOperations] New player banished size:', newBanished.length);
         
         return {
           ...prev,
           deck: remainingDeck,
-          deadZone: newDeadZone
+          banished: newBanished
         };
       });
     } else {
       setEnemyField((prev: any) => {
         const cardsToMill = prev.deck.slice(0, count);
         const remainingDeck = prev.deck.slice(count);
-        const newDeadZone = [...(prev.deadZone || []), ...cardsToMill];
+        const newBanished = [...(prev.banished || []), ...cardsToMill];
         
         return {
           ...prev,
           deck: remainingDeck,
-          deadZone: newDeadZone
+          banished: newBanished
         };
       });
     }
   };
 
   return {
-    addCardToDeadZone,
     moveCardBetweenZones,
     millCards
   };

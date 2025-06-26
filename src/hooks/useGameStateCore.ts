@@ -26,12 +26,11 @@ export const useGameStateCore = () => {
   const [playerReady, setPlayerReady] = useState(false);
   const [opponentConnected, setOpponentConnected] = useState(false);
 
-  // Field states with guaranteed arrays
+  // Field states with guaranteed arrays - removed deadZone completely
   const [playerField, setPlayerField] = useState({
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    deadZone: [],
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -42,7 +41,6 @@ export const useGameStateCore = () => {
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    deadZone: [],
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
@@ -53,7 +51,7 @@ export const useGameStateCore = () => {
     // Basic game state
     gameStarted, setGameStarted,
     gameData, setGameData,
-    playerDeckData, setPlayerDeckData,
+    playerDeckData, setPlayerDeckData,  
     playerLifePoints, setPlayerLifePoints,
     enemyLifePoints, setEnemyLifePoints,
     

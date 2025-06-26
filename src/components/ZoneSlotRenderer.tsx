@@ -23,7 +23,7 @@ const ZoneSlotRenderer = ({
       slots.push(
         <div 
           key="extra-deck" 
-          className="relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40 border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
+          className="relative w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40 lg:w-32 lg:h-44 border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
           onClick={(e) => handleZoneClick('extraDeck', e)}
         >
           <div className="text-purple-400 text-xs font-bold mb-1">Extra Deck</div>
@@ -36,7 +36,6 @@ const ZoneSlotRenderer = ({
       const spellTrapCards = field.spellsTraps || [];
       for (let i = 0; i < 5; i++) {
         const card = spellTrapCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
         const isHighlighted = !isEnemy && selectedCardFromHand && !card;
         
         slots.push(
@@ -61,7 +60,7 @@ const ZoneSlotRenderer = ({
       slots.push(
         <div 
           key="banished-facedown" 
-          className="relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40 border-2 border-red-500 bg-red-900/30 rounded-lg cursor-pointer hover:bg-red-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
+          className="relative w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40 lg:w-32 lg:h-44 border-2 border-red-500 bg-red-900/30 rounded-lg cursor-pointer hover:bg-red-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
           onClick={(e) => handleZoneClick('banishedFaceDown', e)}
         >
           <div className="text-red-400 text-xs font-bold mb-1">Banish FD</div>
@@ -75,7 +74,7 @@ const ZoneSlotRenderer = ({
       slots.push(
         <div 
           key="deck" 
-          className="relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40 border-2 border-green-500 bg-green-900/30 rounded-lg cursor-pointer hover:bg-green-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
+          className="relative w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40 lg:w-32 lg:h-44 border-2 border-green-500 bg-green-900/30 rounded-lg cursor-pointer hover:bg-green-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
           onClick={(e) => handleZoneClick('deck', e)}
         >
           <div className="text-green-400 text-xs font-bold mb-1">Deck</div>
@@ -88,7 +87,6 @@ const ZoneSlotRenderer = ({
       const monsterCards = field.monsters || [];
       for (let i = 0; i < 5; i++) {
         const card = monsterCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
         const isHighlighted = !isEnemy && selectedCardFromHand && !card;
         
         slots.push(
@@ -113,7 +111,7 @@ const ZoneSlotRenderer = ({
       slots.push(
         <div 
           key="banished" 
-          className="relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40 border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
+          className="relative w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40 lg:w-32 lg:h-44 border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2"
           onClick={(e) => handleZoneClick('banished', e)}
         >
           <div className="text-purple-400 text-xs font-bold mb-1">Banished</div>
@@ -121,24 +119,9 @@ const ZoneSlotRenderer = ({
           <div className="text-xs text-purple-300 font-bold mt-1">{(field.banished || []).length}</div>
         </div>
       );
-    } else if (zoneType === 'deadZone') {
-      // Dead Zone
-      const deadZoneCards = field.deadZone || [];
-      slots.push(
-        <div 
-          key="dead-zone" 
-          className="relative w-16 h-24 sm:w-20 sm:h-32 md:w-24 md:h-36 lg:w-28 lg:h-40 border-2 border-gray-500 bg-gray-900/50 rounded-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-200 flex flex-col items-center justify-center p-2"
-          onClick={(e) => handleZoneClick('deadZone', e)}
-        >
-          <div className="text-gray-400 text-xs font-bold mb-1">Dead Zone</div>
-          <div className="text-2xl">💀</div>
-          <div className="text-xs text-gray-300 font-bold mt-1">{deadZoneCards.length}</div>
-        </div>
-      );
     } else if (zoneType === 'fieldSpell') {
       // Field Spell zone
       const fieldCard = (field.fieldSpell || [])[0];
-      // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
       const isHighlighted = !isEnemy && selectedCardFromHand && !fieldCard;
       
       slots.push(
