@@ -167,14 +167,18 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         (payload) => {
           console.log('Game state update:', payload);
           // Handle opponent state updates here
-          if (payload.new && payload.new.player_id !== user.id) {
+          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
             // Update opponent's game state
-            if (payload.new.player_ready) {
+            if ('player_ready' in payload.new && payload.new.player_ready) {
               setOpponentReady(true);
             }
             // Sync other game state properties
-            gameState.setEnemyField(payload.new.player_field);
-            gameState.setEnemyLifePoints(payload.new.player_life_points);
+            if ('player_field' in payload.new && payload.new.player_field) {
+              gameState.setEnemyField(payload.new.player_field);
+            }
+            if ('player_life_points' in payload.new && typeof payload.new.player_life_points === 'number') {
+              gameState.setEnemyLifePoints(payload.new.player_life_points);
+            }
           }
         }
       )
@@ -193,13 +197,15 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         },
         (payload) => {
           console.log('New chat message:', payload);
-          if (payload.new && payload.new.player_id !== user.id) {
+          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
             // Add message to chat
-            gameState.setChatMessages(prev => [...prev, {
-              id: payload.new.id,
-              player: payload.new.player_name,
-              message: payload.new.message
-            }]);
+            if ('id' in payload.new && 'player_name' in payload.new && 'message' in payload.new) {
+              gameState.setChatMessages((prev: any[]) => [...prev, {
+                id: payload.new.id,
+                player: payload.new.player_name,
+                message: payload.new.message
+              }]);
+            }
           }
         }
       )
@@ -218,14 +224,16 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         },
         (payload) => {
           console.log('New game action:', payload);
-          if (payload.new && payload.new.player_id !== user.id) {
+          if (payload.new && typeof payload.new === 'object' && 'player_id' in payload.new && payload.new.player_id !== user.id) {
             // Add action to log
-            gameState.setActionLog(prev => [...prev, {
-              id: payload.new.id,
-              player: payload.new.player_name,
-              action: payload.new.action,
-              timestamp: new Date(payload.new.timestamp).toLocaleTimeString()
-            }]);
+            if ('id' in payload.new && 'player_name' in payload.new && 'action' in payload.new && 'timestamp' in payload.new) {
+              gameState.setActionLog((prev: any[]) => [...prev, {
+                id: payload.new.id,
+                player: payload.new.player_name,
+                action: payload.new.action,
+                timestamp: new Date(payload.new.timestamp as string).toLocaleTimeString()
+              }]);
+            }
           }
         }
       )
