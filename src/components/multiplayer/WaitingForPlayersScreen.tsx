@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Play, LogOut, Clock } from 'lucide-react';
+import { Users, Play, LogOut, Clock, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WaitingForPlayersScreenProps {
   gameData: any;
@@ -23,6 +24,8 @@ const WaitingForPlayersScreen = ({
   onGameStart 
 }: WaitingForPlayersScreenProps) => {
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const bothReady = playerReady && opponentReady;
 
   console.log('=== WAITING SCREEN STATE ===', {
@@ -32,6 +35,41 @@ const WaitingForPlayersScreen = ({
     countdown,
     gameData: gameData?.gameId
   });
+
+  // Debug function to check session status
+  const refreshSession = async () => {
+    if (!gameData?.gameId) return;
+    
+    setIsRefreshing(true);
+    try {
+      console.log('Refreshing session for game:', gameData.gameId);
+      
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .select('*')
+        .eq('game_id', gameData.gameId)
+        .single();
+
+      if (error) {
+        console.error('Error refreshing session:', error);
+      } else {
+        console.log('Current session state:', data);
+        setDebugInfo(data);
+      }
+    } catch (err) {
+      console.error('Error in refreshSession:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Auto-refresh every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(refreshSession, 3000);
+    refreshSession(); // Initial refresh
+    
+    return () => clearInterval(interval);
+  }, [gameData?.gameId]);
 
   // Start countdown when both players are ready
   useEffect(() => {
@@ -65,14 +103,25 @@ const WaitingForPlayersScreen = ({
               <h1 className="text-2xl font-bold text-white">Waiting for Players</h1>
               <p className="text-gray-400">Get ready to duel!</p>
             </div>
-            <Button
-              onClick={onSignOut}
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-white"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={refreshSession}
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white"
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                onClick={onSignOut}
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -97,6 +146,16 @@ const WaitingForPlayersScreen = ({
                 </span>
               </div>
             </div>
+
+            {/* Debug info */}
+            {debugInfo && (
+              <div className="bg-slate-600/50 p-3 rounded text-xs space-y-1">
+                <p className="text-yellow-400">Debug Info:</p>
+                <p className="text-gray-300">Host: {debugInfo.host_name} ({debugInfo.host_ready ? 'Ready' : 'Not Ready'})</p>
+                <p className="text-gray-300">Guest: {debugInfo.guest_name || 'None'} ({debugInfo.guest_ready ? 'Ready' : 'Not Ready'})</p>
+                <p className="text-gray-300">Status: {debugInfo.status}</p>
+              </div>
+            )}
 
             {/* Ready button */}
             {!playerReady && onPlayerReady && (

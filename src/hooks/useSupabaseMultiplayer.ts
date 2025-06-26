@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -26,6 +27,10 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
   console.log('=== SUPABASE MULTIPLAYER HOOK ===', {
     hasUser: !!user,
     currentSession: !!currentSession,
+    sessionId: currentSession?.id,
+    gameId: currentSession?.game_id,
+    hostId: currentSession?.host_id,
+    guestId: currentSession?.guest_id,
     opponentReady,
     error
   });
@@ -104,8 +109,48 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       if (!existingSession) {
-        setError('Game not found or already started');
-        return null;
+        console.log('No waiting session found, checking active sessions...');
+        // Try to find active session in case host already entered waiting room
+        const { data: activeSession, error: activeError } = await supabase
+          .from('game_sessions')
+          .select('*')
+          .eq('game_id', gameId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (activeError || !activeSession) {
+          console.error('No session found for game ID:', gameId);
+          setError('Game not found or expired');
+          return null;
+        }
+
+        if (activeSession.guest_id) {
+          setError('Game is already full');
+          return null;
+        }
+
+        // Join the active session
+        const { data: joinData, error: joinError } = await supabase
+          .from('game_sessions')
+          .update({
+            guest_id: user.id,
+            guest_name: playerName
+          })
+          .eq('id', activeSession.id)
+          .select()
+          .single();
+
+        if (joinError) {
+          console.error('Error joining active session:', joinError);
+          setError('Failed to join game session');
+          return null;
+        }
+
+        console.log('Successfully joined active game session:', joinData);
+        const gameSession = castToGameSession(joinData);
+        setCurrentSession(gameSession);
+        setError(null);
+        return gameSession;
       }
 
       if (existingSession.guest_id) {
@@ -113,7 +158,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         return null;
       }
 
-      console.log('Found game session, joining:', existingSession);
+      console.log('Found waiting session, joining:', existingSession);
 
       // Join the game
       const { data, error } = await supabase
@@ -264,6 +309,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           filter: `id=eq.${currentSession.id}`
         },
         (payload) => {
+          console.log('=== REAL-TIME UPDATE ===');
           console.log('Game session updated via realtime:', payload.new);
           const updatedSession = castToGameSession(payload.new);
           setCurrentSession(updatedSession);
@@ -277,18 +323,30 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
             playerIsHost: isHost,
             hostReady: updatedSession.host_ready,
             guestReady: updatedSession.guest_ready,
-            opponentReady: opponentReadyStatus
+            opponentReady: opponentReadyStatus,
+            hasGuest: !!updatedSession.guest_id,
+            guestName: updatedSession.guest_name
           });
+
+          // Show toast when opponent joins
+          if (isHost && updatedSession.guest_id && updatedSession.guest_name && !currentSession.guest_id) {
+            toast({
+              title: "Avversario connesso!",
+              description: `${updatedSession.guest_name} si è unito alla partita`,
+            });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
 
     // Cleanup subscriptions
     return () => {
       console.log('Cleaning up subscriptions');
       supabase.removeChannel(gameSessionChannel);
     };
-  }, [currentSession, user]);
+  }, [currentSession, user, toast]);
 
   // Load initial data when session is set
   useEffect(() => {
@@ -307,7 +365,9 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           playerIsHost: isHost,
           hostReady: currentSession.host_ready,
           guestReady: currentSession.guest_ready,
-          initialOpponentReady
+          initialOpponentReady,
+          hasGuest: !!currentSession.guest_id,
+          guestName: currentSession.guest_name
         });
       } catch (err) {
         console.error('Error loading initial data:', err);
@@ -315,6 +375,47 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     };
 
     loadInitialData();
+  }, [currentSession, user]);
+
+  // Periodically check for updates if real-time fails
+  useEffect(() => {
+    if (!currentSession || !user) return;
+
+    const checkForUpdates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('game_sessions')
+          .select('*')
+          .eq('id', currentSession.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking for updates:', error);
+          return;
+        }
+
+        if (data) {
+          const updatedSession = castToGameSession(data);
+          
+          // Only update if something actually changed
+          if (JSON.stringify(updatedSession) !== JSON.stringify(currentSession)) {
+            console.log('Manual update detected:', updatedSession);
+            setCurrentSession(updatedSession);
+            
+            const isHost = updatedSession.host_id === user.id;
+            const opponentReadyStatus = isHost ? updatedSession.guest_ready : updatedSession.host_ready;
+            setOpponentReady(opponentReadyStatus);
+          }
+        }
+      } catch (err) {
+        console.error('Error in manual update check:', err);
+      }
+    };
+
+    // Check every 2 seconds as fallback
+    const interval = setInterval(checkForUpdates, 2000);
+
+    return () => clearInterval(interval);
   }, [currentSession, user]);
 
   return {
