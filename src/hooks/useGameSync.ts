@@ -128,7 +128,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     }
   }, [user?.id, setGameState]);
 
-  // Sincronizza lo stato completo
+  // Sincronizza lo stato completo (versione semplificata)
   const syncCompleteGameState = useCallback(async () => {
     if (!user || !gameSessionId) return;
 
@@ -149,7 +149,6 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           player_hand: gameState.playerHand,
           enemy_field: gameState.enemyField,
           enemy_life_points: gameState.enemyLifePoints,
-          action_log: gameState.actionLog,
           chat_messages: gameState.chatMessages,
           turn_number: gameState.turnNumber || 1,
           last_update: new Date().toISOString()

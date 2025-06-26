@@ -86,7 +86,10 @@ const WaitingForPlayersScreen = ({
         setCountdown(prev => {
           if (prev === null || prev <= 1) {
             console.log('Countdown finished, starting game...');
-            onGameStart && onGameStart();
+            // Use setTimeout to avoid setState during render
+            setTimeout(() => {
+              onGameStart && onGameStart();
+            }, 0);
             return null;
           }
           return prev - 1;
