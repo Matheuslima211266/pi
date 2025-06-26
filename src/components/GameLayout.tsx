@@ -1,6 +1,5 @@
-
 import React from 'react';
-import GameBoard from '@/components/GameBoard';
+import PositionedGameBoard from '@/components/PositionedGameBoard';
 import PlayerHand from '@/components/PlayerHand';
 import EnemyHand from '@/components/EnemyHand';
 import ActionLog from '@/components/ActionLog';
@@ -54,59 +53,56 @@ const GameLayout = ({
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
       {/* Game ID Display */}
       {gameData?.gameId && (
-        <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="inline-flex items-center gap-1 bg-gold-600 text-black px-1.5 py-0.5 rounded text-xs font-semibold">
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30">
+          <div className="inline-flex items-center gap-2 bg-gold-600 text-black px-3 py-1 rounded-lg text-sm font-semibold shadow-lg">
             <span>Game ID: {gameData.gameId}</span>
             {gameData.isHost && <span className="text-xs">(Host)</span>}
           </div>
         </div>
       )}
       
-      {/* Main Layout Grid - No gaps */}
-      <div className="h-full grid grid-cols-12">
-        {/* Left Side - Main Game Area */}
-        <div className="col-span-9 flex flex-col h-full">
-          {/* Enemy Hand - Ultra compact */}
-          <div className="h-8">
-            <EnemyHand 
-              handCount={enemyHandCount}
-              revealedCard={enemyRevealedCard}
-              revealedHand={enemyRevealedHand}
-            />
-          </div>
-          
-          {/* Game Board - Maximum space */}
-          <div className="flex-1">
-            <GameBoard 
-              playerField={playerField}
-              enemyField={enemyField}
-              onAttack={handleAttack}
-              onCardPlace={handleCardPlace}
-              selectedCardFromHand={selectedCardFromHand}
-              onCardPreview={setPreviewCard}
-              onCardMove={handleCardMove}
-              onDrawCard={handleDrawCard}
-            />
-          </div>
-          
-          {/* Player Hand - Ultra compact */}
-          <div className="h-12">
-            <PlayerHand 
-              cards={playerHand}
-              onPlayCard={gameState.setSelectedCardFromHand}
-              isPlayerTurn={true}
-              onCardPreview={setPreviewCard}
-              onCardMove={handleCardMove}
-              onShowCard={handleShowCard}
-              onShowHand={handleShowHand}
-            />
-          </div>
+      {/* Layout principale ottimizzato per 16:9 */}
+      <div className="h-full grid grid-cols-12 grid-rows-12">
+        {/* Enemy Hand - Riga superiore */}
+        <div className="col-span-9 row-span-1 flex items-center">
+          <EnemyHand 
+            handCount={enemyHandCount}
+            revealedCard={enemyRevealedCard}
+            revealedHand={enemyRevealedHand}
+          />
         </div>
         
-        {/* Right Side - Sidebar and Controls - No spacing */}
-        <div className="col-span-3 flex flex-col h-full">
+        {/* Game Board - Area principale centrale */}
+        <div className="col-span-9 row-span-10">
+          <PositionedGameBoard 
+            playerField={playerField}
+            enemyField={enemyField}
+            onAttack={handleAttack}
+            onCardPlace={handleCardPlace}
+            selectedCardFromHand={selectedCardFromHand}
+            onCardPreview={setPreviewCard}
+            onCardMove={handleCardMove}
+            onDrawCard={handleDrawCard}
+          />
+        </div>
+        
+        {/* Player Hand - Riga inferiore */}
+        <div className="col-span-9 row-span-1 flex items-center">
+          <PlayerHand 
+            cards={playerHand}
+            onPlayCard={gameState.setSelectedCardFromHand}
+            isPlayerTurn={true}
+            onCardPreview={setPreviewCard}
+            onCardMove={handleCardMove}
+            onShowCard={handleShowCard}
+            onShowHand={handleShowHand}
+          />
+        </div>
+        
+        {/* Sidebar - Colonna destra completa */}
+        <div className="col-span-3 row-span-12 flex flex-col">
           {/* Game Controls */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 p-2">
             <GameSidebar
               enemyLifePoints={enemyLifePoints}
               playerLifePoints={playerLifePoints}
@@ -123,8 +119,8 @@ const GameLayout = ({
             />
           </div>
           
-          {/* Action Log and Dice/Coin - No spacing */}
-          <div className="flex-1 grid grid-rows-2">
+          {/* Action Log and Dice/Coin */}
+          <div className="flex-1 grid grid-rows-2 p-2 gap-2">
             <ActionLog actions={actionLog} />
             <DiceAndCoin 
               onDiceRoll={handleDiceRoll}
