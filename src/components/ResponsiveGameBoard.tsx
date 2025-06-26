@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
@@ -17,7 +16,8 @@ const ResponsiveGameBoard = ({
   onCardPlace, 
   selectedCardFromHand, 
   onCardPreview, 
-  onCardMove, 
+  onCardMove,
+  onDeckMill,
   onDrawCard,
   setSelectedCardFromHand 
 }) => {
@@ -47,6 +47,12 @@ const ResponsiveGameBoard = ({
         break;
       case 'draw':
         if (!isEnemy) onDrawCard && onDrawCard();
+        break;
+      case 'mill':
+        if (!isEnemy) onDeckMill && onDeckMill(1);
+        break;
+      case 'mill3':
+        if (!isEnemy) onDeckMill && onDeckMill(3);
         break;
       case 'shuffle':
         console.log(`Shuffle ${zoneName} for ${isEnemy ? 'enemy' : 'player'}`);
@@ -78,6 +84,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="spellsTraps"
         />
       </div>
@@ -93,6 +100,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="monsters"
         />
       </div>
@@ -149,6 +157,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="monsters"
         />
       </div>
@@ -164,6 +173,7 @@ const ResponsiveGameBoard = ({
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
           onDrawCard={onDrawCard}
+          onDeckMill={onDeckMill}
           zoneType="spellsTraps"
         />
       </div>

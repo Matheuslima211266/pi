@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Star, BookOpen, Skull, Ban } from 'lucide-react';
 import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
@@ -16,6 +15,7 @@ const ResponsiveGameZones = ({
   onCardMove, 
   onCardPreview, 
   onDrawCard,
+  onDeckMill,
   zoneType 
 }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
@@ -67,20 +67,10 @@ const ResponsiveGameZones = ({
         onDrawCard && onDrawCard();
         break;
       case 'mill':
-        // Mill 1 carta dal deck al cimitero
-        if (field.deck && field.deck.length > 0) {
-          const cardToMill = field.deck[0];
-          onCardMove && onCardMove(cardToMill, 'deck', 'graveyard');
-        }
+        onDeckMill && onDeckMill(1);
         break;
       case 'mill3':
-        // Mill 3 carte dal deck al cimitero
-        if (field.deck && field.deck.length > 0) {
-          const cardsToMill = field.deck.slice(0, 3);
-          cardsToMill.forEach(card => {
-            onCardMove && onCardMove(card, 'deck', 'graveyard');
-          });
-        }
+        onDeckMill && onDeckMill(3);
         break;
       case 'shuffle':
         console.log(`Shuffle ${zoneName}`);
