@@ -23,8 +23,7 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
 
   console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones deadZone:', field?.deadZone);
-  console.log('ResponsiveGameZones selectedCardFromHand:', selectedCardFromHand);
+  console.log('ResponsiveGameZones deadZone:', field?.deadZone || field?.graveyard); // Support both names
 
   const {
     handleSlotClick,
@@ -58,13 +57,14 @@ const ResponsiveGameZones = ({
   });
 
   const handlePlacementChoiceWrapper = (choice) => {
-    console.log('PlacementChoiceWrapper called:', choice, placementMenu);
     handlePlacementChoice(choice, placementMenu);
   };
 
   // Enhanced zone click handler to support deadZone
   const enhancedHandleZoneClick = (zoneName, e) => {
-    handleZoneClick(zoneName, e);
+    // Convert graveyard to deadZone for consistency
+    const actualZoneName = zoneName === 'graveyard' ? 'deadZone' : zoneName;
+    handleZoneClick(actualZoneName, e);
   };
 
   return (
@@ -86,10 +86,7 @@ const ResponsiveGameZones = ({
       <PlacementMenu
         placementMenu={placementMenu}
         onPlacementChoice={handlePlacementChoiceWrapper}
-        onClose={() => {
-          console.log('Closing placement menu');
-          setPlacementMenu(null);
-        }}
+        onClose={() => setPlacementMenu(null)}
       />
 
       {/* Zone Action Menu */}

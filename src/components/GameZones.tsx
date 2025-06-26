@@ -56,12 +56,12 @@ const GameZones = ({ field, isEnemy, onCardClick, onCardPlace, selectedCardFromH
         )}
         
         <ZoneManager
-          cards={field.deadZone || []}
-          zoneName="deadZone"
+          cards={field.graveyard || []}
+          zoneName="graveyard"
           onCardMove={onCardMove}
           onCardPreview={onCardPreview}
-          isExpanded={expandedZone === 'deadZone'}
-          onToggleExpand={() => handleZoneToggle('deadZone')}
+          isExpanded={expandedZone === 'graveyard'}
+          onToggleExpand={() => handleZoneToggle('graveyard')}
           isCompact={true}
         />
         

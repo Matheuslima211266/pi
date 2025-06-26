@@ -22,7 +22,7 @@ const ZoneActionMenu = ({ zoneName, onAction, onClose, position }) => {
           { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> },
           { key: 'search', label: 'Cerca', icon: <Eye size={16} /> }
         ];
-      case 'deadZone':
+      case 'graveyard':
         return [
           { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> },
           { key: 'shuffle', label: 'Mescola nel Deck', icon: <Shuffle size={16} /> }

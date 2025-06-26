@@ -36,8 +36,7 @@ const ZoneSlotRenderer = ({
       const spellTrapCards = field.spellsTraps || [];
       for (let i = 0; i < 5; i++) {
         const card = spellTrapCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
-        const isHighlighted = !isEnemy && selectedCardFromHand && !card;
+        const isHighlighted = selectedCardFromHand && !card && !isEnemy;
         
         slots.push(
           <ResponsiveGameZoneSlot
@@ -88,8 +87,7 @@ const ZoneSlotRenderer = ({
       const monsterCards = field.monsters || [];
       for (let i = 0; i < 5; i++) {
         const card = monsterCards[i];
-        // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
-        const isHighlighted = !isEnemy && selectedCardFromHand && !card;
+        const isHighlighted = selectedCardFromHand && !card && !isEnemy;
         
         slots.push(
           <ResponsiveGameZoneSlot
@@ -122,8 +120,8 @@ const ZoneSlotRenderer = ({
         </div>
       );
     } else if (zoneType === 'deadZone') {
-      // Dead Zone
-      const deadZoneCards = field.deadZone || [];
+      // Dead Zone (sostituzione del cimitero) - Stile simile a Banished
+      const deadZoneCards = field.deadZone || field.graveyard || []; // Fallback per compatibilità
       slots.push(
         <div 
           key="dead-zone" 
@@ -138,8 +136,7 @@ const ZoneSlotRenderer = ({
     } else if (zoneType === 'fieldSpell') {
       // Field Spell zone
       const fieldCard = (field.fieldSpell || [])[0];
-      // Solo evidenzia se abbiamo una carta selezionata dalla mano e non siamo nemici
-      const isHighlighted = !isEnemy && selectedCardFromHand && !fieldCard;
+      const isHighlighted = selectedCardFromHand && !fieldCard && !isEnemy;
       
       slots.push(
         <ResponsiveGameZoneSlot
