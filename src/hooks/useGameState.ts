@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import sampleCardsData from '@/data/sampleCards.json';
 
@@ -10,29 +11,33 @@ export const useGameState = () => {
   const [playerHand, setPlayerHand] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
   const [enemyDeck, setEnemyDeck] = useState([]);
-  const [enemyHandCount, setEnemyHandCount] = useState(5); // Conteggio carte nemico
-  const [enemyRevealedCard, setEnemyRevealedCard] = useState(null); // Carta rivelata del nemico
-  const [enemyRevealedHand, setEnemyRevealedHand] = useState(null); // Mano rivelata del nemico
+  const [enemyHandCount, setEnemyHandCount] = useState(5);
+  const [enemyRevealedCard, setEnemyRevealedCard] = useState(null);
+  const [enemyRevealedHand, setEnemyRevealedHand] = useState(null);
+  
+  // Inizializzazione più robusta dei field con arrays vuoti garantiti
   const [playerField, setPlayerField] = useState({
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    graveyard: [],
+    graveyard: [], // Assicuriamoci che sia sempre un array
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
     deck: [],
   });
+  
   const [enemyField, setEnemyField] = useState({
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
     fieldSpell: [],
-    graveyard: [],
+    graveyard: [], // Assicuriamoci che sia sempre un array
     banished: [],
     banishedFaceDown: [],
     extraDeck: [],
     deck: [],
   });
+  
   const [previewCard, setPreviewCard] = useState(null);
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [currentPhase, setCurrentPhase] = useState('draw');
@@ -55,9 +60,76 @@ export const useGameState = () => {
     return shuffled;
   };
 
-  // Funzione per generare ID unici per le carte (corretta)
+  // Funzione per generare ID unici per le carte
   const generateUniqueCardId = (baseId: any, playerId: string, index: string | number = 0) => {
     return `${playerId}_${baseId}_${index}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  };
+
+  // Funzione helper per aggiungere carte al cimitero (per test)
+  const addCardToGraveyard = (card, isPlayer = true) => {
+    console.log('[useGameState] Adding card to graveyard:', card.name);
+    if (isPlayer) {
+      setPlayerField(prev => {
+        const newGraveyard = [...(prev.graveyard || []), card];
+        console.log('[useGameState] Player graveyard updated:', newGraveyard.map(c => c.name));
+        return {
+          ...prev,
+          graveyard: newGraveyard
+        };
+      });
+    } else {
+      setEnemyField(prev => {
+        const newGraveyard = [...(prev.graveyard || []), card];
+        console.log('[useGameState] Enemy graveyard updated:', newGraveyard.map(c => c.name));
+        return {
+          ...prev,
+          graveyard: newGraveyard
+        };
+      });
+    }
+  };
+
+  // Funzione per spostare carte tra zone
+  const moveCardBetweenZones = (card, fromZone, toZone, isPlayer = true) => {
+    console.log(`[useGameState] Moving card ${card.name} from ${fromZone} to ${toZone}`);
+    
+    const fieldSetter = isPlayer ? setPlayerField : setEnemyField;
+    const handSetter = isPlayer ? setPlayerHand : null;
+    
+    fieldSetter(prev => {
+      const newField = { ...prev };
+      
+      // Rimuovi dalla zona di origine
+      if (fromZone === 'hand' && isPlayer) {
+        // Gestione speciale per la mano
+        if (handSetter) {
+          setPlayerHand(currentHand => currentHand.filter(c => c.id !== card.id));
+        }
+      } else if (newField[fromZone]) {
+        if (Array.isArray(newField[fromZone])) {
+          newField[fromZone] = newField[fromZone].filter(c => c && c.id !== card.id);
+        } else {
+          // Per zone con slot (monsters, spellsTraps)
+          newField[fromZone] = newField[fromZone].map(c => c && c.id === card.id ? null : c);
+        }
+      }
+      
+      // Aggiungi alla zona di destinazione
+      if (toZone === 'hand' && isPlayer) {
+        // Gestione speciale per la mano
+        if (handSetter) {
+          setPlayerHand(currentHand => [...currentHand, card]);
+        }
+      } else if (newField[toZone]) {
+        if (Array.isArray(newField[toZone])) {
+          newField[toZone] = [...newField[toZone], card];
+        }
+        // Per zone con slot, dovremmo gestire il piazzamento in slot specifici
+      }
+      
+      console.log(`[useGameState] Updated ${toZone}:`, newField[toZone]);
+      return newField;
+    });
   };
 
   const initializeGame = () => {
@@ -69,14 +141,12 @@ export const useGameState = () => {
     // Genera un deck completo con ID unici per ogni copia
     const fullDeck = [];
     mainDeckCards.forEach((card, cardIndex) => {
-      // Crea esattamente 3 copie di ogni carta per un deck più completo
       for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
         const uniqueCard = {
           ...card,
           id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `${cardIndex}_copy${copyIndex}`)
         };
         fullDeck.push(uniqueCard);
-        console.log(`[useGameState] Added card copy:`, uniqueCard.name, 'with ID:', uniqueCard.id);
       }
     });
     
@@ -85,14 +155,11 @@ export const useGameState = () => {
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    console.log(`[useGameState] Created deck with ${fullDeck.length} cards total`);
-    console.log('[useGameState] Full deck cards:', fullDeck.map(c => `${c.name} (${c.id})`));
-
     const shuffledMainDeck = shuffleArray([...fullDeck]);
     const shuffledHand = shuffledMainDeck.slice(0, 5);
     const remainingDeck = shuffledMainDeck.slice(5);
 
-    // Crea anche un deck separato per il nemico con le stesse carte ma ID diversi
+    // Crea anche un deck separato per il nemico
     const enemyDeck = [];
     mainDeckCards.forEach((card, cardIndex) => {
       for (let copyIndex = 0; copyIndex < 3; copyIndex++) {
@@ -103,29 +170,75 @@ export const useGameState = () => {
       }
     });
 
-    console.log(`[useGameState] Initial hand:`, shuffledHand.map(c => `${c.name} (${c.id})`));
+    // Aggiungi alcune carte di test al cimitero per verificare il funzionamento
+    const testGraveyardCards = shuffledHand.slice(0, 2).map(card => ({
+      ...card,
+      id: generateUniqueCardId(card.id, 'graveyard_test', Date.now())
+    }));
+
+    console.log('[useGameState] Test graveyard cards:', testGraveyardCards.map(c => c.name));
 
     setPlayerDeck(remainingDeck);
     setEnemyDeck(shuffleArray(enemyDeck).slice(0, 35));
     setPlayerHand(shuffledHand);
+    
     setPlayerField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: remainingDeck,
-      graveyard: [],
+      graveyard: testGraveyardCards, // Aggiungi carte di test
       banished: [],
       banishedFaceDown: []
     }));
+    
     setEnemyField(prev => ({ 
       ...prev, 
       extraDeck: uniqueExtraDeckCards,
       deck: shuffleArray([...enemyDeck]).slice(0, 35),
-      graveyard: [],
+      graveyard: [testGraveyardCards[0]], // Aggiungi una carta di test anche al nemico
       banished: [],
       banishedFaceDown: []
     }));
 
-    console.log('[useGameState] Game initialized successfully');
+    console.log('[useGameState] Game initialized successfully with test graveyard cards');
+  };
+
+  // Funzione per il mill (spostare carte dal deck al cimitero)
+  const millCards = (count = 1, isPlayer = true) => {
+    console.log(`[useGameState] Milling ${count} cards for ${isPlayer ? 'player' : 'enemy'}`);
+    
+    if (isPlayer) {
+      setPlayerField(prev => {
+        const cardsToMill = prev.deck.slice(0, count);
+        const remainingDeck = prev.deck.slice(count);
+        const newGraveyard = [...(prev.graveyard || []), ...cardsToMill];
+        
+        console.log('[useGameState] Cards milled to player graveyard:', cardsToMill.map(c => c.name));
+        console.log('[useGameState] New player graveyard size:', newGraveyard.length);
+        
+        return {
+          ...prev,
+          deck: remainingDeck,
+          graveyard: newGraveyard
+        };
+      });
+      
+      setPlayerDeck(prev => prev.slice(count));
+    } else {
+      setEnemyField(prev => {
+        const cardsToMill = prev.deck.slice(0, count);
+        const remainingDeck = prev.deck.slice(count);
+        const newGraveyard = [...(prev.graveyard || []), ...cardsToMill];
+        
+        return {
+          ...prev,
+          deck: remainingDeck,
+          graveyard: newGraveyard
+        };
+      });
+      
+      setEnemyDeck(prev => prev.slice(count));
+    }
   };
 
   return {
@@ -157,6 +270,9 @@ export const useGameState = () => {
     // Functions
     shuffleArray,
     initializeGame,
-    generateUniqueCardId
+    generateUniqueCardId,
+    addCardToGraveyard,
+    moveCardBetweenZones,
+    millCards
   };
 };
