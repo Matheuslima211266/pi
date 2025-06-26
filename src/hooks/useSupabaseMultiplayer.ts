@@ -25,6 +25,7 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
 
   console.log('=== SUPABASE MULTIPLAYER HOOK ===', {
     hasUser: !!user,
+    userId: user?.id,
     currentSession: !!currentSession,
     sessionId: currentSession?.id,
     gameId: currentSession?.game_id,
@@ -83,41 +84,64 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
   }, [user]);
 
-  // Join game session (for guest)
+  // Join game session (for guest) - FIXED VERSION
   const joinGameSession = useCallback(async (gameId: string, playerName: string) => {
     if (!user) {
       console.error('No user for joinGameSession');
+      setError('User not authenticated');
       return null;
     }
 
     try {
-      console.log('=== GUEST JOINING GAME ===', { gameId, playerName, userId: user.id });
+      console.log('=== GUEST ATTEMPTING TO JOIN ===', { 
+        gameId, 
+        playerName, 
+        userId: user.id 
+      });
       
-      // First, find the game session
+      // First, find the game session with more detailed logging
+      console.log('Searching for game session with game_id:', gameId);
+      
       const { data: existingSession, error: fetchError } = await supabase
         .from('game_sessions')
         .select('*')
-        .eq('game_id', gameId)
-        .in('status', ['waiting', 'active'])
-        .maybeSingle();
+        .eq('game_id', gameId.toUpperCase()) // Ensure uppercase
+        .single();
+
+      console.log('Database search result:', {
+        data: existingSession,
+        error: fetchError
+      });
 
       if (fetchError) {
         console.error('Error fetching game session:', fetchError);
-        setError('Failed to find game session');
+        if (fetchError.code === 'PGRST116') {
+          setError('Game ID not found. Please check the ID and try again.');
+        } else {
+          setError('Failed to find game session');
+        }
         return null;
       }
 
       if (!existingSession) {
         console.error('No session found for game ID:', gameId);
-        setError('Game not found or expired');
+        setError('Game not found');
         return null;
       }
 
       console.log('Found existing session:', existingSession);
 
+      // Check if game is full
       if (existingSession.guest_id && existingSession.guest_id !== user.id) {
         console.error('Game is already full');
         setError('Game is already full');
+        return null;
+      }
+
+      // Check if user is trying to join their own game
+      if (existingSession.host_id === user.id) {
+        console.error('Cannot join your own game');
+        setError('Cannot join your own game');
         return null;
       }
 
@@ -131,7 +155,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       }
 
       // Join the game by updating the session
-      console.log('Joining game session:', existingSession.id);
+      console.log('Updating session to add guest:', existingSession.id);
+      
       const { data: updatedSession, error: updateError } = await supabase
         .from('game_sessions')
         .update({
@@ -142,6 +167,11 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
         .eq('id', existingSession.id)
         .select()
         .single();
+
+      console.log('Update result:', {
+        data: updatedSession,
+        error: updateError
+      });
 
       if (updateError) {
         console.error('Error joining game session:', updateError);
@@ -154,13 +184,19 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
       setCurrentSession(gameSession);
       setError(null);
       
+      // Show success toast
+      toast({
+        title: "Successfully joined game!",
+        description: `Joined game ${gameId}`,
+      });
+      
       return gameSession;
     } catch (err) {
       console.error('Error in joinGameSession:', err);
       setError('Failed to join game session');
       return null;
     }
-  }, [user]);
+  }, [user, toast]);
 
   // Update player ready status
   const setPlayerReady = useCallback(async (isReady: boolean) => {
@@ -307,8 +343,8 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
           // Show toast when opponent joins or gets ready
           if (isHost && updatedSession.guest_id && updatedSession.guest_name && !currentSession.guest_id) {
             toast({
-              title: "Avversario connesso!",
-              description: `${updatedSession.guest_name} si è unito alla partita`,
+              title: "Opponent connected!",
+              description: `${updatedSession.guest_name} joined the game`,
             });
           }
         }
