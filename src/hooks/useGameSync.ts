@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -88,11 +87,11 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
       case 'LIFE_POINTS_CHANGED':
         console.log('[GAME_SYNC] Applying LIFE_POINTS_CHANGED', action_data);
-        if (action_data.isPlayer) {
-          // L'avversario ha cambiato i suoi LP (che per noi sono enemyLifePoints)
-          gameState.setEnemyLifePoints(action_data.newLifePoints);
-          console.log('[GAME_SYNC] Enemy life points updated to:', action_data.newLifePoints);
-        }
+        // L'avversario ha cambiato i suoi punti vita
+        // Se isPlayer è true nell'action_data, significa che l'avversario ha cambiato i suoi punti
+        // Per noi, i punti dell'avversario sono enemyLifePoints
+        gameState.setEnemyLifePoints(action_data.newLifePoints);
+        console.log('[GAME_SYNC] Enemy life points updated to:', action_data.newLifePoints);
         break;
 
       case 'CHAT_MESSAGE':

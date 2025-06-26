@@ -53,10 +53,10 @@ const Index = () => {
     },
     handleLifePointsChange: (newLifePoints: number, isPlayer: boolean = true) => {
       handlers.handleLifePointsChange(newLifePoints, isPlayer);
-      // Sync life points change
+      // Sync life points change - SEMPRE invia isPlayer: true perché è sempre il proprio giocatore che cambia i suoi punti
       gameSync.sendGameAction('LIFE_POINTS_CHANGED', {
         newLifePoints,
-        isPlayer
+        isPlayer: true // Sempre true perché questo giocatore sta cambiando i suoi punti
       });
     },
     handlePhaseChange: (newPhase: string) => {
