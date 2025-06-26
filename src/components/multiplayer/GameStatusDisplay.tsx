@@ -19,11 +19,10 @@ const GameStatusDisplay = ({
   linkCopied, 
   onCopyGameLink 
 }: GameStatusDisplayProps) => {
-  // DEBUG: Aggiungi console.log per vedere i valori
-  console.log('GameStatusDisplay props:', { gameId, isHost, gameSessionCreated, linkCopied });
+  
+  console.log('GameStatusDisplay render:', { gameId, isHost, gameSessionCreated, linkCopied });
   
   if (!gameId) {
-    console.log('No gameId, returning null');
     return null;
   }
 
@@ -36,13 +35,13 @@ const GameStatusDisplay = ({
         <p className="text-xs text-gray-400 mt-1">Game ID</p>
       </div>
       
-      {/* Mostra il link per l'host quando il gioco è creato */}
+      {/* Show link and success message for host when game session is created */}
       {isHost && gameSessionCreated && (
         <div className="space-y-2">
           <Button
             onClick={onCopyGameLink}
             variant="outline"
-            className="w-full border-gold-400 text-gold-400"
+            className="w-full border-gold-400 text-gold-400 hover:bg-gold-400 hover:text-black"
           >
             {linkCopied ? <Check className="w-4 h-4 mr-2" /> : <Link className="w-4 h-4 mr-2" />}
             {linkCopied ? 'Link Copied!' : 'Copy Game Link'}
@@ -62,7 +61,7 @@ const GameStatusDisplay = ({
         </div>
       )}
 
-      {/* Mostra status per i guest */}
+      {/* Show joining status for guests */}
       {!isHost && gameId && (
         <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
           <p className="text-blue-400 font-semibold">Joining game...</p>

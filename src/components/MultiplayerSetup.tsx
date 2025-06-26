@@ -26,23 +26,16 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
   const [gameSessionCreated, setGameSessionCreated] = useState(false);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
 
+  // Check URL for game parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const gameFromUrl = urlParams.get('game');
     if (gameFromUrl) {
       setGameId(gameFromUrl);
-      setIsHost(false); // Se arriva da URL, non è l'host
+      setIsHost(false); // If from URL, user is joining as guest
+      console.log('Game ID from URL:', gameFromUrl);
     }
   }, []);
-
-  useEffect(() => {
-    if (gameState?.gameStarted && !gameState?.bothPlayersReady) {
-      const bothReady = gameState?.playerReady && gameState?.opponentReady;
-      if (bothReady && !gameState?.bothPlayersReady) {
-        gameState?.setBothPlayersReady(true);
-      }
-    }
-  }, [gameState?.playerReady, gameState?.opponentReady, gameState?.bothPlayersReady, gameState?.gameStarted, gameState]);
 
   const createGame = async () => {
     if (!playerName.trim()) {
@@ -57,38 +50,31 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
 
     setIsCreatingGame(true);
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    setGameId(newGameId);
-    setIsHost(true);
     
     try {
-      console.log('Creating game session for:', newGameId);
+      console.log('Creating game with ID:', newGameId);
+      
       const gameData = {
         gameId: newGameId,
-        playerName: playerName,
+        playerName: playerName.trim(),
         isHost: true,
         deckLoaded: true
       };
       
       const success = await onGameStart(gameData);
-      console.log('onGameStart result:', success);
+      console.log('Game creation result:', success);
       
       if (success) {
+        setGameId(newGameId);
+        setIsHost(true);
         setGameSessionCreated(true);
-        console.log('Game session created successfully, showing link...', { 
-          gameId: newGameId, 
-          isHost: true, 
-          gameSessionCreated: true 
-        });
+        console.log('Game created successfully, showing link...');
       } else {
         alert('Failed to create game session. Please try again.');
-        setGameId('');
-        setIsHost(false);
       }
     } catch (error) {
       console.error('Error creating game:', error);
       alert('Failed to create game session. Please try again.');
-      setGameId('');
-      setIsHost(false);
     } finally {
       setIsCreatingGame(false);
     }
@@ -111,6 +97,7 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     }
 
     console.log('Attempting to join game:', gameId);
+    
     try {
       const success = await onGameStart({ 
         gameId: gameId.trim().toUpperCase(),
@@ -163,14 +150,22 @@ const MultiplayerSetup = ({ onGameStart, onDeckLoad, onPlayerReady, gameState }:
     window.location.reload();
   };
 
-  // CORREZIONE: Mostra il waiting screen SOLO quando entrambi i giocatori sono connessi
-  // ma non ancora entrambi pronti per iniziare
-  if (gameState?.gameStarted && gameState?.opponentConnected && !gameState?.bothPlayersReady) {
+  // Show waiting screen when:
+  // 1. Game is started AND
+  // 2. We have a current session (opponent connected) AND  
+  // 3. Not both players ready yet
+  if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
+    console.log('Showing waiting screen', {
+      gameStarted: gameState.gameStarted,
+      currentSession: !!gameState.currentSession,
+      bothPlayersReady: gameState.bothPlayersReady
+    });
+    
     return (
       <WaitingForPlayersScreen
-        gameData={gameState?.gameData}
-        playerReady={gameState?.playerReady}
-        opponentReady={gameState?.opponentReady}
+        gameData={gameState.gameData}
+        playerReady={gameState.playerReady}
+        opponentReady={gameState.opponentReady}
         onPlayerReady={onPlayerReady}
         onSignOut={handleSignOut}
       />

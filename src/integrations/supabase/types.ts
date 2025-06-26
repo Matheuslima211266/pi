@@ -85,8 +85,10 @@ export type Database = {
           game_id: string
           guest_id: string | null
           guest_name: string | null
+          guest_ready: boolean | null
           host_id: string | null
           host_name: string
+          host_ready: boolean | null
           id: string
           status: string
           updated_at: string
@@ -96,8 +98,10 @@ export type Database = {
           game_id: string
           guest_id?: string | null
           guest_name?: string | null
+          guest_ready?: boolean | null
           host_id?: string | null
           host_name: string
+          host_ready?: boolean | null
           id?: string
           status?: string
           updated_at?: string
@@ -107,8 +111,10 @@ export type Database = {
           game_id?: string
           guest_id?: string | null
           guest_name?: string | null
+          guest_ready?: boolean | null
           host_id?: string | null
           host_name?: string
+          host_ready?: boolean | null
           id?: string
           status?: string
           updated_at?: string
