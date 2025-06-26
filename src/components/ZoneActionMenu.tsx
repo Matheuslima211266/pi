@@ -9,28 +9,37 @@ const ZoneActionMenu = ({ zoneName, onAction, onClose, position }) => {
     switch (zoneName) {
       case 'deck':
         return [
-          { key: 'draw', label: 'Draw Card', icon: <ArrowUp size={16} /> },
-          { key: 'mill', label: 'Mill 1 Card', icon: <Skull size={16} /> },
-          { key: 'mill3', label: 'Mill 3 Cards', icon: <Skull size={16} /> },
-          { key: 'shuffle', label: 'Shuffle Deck', icon: <Shuffle size={16} /> },
-          { key: 'view', label: 'View Deck', icon: <Eye size={16} /> }
-        ];
-      case 'graveyard':
-        return [
-          { key: 'view', label: 'View Graveyard', icon: <Eye size={16} /> },
-          { key: 'shuffle', label: 'Shuffle into Deck', icon: <Shuffle size={16} /> }
-        ];
-      case 'banished':
-        return [
-          { key: 'view', label: 'View Banished', icon: <Eye size={16} /> }
+          { key: 'draw', label: 'Pesca 1', icon: <ArrowUp size={16} /> },
+          { key: 'mill', label: 'Mill 1', icon: <Skull size={16} /> },
+          { key: 'mill3', label: 'Mill 3', icon: <Skull size={16} /> },
+          { key: 'mill5', label: 'Mill 5', icon: <Skull size={16} /> },
+          { key: 'shuffle', label: 'Mescola', icon: <Shuffle size={16} /> },
+          { key: 'search', label: 'Cerca', icon: <Eye size={16} /> },
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> }
         ];
       case 'extraDeck':
         return [
-          { key: 'view', label: 'View Extra Deck', icon: <Eye size={16} /> },
-          { key: 'shuffle', label: 'Shuffle Extra Deck', icon: <Shuffle size={16} /> }
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> },
+          { key: 'search', label: 'Cerca', icon: <Eye size={16} /> }
+        ];
+      case 'graveyard':
+        return [
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> },
+          { key: 'shuffle', label: 'Mescola nel Deck', icon: <Shuffle size={16} /> }
+        ];
+      case 'banished':
+      case 'banishedFaceDown':
+        return [
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> }
+        ];
+      case 'fieldSpell':
+        return [
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> }
         ];
       default:
-        return [];
+        return [
+          { key: 'view', label: 'Visualizza', icon: <Eye size={16} /> }
+        ];
     }
   };
 
