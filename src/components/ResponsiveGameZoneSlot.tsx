@@ -74,7 +74,7 @@ const ResponsiveGameZoneSlot = ({
               </button>
               <button
                 onClick={(e) => {
-                  e.stopPropragation();
+                  e.stopPropagation();
                   handleCardAction('banish');
                 }}
                 className="text-purple-400 text-xs hover:text-purple-300 block"
