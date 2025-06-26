@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PlacementMenu from './PlacementMenu';
 import ZoneActionMenu from './ZoneActionMenu';
@@ -23,7 +22,7 @@ const ResponsiveGameZones = ({
   const [placementMenu, setPlacementMenu] = useState(null);
 
   console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones selectedCardFromHand:', selectedCardFromHand);
+  console.log('ResponsiveGameZones graveyard:', field?.graveyard);
 
   const {
     handleSlotClick,
@@ -57,12 +56,7 @@ const ResponsiveGameZones = ({
   });
 
   const handlePlacementChoiceWrapper = (choice) => {
-    console.log('PlacementChoiceWrapper called:', choice, placementMenu);
     handlePlacementChoice(choice, placementMenu);
-  };
-
-  const enhancedHandleZoneClick = (zoneName, e) => {
-    handleZoneClick(zoneName, e);
   };
 
   return (
@@ -77,17 +71,14 @@ const ResponsiveGameZones = ({
         handleFieldCardAction={handleFieldCardAction}
         handleCardClick={handleCardClick}
         isEffectActivated={isEffectActivated}
-        handleZoneClick={enhancedHandleZoneClick}
+        handleZoneClick={handleZoneClick}
       />
 
       {/* Menu di piazzamento */}
       <PlacementMenu
         placementMenu={placementMenu}
         onPlacementChoice={handlePlacementChoiceWrapper}
-        onClose={() => {
-          console.log('Closing placement menu');
-          setPlacementMenu(null);
-        }}
+        onClose={() => setPlacementMenu(null)}
       />
 
       {/* Zone Action Menu */}

@@ -20,54 +20,44 @@ const GameSidebar = ({
   onSendMessage
 }) => {
   return (
-    <div className="w-full space-y-1 bg-slate-900/95 p-2 rounded-lg border border-slate-700">
+    <div className="w-full space-y-1">
       {/* Enemy Life Points - Ultra compressed */}
-      <div className="bg-slate-800/95 p-1 rounded border border-slate-600">
-        <LifePointsControl 
-          playerName="Avversario"
-          lifePoints={enemyLifePoints}
-          onLifePointsChange={(amount) => onLifePointsChange(amount, true)}
-          color="red"
-        />
-      </div>
+      <LifePointsControl 
+        playerName="Avversario"
+        lifePoints={enemyLifePoints}
+        onLifePointsChange={(amount) => onLifePointsChange(amount, true)}
+        color="red"
+      />
       
       {/* Game Phases - Ultra compressed */}
-      <div className="bg-slate-800/95 p-1 rounded border border-slate-600">
-        <GamePhases 
-          currentPhase={currentPhase}
-          onPhaseChange={onPhaseChange}
-          onEndTurn={onEndTurn}
-          isPlayerTurn={isPlayerTurn}
-        />
-      </div>
+      <GamePhases 
+        currentPhase={currentPhase}
+        onPhaseChange={onPhaseChange}
+        onEndTurn={onEndTurn}
+        isPlayerTurn={isPlayerTurn}
+      />
       
       {/* Player Life Points - Ultra compressed */}
-      <div className="bg-slate-800/95 p-1 rounded border border-slate-600">
-        <LifePointsControl 
-          playerName="Giocatore"
-          lifePoints={playerLifePoints}
-          onLifePointsChange={(amount) => onLifePointsChange(amount, false)}
-          color="blue"
-        />
-      </div>
+      <LifePointsControl 
+        playerName="Giocatore"
+        lifePoints={playerLifePoints}
+        onLifePointsChange={(amount) => onLifePointsChange(amount, false)}
+        color="blue"
+      />
       
       {/* Timer - Ultra compressed */}
-      <div className="bg-slate-800/95 p-1 rounded border border-slate-600">
-        <TurnTimer 
-          isActive={isPlayerTurn}
-          onTimeUp={onTimeUp}
-          timeRemaining={timeRemaining}
-          onTimeChange={onTimeChange}
-        />
-      </div>
+      <TurnTimer 
+        isActive={isPlayerTurn}
+        onTimeUp={onTimeUp}
+        timeRemaining={timeRemaining}
+        onTimeChange={onTimeChange}
+      />
       
       {/* Chat - Ultra compressed */}
-      <div className="bg-slate-800/95 p-1 rounded border border-slate-600">
-        <ChatBox 
-          messages={chatMessages}
-          onSendMessage={onSendMessage}
-        />
-      </div>
+      <ChatBox 
+        messages={chatMessages}
+        onSendMessage={onSendMessage}
+      />
     </div>
   );
 };

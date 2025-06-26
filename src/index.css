@@ -179,15 +179,14 @@
 /* ==== ZONA AVVERSARIO (TOP) ==== */
 .opponent-zone {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: clamp(0.25rem, 0.8vw, 0.5rem);
   width: 100%;
-  max-width: min(90vw, 800px);
+  max-width: min(95vw, 900px);
   transform: rotate(180deg);
-  justify-items: center;
 }
 
-/* ==== ZONA CENTRALE (FIELD SPELLS) ==== */
+/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS + GRAVEYARDS) ==== */
 .center-zone {
   display: flex;
   justify-content: center;
@@ -228,11 +227,10 @@
 /* ==== ZONA GIOCATORE (BOTTOM) ==== */
 .player-zone {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: clamp(0.25rem, 0.8vw, 0.5rem);
   width: 100%;
-  max-width: min(90vw, 800px);
-  justify-items: center;
+  max-width: min(95vw, 900px);
 }
 
 /* ==== ZONE MANI ==== */

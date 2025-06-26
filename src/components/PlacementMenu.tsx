@@ -18,9 +18,9 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           { key: 'activate', label: 'Activate Now', icon: '⚡' },
           { key: 'set', label: 'Set Face-down', icon: '🔒' }
         ];
-      case 'deadZone':
+      case 'graveyard':
         return [
-          { key: 'send', label: 'Send to Dead Zone', icon: '💀' }
+          { key: 'send', label: 'Send to Graveyard', icon: '💀' }
         ];
       case 'banished':
         return [
@@ -50,33 +50,25 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     }
   };
 
-  // Calcola la posizione del menu vicino al cursore
-  const menuStyle: React.CSSProperties = {
-    position: 'fixed' as const,
-    left: Math.max(10, Math.min(placementMenu.x - 100, window.innerWidth - 220)),
-    top: Math.max(10, Math.min(placementMenu.y - 50, window.innerHeight - 200)),
-    zIndex: 1000
-  };
-
   return (
     <>
       <div 
-        className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-2xl min-w-48 max-w-64"
-        style={menuStyle}
+        className="fixed bg-gray-800 border border-gray-600 rounded-lg p-1 shadow-lg z-50 min-w-32"
+        style={{ left: placementMenu.x, top: placementMenu.y }}
       >
-        <div className="text-sm font-semibold mb-3 text-gray-300 border-b border-gray-600 pb-2">
-          Place: {placementMenu.card?.name}
+        <div className="text-xs font-semibold mb-1 text-gray-300">
+          {placementMenu.card?.name}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-0.5">
           {getMenuOptions(placementMenu.zoneName).map((option) => (
             <Button 
               key={option.key}
               size="sm" 
               onClick={() => onPlacementChoice(option.key)}
-              className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500"
+              className="w-full text-left justify-start text-xs h-5"
               variant="ghost"
             >
-              <span className="mr-2">{option.icon}</span>
+              <span className="mr-1">{option.icon}</span>
               {option.label}
             </Button>
           ))}
@@ -85,15 +77,14 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
           size="sm" 
           variant="outline"
           onClick={onClose}
-          className="w-full mt-3 text-sm h-8 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+          className="w-full mt-1 text-xs h-5"
         >
           Cancel
         </Button>
       </div>
       <div 
-        className="fixed inset-0 z-50"
+        className="fixed inset-0 z-40"
         onClick={onClose}
-        style={{ zIndex: 999 }}
       />
     </>
   );
