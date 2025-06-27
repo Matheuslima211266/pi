@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -30,9 +31,9 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     }
 
     try {
-      console.log('[GAME_SYNC] Sending action', { actionType, actionData });
+      console.log('[GAME_SYNC] Sending action', { actionType, actionData, gameSessionId, playerId: user.id });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('game_actions_realtime')
         .insert({
           game_session_id: gameSessionId,
@@ -40,12 +41,14 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           player_name: gameState.gameData?.playerName || 'Player',
           action_type: actionType,
           action_data: actionData
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('[GAME_SYNC] Error sending action', error);
       } else {
-        console.log('[GAME_SYNC] Action sent successfully');
+        console.log('[GAME_SYNC] Action sent successfully', data);
       }
     } catch (err) {
       console.error('[GAME_SYNC] Exception sending action', err);
@@ -75,16 +78,23 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
 
     switch (action_type) {
       case 'CARD_PLACED':
-        console.log('[GAME_SYNC] Applying CARD_PLACED', action_data);
+        console.log('[GAME_SYNC] Applying CARD_PLACED to enemy field', action_data);
         gameState.setEnemyField((prev: any) => {
           const newField = { ...prev };
           
           if (action_data.zoneName === 'monsters') {
             newField.monsters = [...prev.monsters];
-            newField.monsters[action_data.slotIndex] = action_data.card;
+            newField.monsters[action_data.slotIndex] = {
+              ...action_data.card,
+              position: action_data.position || 'attack',
+              isFaceDown: action_data.isFaceDown || false
+            };
           } else if (action_data.zoneName === 'spellsTraps') {
             newField.spellsTraps = [...prev.spellsTraps];
-            newField.spellsTraps[action_data.slotIndex] = action_data.card;
+            newField.spellsTraps[action_data.slotIndex] = {
+              ...action_data.card,
+              isFaceDown: action_data.isFaceDown || false
+            };
           } else if (action_data.zoneName === 'fieldSpell') {
             newField.fieldSpell = [action_data.card];
           }
@@ -92,12 +102,14 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           console.log('[GAME_SYNC] Enemy field updated:', newField);
           return newField;
         });
+        
+        // Aggiorna il conteggio delle carte in mano dell'avversario
+        gameState.setEnemyHandCount((prev: number) => Math.max(0, prev - 1));
         break;
 
       case 'LIFE_POINTS_CHANGED':
         console.log('[GAME_SYNC] Applying LIFE_POINTS_CHANGED', action_data);
         gameState.setEnemyLifePoints(action_data.newLifePoints);
-        console.log('[GAME_SYNC] Enemy life points updated to:', action_data.newLifePoints);
         break;
 
       case 'CHAT_MESSAGE':
@@ -112,23 +124,16 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
       case 'PHASE_CHANGED':
         console.log('[GAME_SYNC] Applying PHASE_CHANGED', action_data);
         gameState.setCurrentPhase(action_data.phase);
-        // IMPORTANTE: Cambia il turno quando cambia la fase
-        gameState.setIsPlayerTurn(action_data.phase === 'draw' ? true : false);
         break;
 
       case 'TURN_ENDED':
-        console.log('[GAME_SYNC] Applying TURN_ENDED', action_data);
-        // Quando l'avversario finisce il turno, diventa il nostro turno
+        console.log('[GAME_SYNC] Applying TURN_ENDED - switching to our turn', action_data);
         gameState.setIsPlayerTurn(true);
         gameState.setCurrentPhase('draw');
         break;
 
       case 'CARD_DRAWN':
         console.log('[GAME_SYNC] Applying CARD_DRAWN', action_data);
-        gameState.setEnemyField((prev: any) => ({
-          ...prev,
-          deck: prev.deck.slice(1)
-        }));
         gameState.setEnemyHandCount((prev: number) => prev + 1);
         break;
 
@@ -138,6 +143,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           const newField = { ...prev };
           const { card, fromZone, toZone, slotIndex } = action_data;
           
+          // Remove from source zone
           if (fromZone === 'monsters') {
             newField.monsters = [...prev.monsters];
             const sourceIndex = prev.monsters.findIndex((m: any) => m && m.id === card.id);
@@ -148,10 +154,17 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
             if (sourceIndex !== -1) newField.spellsTraps[sourceIndex] = null;
           }
           
+          // Add to destination zone
           if (toZone === 'graveyard') {
             newField.graveyard = [...prev.graveyard, card];
           } else if (toZone === 'banished') {
             newField.banished = [...prev.banished, card];
+          } else if (toZone === 'monsters' && slotIndex !== undefined) {
+            newField.monsters = [...(newField.monsters || prev.monsters)];
+            newField.monsters[slotIndex] = card;
+          } else if (toZone === 'spellsTraps' && slotIndex !== undefined) {
+            newField.spellsTraps = [...(newField.spellsTraps || prev.spellsTraps)];
+            newField.spellsTraps[slotIndex] = card;
           }
           
           return newField;
@@ -208,7 +221,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     }
   };
 
-  // Sincronizza lo stato completo (versione semplificata)
+  // Sincronizza lo stato completo
   const syncCompleteGameState = useCallback(async () => {
     if (!user || !gameSessionId) return;
 
@@ -242,7 +255,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     }
   }, [user, gameSessionId, gameState]);
 
-  // Ascolta le azioni in tempo reale
+  // Ascolta le azioni in tempo reale con miglior gestione degli errori
   useEffect(() => {
     if (!gameSessionId || !user) return;
 
@@ -262,14 +275,29 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
           console.log('[GAME_SYNC] Received real-time action', payload.new);
           const action = payload.new as GameAction;
           
-          if (action.id !== lastProcessedAction) {
+          // Evita di processare la stessa azione più volte
+          if (action.id !== lastProcessedAction && action.player_id !== user.id) {
+            console.log('[GAME_SYNC] Processing new action from opponent', action.id);
             applyReceivedAction(action);
             setLastProcessedAction(action.id);
+          } else {
+            console.log('[GAME_SYNC] Skipping action - either already processed or own action', {
+              actionId: action.id,
+              lastProcessed: lastProcessedAction,
+              isOwnAction: action.player_id === user.id
+            });
           }
         }
       )
       .subscribe((status) => {
         console.log('[GAME_SYNC] Action listener subscription status', status);
+        if (status === 'SUBSCRIPTION_ERROR') {
+          console.error('[GAME_SYNC] Subscription error, attempting to reconnect...');
+          setTimeout(() => {
+            channel.unsubscribe();
+            // Riconnessione automatica
+          }, 5000);
+        }
       });
 
     return () => {
