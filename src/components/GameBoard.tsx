@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import GameZones from './GameZones';
 
-const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCardFromHand, onCardPreview, onCardMove, onDrawCard }) => {
+const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCardFromHand, onCardPreview, onCardMove, onDrawCard, onDeckMill }) => {
   return (
     <div className="h-full overflow-auto">
       <Card className="bg-slate-800/50 border border-slate-600 min-h-full">
@@ -11,13 +11,11 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
           {/* Campo avversario - Compressed */}
           <div className="min-h-[45vh] transform rotate-180 overflow-auto">
             <GameZones 
-              field={enemyField}
-              isEnemy={true}
-              onCardClick={onCardPreview}
-              onCardPlace={onCardPlace}
-              selectedCardFromHand={null}
-              onCardMove={onCardMove}
+              playerField={enemyField}
+              enemyField={playerField}
               onCardPreview={onCardPreview}
+              onCardMove={onCardMove}
+              onDeckMill={onDeckMill}
               onDrawCard={onDrawCard}
             />
           </div>
@@ -32,13 +30,11 @@ const GameBoard = ({ playerField, enemyField, onAttack, onCardPlace, selectedCar
           {/* Campo giocatore - Compressed */}
           <div className="min-h-[45vh] overflow-auto">
             <GameZones 
-              field={playerField}
-              isEnemy={false}
-              onCardClick={onCardPreview}
-              onCardPlace={onCardPlace}
-              selectedCardFromHand={selectedCardFromHand}
-              onCardMove={onCardMove}
+              playerField={playerField}
+              enemyField={enemyField}
               onCardPreview={onCardPreview}
+              onCardMove={onCardMove}
+              onDeckMill={onDeckMill}
               onDrawCard={onDrawCard}
             />
           </div>
