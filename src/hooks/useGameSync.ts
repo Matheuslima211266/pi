@@ -29,7 +29,8 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
           player_id: user.id,
           player_name: gameState.gameData?.playerName || 'Player',
           action_type: actionType,
-          action_data: actionData
+          action_data: actionData,
+          created_at: new Date().toISOString()
         });
 
       if (error) {
@@ -94,6 +95,17 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         if (gameState.setEnemyField) {
           gameState.setEnemyField((prev: any) => {
             const newField = { ...prev };
+            
+            // Preserve private data
+            const privateData = {
+              deck: prev.deck,
+              extraDeck: prev.extraDeck,
+              deadZone: prev.deadZone,
+              banished: prev.banished,
+              banishedFaceDown: prev.banishedFaceDown
+            };
+            
+            // Update only public zones
             if (newField[action_data.zoneName]) {
               newField[action_data.zoneName] = [...newField[action_data.zoneName]];
               newField[action_data.zoneName][action_data.slotIndex] = {
@@ -102,7 +114,9 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
                 isFaceDown: action_data.isFaceDown || false
               };
             }
-            return newField;
+            
+            // Merge private data back
+            return { ...newField, ...privateData };
           });
         }
         break;
@@ -141,7 +155,36 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         break;
 
       case 'CARD_MOVED':
-        // Handle card movement between zones
+        // Handle card movement between zones with private data preservation
+        if (gameState.setEnemyField) {
+          gameState.setEnemyField((prev: any) => {
+            const newField = { ...prev };
+            
+            // Preserve private data
+            const privateData = {
+              deck: prev.deck,
+              extraDeck: prev.extraDeck,
+              deadZone: prev.deadZone,
+              banished: prev.banished,
+              banishedFaceDown: prev.banishedFaceDown
+            };
+            
+            // Handle public zone moves only
+            if (action_data.toZone === 'monsters' || action_data.toZone === 'spellsTraps' || action_data.toZone === 'fieldSpell') {
+              // Update public zones
+              if (newField[action_data.toZone]) {
+                newField[action_data.toZone] = [...newField[action_data.toZone]];
+                if (action_data.slotIndex !== undefined) {
+                  newField[action_data.toZone][action_data.slotIndex] = action_data.card;
+                } else {
+                  newField[action_data.toZone].push(action_data.card);
+                }
+              }
+            }
+            
+            return { ...newField, ...privateData };
+          });
+        }
         break;
 
       case 'SHOW_CARD':
@@ -175,6 +218,14 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
     }
 
     lastProcessedActionRef.current = action.id;
+    
+    // Debug logging
+    console.log('🔄 Multiplayer sync completed:', {
+      actionType: action_type,
+      playerDeckSize: gameState.playerField?.deck?.length || 0,
+      enemyDeckSize: gameState.enemyField?.deck?.length || 0,
+      areDecksIndependent: gameState.playerField?.deck?.[0]?.id !== gameState.enemyField?.deck?.[0]?.id
+    });
   }, [user, gameState]);
 
   useEffect(() => {
@@ -188,7 +239,6 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
     const cleanupChannel = () => {
       if (channelRef.current) {
         console.log('[GAME_SYNC] Cleaning up action listener');
-        console.log('[GAME_SYNC] Action listener subscription status', channelRef.current.state);
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }

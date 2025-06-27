@@ -1,19 +1,30 @@
 
 import * as React from "react"
 
-// Sempre considera come mobile per il layout uniforme
-const MOBILE_BREAKPOINT = 9999 // Impostiamo un valore alto per forzare mobile layout
+const MOBILE_BREAKPOINT = 768
 const SMALL_MOBILE_BREAKPOINT = 480
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(true) // Sempre true
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
-    // Forza sempre mobile layout
-    setIsMobile(true)
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const onChange = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT
+      setIsMobile(mobile)
+      
+      console.log('📱 Mobile detection:', {
+        width: window.innerWidth,
+        isMobile: mobile,
+        breakpoint: MOBILE_BREAKPOINT
+      })
+    }
+    mql.addEventListener("change", onChange)
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return true // Sempre mobile layout
+  return !!isMobile
 }
 
 export function useIsSmallMobile() {

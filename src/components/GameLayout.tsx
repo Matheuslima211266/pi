@@ -8,11 +8,6 @@ import GamePhases from '@/components/GamePhases';
 import ChatBox from '@/components/ChatBox';
 import TurnTimer from '@/components/TurnTimer';
 import MobileSidebar from '@/components/MobileSidebar';
-import LifePointsPanel from '@/components/LifePointsPanel';
-import PhaseControls from '@/components/PhaseControls';
-import TimerControls from '@/components/TimerControls';
-import GameControlsPanel from '@/components/GameControlsPanel';
-import ChatArea from '@/components/ChatArea';
 import GameSidebar from '@/components/GameSidebar';
 import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
 import { RotateCcw } from 'lucide-react';
@@ -65,6 +60,14 @@ const GameLayout = ({
     handleShowHand
   } = handlers;
 
+  // Debug logging
+  console.log('🎮 GameLayout render:', {
+    isMobile,
+    isSmallMobile,
+    sidebarPosition,
+    screenWidth: typeof window !== 'undefined' ? window.innerWidth : 0
+  });
+
   if (isSmallMobile) {
     return (
       <div className={`game-container ${sidebarPosition === 'side' ? 'sidebar-side' : ''}`}>
@@ -76,18 +79,9 @@ const GameLayout = ({
               {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
             </div>
           )}
-          
-          {/* Sidebar Position Toggle */}
-          <button
-            onClick={() => setSidebarPosition(prev => prev === 'bottom' ? 'side' : 'bottom')}
-            className="fixed top-4 right-4 z-60 bg-slate-800/90 border border-slate-600 rounded p-2 text-white hover:bg-slate-700/90 transition-colors"
-            title={`Switch to ${sidebarPosition === 'bottom' ? 'side' : 'bottom'} sidebar`}
-          >
-            <RotateCcw size={16} />
-          </button>
         </div>
         
-        {/* Mobile Sidebar */}
+        {/* Mobile Sidebar with position switching */}
         <MobileSidebar
           enemyLifePoints={enemyLifePoints}
           playerLifePoints={playerLifePoints}
@@ -100,9 +94,10 @@ const GameLayout = ({
           onTimeUp={handleTimeUp}
           onTimeChange={setTimeRemaining}
           sidebarPosition={sidebarPosition}
+          onSidebarPositionChange={setSidebarPosition}
         />
         
-        {/* Area principale del campo */}
+        {/* Main game area */}
         <div className="field-area">
           <ResponsiveGameBoard 
             playerField={playerField}
@@ -133,7 +128,7 @@ const GameLayout = ({
     );
   }
 
-  // Mobile layout - keep existing mobile sidebar approach
+  // Mobile layout (tablets/large phones)
   if (isMobile) {
     return (
       <div className="game-container">
@@ -147,71 +142,23 @@ const GameLayout = ({
           )}
         </div>
         
-        {/* Sidebar completa con tutti i controlli */}
-        <div className="sidebar">
-          {/* Enemy Life Points */}
-          <div className="sidebar-section">
-            <LifePointsControl 
-              playerName="Avversario"
-              lifePoints={enemyLifePoints}
-              onLifePointsChange={(amount) => handleLifePointsChange(amount, true)}
-              color="red"
-            />
-          </div>
-          
-          {/* Game Phases */}
-          <div className="sidebar-section">
-            <GamePhases 
-              currentPhase={currentPhase}
-              onPhaseChange={handlePhaseChange}
-              onEndTurn={handleEndTurn}
-              isPlayerTurn={isPlayerTurn}
-            />
-          </div>
-          
-          {/* Player Life Points */}
-          <div className="sidebar-section">
-            <LifePointsControl 
-              playerName="Giocatore"
-              lifePoints={playerLifePoints}
-              onLifePointsChange={(amount) => handleLifePointsChange(amount, false)}
-              color="blue"
-            />
-          </div>
-          
-          {/* Timer */}
-          <div className="sidebar-section">
-            <TurnTimer 
-              isActive={isPlayerTurn}
-              onTimeUp={handleTimeUp}
-              timeRemaining={timeRemaining}
-              onTimeChange={setTimeRemaining}
-            />
-          </div>
-          
-          {/* Action Log */}
-          <div className="sidebar-section flex-1">
-            <ActionLog actions={actionLog} />
-          </div>
-          
-          {/* Dice and Coin */}
-          <div className="sidebar-section">
-            <DiceAndCoin 
-              onDiceRoll={handleDiceRoll}
-              onCoinFlip={handleCoinFlip}
-            />
-          </div>
-          
-          {/* Chat */}
-          <div className="sidebar-section">
-            <ChatBox 
-              messages={chatMessages}
-              onSendMessage={handleSendMessage}
-            />
-          </div>
-        </div>
+        {/* Mobile Sidebar with position switching */}
+        <MobileSidebar
+          enemyLifePoints={enemyLifePoints}
+          playerLifePoints={playerLifePoints}
+          currentPhase={currentPhase}
+          isPlayerTurn={isPlayerTurn}
+          timeRemaining={timeRemaining}
+          onLifePointsChange={handleLifePointsChange}
+          onPhaseChange={handlePhaseChange}
+          onEndTurn={handleEndTurn}
+          onTimeUp={handleTimeUp}
+          onTimeChange={setTimeRemaining}
+          sidebarPosition={sidebarPosition}
+          onSidebarPositionChange={setSidebarPosition}
+        />
         
-        {/* Area principale del campo */}
+        {/* Main game area */}
         <div className="field-area">
           <ResponsiveGameBoard 
             playerField={playerField}
@@ -242,7 +189,7 @@ const GameLayout = ({
     );
   }
 
-  // Desktop layout - NEW: Dual sidebar layout
+  // Desktop layout - Use GameSidebar (dual sidebar layout)
   return (
     <div className="desktop-game-container">
       {/* Game ID Display */}
@@ -255,7 +202,7 @@ const GameLayout = ({
         )}
       </div>
 
-      {/* Dual Sidebars */}
+      {/* Desktop Dual Sidebars */}
       <GameSidebar
         enemyLifePoints={enemyLifePoints}
         playerLifePoints={playerLifePoints}
