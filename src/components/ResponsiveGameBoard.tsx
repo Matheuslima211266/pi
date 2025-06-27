@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
@@ -26,6 +27,7 @@ const ResponsiveGameBoard = ({
 
   console.log('ResponsiveGameBoard playerField:', playerField);
   console.log('ResponsiveGameBoard enemyField:', enemyField);
+  console.log('ResponsiveGameBoard selectedCardFromHand:', selectedCardFromHand);
 
   const handleZoneClick = (zoneName, isEnemy = false, event) => {
     event.stopPropagation();
@@ -70,6 +72,11 @@ const ResponsiveGameBoard = ({
     const cards = field[zoneName] || [];
     console.log(`Getting cards for ${zoneName} (enemy: ${isEnemy}):`, cards);
     return cards;
+  };
+
+  const handleCardSelect = (card) => {
+    console.log('Card selected from hand:', card?.name);
+    setSelectedCardFromHand(card);
   };
 
   return (
@@ -200,7 +207,7 @@ const ResponsiveGameBoard = ({
       <div className="hand-zone">
         <PlayerHand 
           cards={playerHand}
-          onPlayCard={setSelectedCardFromHand}
+          onPlayCard={handleCardSelect}
           isPlayerTurn={true}
           onCardPreview={onCardPreview}
           onCardMove={onCardMove}
@@ -289,8 +296,14 @@ const ResponsiveGameBoard = ({
       {selectedCardFromHand && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-900/90 border border-blue-400 rounded px-4 py-2 z-20">
           <p className="text-sm text-gray-300 text-center">
-            Click anywhere to place <strong>{selectedCardFromHand.name}</strong>
+            Carta selezionata: <strong>{selectedCardFromHand.name}</strong> - Clicca su uno slot per evocarla
           </p>
+          <button 
+            onClick={() => setSelectedCardFromHand(null)}
+            className="ml-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+          >
+            Annulla
+          </button>
         </div>
       )}
     </div>
