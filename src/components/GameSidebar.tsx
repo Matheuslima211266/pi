@@ -3,6 +3,7 @@ import React from 'react';
 import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
 import ChatBox from '@/components/ChatBox';
+import ActionHistory from '@/components/ActionHistory';
 import TurnTimer from '@/components/TurnTimer';
 
 interface GameSidebarProps {
@@ -15,6 +16,12 @@ interface GameSidebarProps {
     id: number;
     player: string;
     message: string;
+    timestamp: string;
+  }>;
+  actionLog: Array<{
+    id: number | string;
+    player: string;
+    action: string;
     timestamp: string;
   }>;
   onLifePointsChange: (amount: number, isEnemy: boolean) => void;
@@ -32,6 +39,7 @@ const GameSidebar = ({
   isPlayerTurn,
   timeRemaining,
   chatMessages,
+  actionLog,
   onLifePointsChange,
   onPhaseChange,
   onEndTurn,
@@ -73,7 +81,7 @@ const GameSidebar = ({
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR - Player Life Points + Chat */}
+      {/* RIGHT SIDEBAR - Player Life Points + Chat + Action History */}
       <div className="fixed right-0 top-0 h-full w-48 bg-slate-900/95 border-l border-slate-600 z-30 flex flex-col p-2 gap-2">
         {/* Player Life Points */}
         <LifePointsControl
@@ -91,6 +99,9 @@ const GameSidebar = ({
             onSendMessage={onSendMessage}
           />
         </div>
+        
+        {/* Action History */}
+        <ActionHistory actions={actionLog} />
       </div>
     </>
   );

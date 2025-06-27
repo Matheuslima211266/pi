@@ -22,6 +22,25 @@ export const useGameInitialization = ({
     console.log('🎮 Initializing game with deck data:', playerDeckData);
 
     try {
+      // Validazione e preparazione deck data
+      let deckCards = [];
+      
+      if (playerDeckData.mainDeck && Array.isArray(playerDeckData.mainDeck)) {
+        deckCards = [...playerDeckData.mainDeck];
+      } else if (playerDeckData.cards && Array.isArray(playerDeckData.cards)) {
+        deckCards = [...playerDeckData.cards];
+      } else {
+        console.error('❌ Invalid deck structure:', playerDeckData);
+        alert('Errore: Struttura deck non valida. Assicurati di caricare un deck valido.');
+        return;
+      }
+
+      if (deckCards.length === 0) {
+        console.error('❌ Empty deck:', playerDeckData);
+        alert('Errore: Deck vuoto. Carica un deck con carte valide.');
+        return;
+      }
+
       // Create deck with unique IDs for each player
       const playerPrefix = gameData?.isHost ? 'host' : 'guest';
       const enemyPrefix = gameData?.isHost ? 'guest' : 'host';
@@ -29,12 +48,12 @@ export const useGameInitialization = ({
       const createDeckWithUniqueIds = (deckData, prefix) => {
         return deckData.map((card, index) => ({
           ...card,
-          id: generateUniqueCardId(prefix, index, card.name)
+          id: generateUniqueCardId(prefix, index, card.name || `card_${index}`)
         }));
       };
 
-      const playerDeckWithIds = createDeckWithUniqueIds(playerDeckData, playerPrefix);
-      const enemyDeckWithIds = createDeckWithUniqueIds(playerDeckData, enemyPrefix);
+      const playerDeckWithIds = createDeckWithUniqueIds(deckCards, playerPrefix);
+      const enemyDeckWithIds = createDeckWithUniqueIds(deckCards, enemyPrefix);
 
       // Shuffle both decks independently
       const shuffledPlayerDeck = shuffleArray([...playerDeckWithIds]);
@@ -67,7 +86,7 @@ export const useGameInitialization = ({
         deadZone: [], // New zone
         banished: [],
         banishedFaceDown: [],
-        extraDeck: [],
+        extraDeck: playerDeckData.extraDeck || [],
         magia: [], // New zone
         terreno: [] // New zone
       });
@@ -82,7 +101,7 @@ export const useGameInitialization = ({
         deadZone: [], // New zone
         banished: [],
         banishedFaceDown: [],
-        extraDeck: [],
+        extraDeck: playerDeckData.extraDeck || [],
         magia: [], // New zone
         terreno: [] // New zone
       });
@@ -92,6 +111,7 @@ export const useGameInitialization = ({
 
     } catch (error) {
       console.error('❌ Error initializing game:', error);
+      alert('Errore durante l\'inizializzazione del gioco. Riprova.');
     }
   }, [playerDeckData, gameData, isInitialized, setPlayerDeck, setEnemyDeck, setPlayerHand, setEnemyHandCount, setPlayerField, setEnemyField]);
 

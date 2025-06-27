@@ -1,248 +1,83 @@
+
 import React, { useState } from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
-import ActionLog from '@/components/ActionLog';
-import DiceAndCoin from '@/components/DiceAndCoin';
-import CardPreview from '@/components/CardPreview';
-import LifePointsControl from '@/components/LifePointsControl';
-import GamePhases from '@/components/GamePhases';
-import ChatBox from '@/components/ChatBox';
-import TurnTimer from '@/components/TurnTimer';
-import MobileSidebar from '@/components/MobileSidebar';
 import GameSidebar from '@/components/GameSidebar';
-import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
-import { RotateCcw } from 'lucide-react';
+import PlayerHand from '@/components/PlayerHand';
+import CardPreview from '@/components/CardPreview';
 
-const GameLayout = ({
-  gameData,
-  gameState,
-  handlers
-}) => {
-  const isMobile = useIsMobile();
-  const isSmallMobile = useIsSmallMobile();
-  const [sidebarPosition, setSidebarPosition] = useState<'bottom' | 'side'>('bottom');
+interface GameLayoutProps {
+  gameData: any;
+  gameState: any;
+  handlers: any;
+}
 
-  const {
-    playerField,
-    enemyField,
-    playerHand,
-    enemyHandCount,
-    enemyRevealedCard,
-    enemyRevealedHand,
-    selectedCardFromHand,
-    previewCard,
-    actionLog,
-    playerLifePoints,
-    enemyLifePoints,
-    currentPhase,
-    isPlayerTurn,
-    timeRemaining,
-    chatMessages,
-    setPreviewCard,
-    setSelectedCardFromHand,
-    setTimeRemaining
-  } = gameState;
+const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
+  const [sidebarPosition, setSidebarPosition] = useState<'bottom' | 'side'>('side');
 
-  const {
-    handleAttack,
-    handleCardPlace,
-    handleCardMove,
-    handleDeckMill,
-    handleDrawCard,
-    handleCardClick,
-    handleLifePointsChange,
-    handlePhaseChange,
-    handleEndTurn,
-    handleTimeUp,
-    handleSendMessage,
-    handleDiceRoll,
-    handleCoinFlip,
-    handleShowCard,
-    handleShowHand
-  } = handlers;
-
-  // Debug logging
   console.log('🎮 GameLayout render:', {
-    isMobile,
-    isSmallMobile,
-    sidebarPosition,
-    screenWidth: typeof window !== 'undefined' ? window.innerWidth : 0
+    playerHandSize: gameState.playerHand?.length || 0,
+    playerDeckSize: gameState.playerField?.deck?.length || 0,
+    enemyDeckSize: gameState.enemyField?.deck?.length || 0,
+    actionLogSize: gameState.actionLog?.length || 0
   });
 
-  if (isSmallMobile) {
-    return (
-      <div className={`game-container ${sidebarPosition === 'side' ? 'sidebar-side' : ''}`}>
-        {/* Game ID Display */}
-        <div className="game-header">
-          {gameData?.gameId && (
-            <div className="game-id">
-              Game ID: {gameData.gameId}
-              {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
-            </div>
-          )}
-        </div>
-        
-        {/* Mobile Sidebar with position switching */}
-        <MobileSidebar
-          enemyLifePoints={enemyLifePoints}
-          playerLifePoints={playerLifePoints}
-          currentPhase={currentPhase}
-          isPlayerTurn={isPlayerTurn}
-          timeRemaining={timeRemaining}
-          onLifePointsChange={handleLifePointsChange}
-          onPhaseChange={handlePhaseChange}
-          onEndTurn={handleEndTurn}
-          onTimeUp={handleTimeUp}
-          onTimeChange={setTimeRemaining}
-          sidebarPosition={sidebarPosition}
-          onSidebarPositionChange={(position: 'bottom' | 'side') => setSidebarPosition(position)}
-        />
-        
-        {/* Main game area */}
-        <div className="field-area">
-          <ResponsiveGameBoard 
-            playerField={playerField}
-            enemyField={enemyField}
-            playerHand={playerHand}
-            enemyHandCount={enemyHandCount}
-            enemyRevealedCard={enemyRevealedCard}
-            enemyRevealedHand={enemyRevealedHand}
-            onAttack={handleAttack}
-            onCardPlace={handleCardPlace}
-            selectedCardFromHand={selectedCardFromHand}
-            onCardPreview={setPreviewCard}
-            onCardMove={handleCardMove}
-            onDeckMill={handleDeckMill}
-            onDrawCard={handleDrawCard}
-            setSelectedCardFromHand={setSelectedCardFromHand}
-          />
-        </div>
-        
-        {/* Card Preview Modal */}
-        {previewCard && (
-          <CardPreview 
-            card={previewCard}
-            onClose={() => setPreviewCard(null)}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // Mobile layout (tablets/large phones)
-  if (isMobile) {
-    return (
-      <div className="game-container">
-        {/* Game ID Display */}
-        <div className="game-header">
-          {gameData?.gameId && (
-            <div className="game-id">
-              Game ID: {gameData.gameId}
-              {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
-            </div>
-          )}
-        </div>
-        
-        {/* Mobile Sidebar with position switching */}
-        <MobileSidebar
-          enemyLifePoints={enemyLifePoints}
-          playerLifePoints={playerLifePoints}
-          currentPhase={currentPhase}
-          isPlayerTurn={isPlayerTurn}
-          timeRemaining={timeRemaining}
-          onLifePointsChange={handleLifePointsChange}
-          onPhaseChange={handlePhaseChange}
-          onEndTurn={handleEndTurn}
-          onTimeUp={handleTimeUp}
-          onTimeChange={setTimeRemaining}
-          sidebarPosition={sidebarPosition}
-          onSidebarPositionChange={(position: 'bottom' | 'side') => setSidebarPosition(position)}
-        />
-        
-        {/* Main game area */}
-        <div className="field-area">
-          <ResponsiveGameBoard 
-            playerField={playerField}
-            enemyField={enemyField}
-            playerHand={playerHand}
-            enemyHandCount={enemyHandCount}
-            enemyRevealedCard={enemyRevealedCard}
-            enemyRevealedHand={enemyRevealedHand}
-            onAttack={handleAttack}
-            onCardPlace={handleCardPlace}
-            selectedCardFromHand={selectedCardFromHand}
-            onCardPreview={setPreviewCard}
-            onCardMove={handleCardMove}
-            onDeckMill={handleDeckMill}
-            onDrawCard={handleDrawCard}
-            setSelectedCardFromHand={setSelectedCardFromHand}
-          />
-        </div>
-        
-        {/* Card Preview Modal */}
-        {previewCard && (
-          <CardPreview 
-            card={previewCard}
-            onClose={() => setPreviewCard(null)}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // Desktop layout - Use GameSidebar (dual sidebar layout)
   return (
-    <div className="desktop-game-container">
-      {/* Game ID Display */}
-      <div className="game-header-desktop">
-        {gameData?.gameId && (
-          <div className="game-id-desktop">
-            Game ID: {gameData.gameId}
-            {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
-          </div>
-        )}
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 overflow-hidden">
+      {/* Game Board */}
+      <div className="pl-48 pr-48 h-full flex flex-col">
+        <div className="flex-1 p-4">
+          <ResponsiveGameBoard
+            playerField={gameState.playerField}
+            enemyField={gameState.enemyField}
+            onAttack={handlers.handleAttack}
+            onCardPlace={handlers.handleCardPlace}
+            selectedCardFromHand={gameState.selectedCardFromHand}
+            onCardPreview={handlers.handleCardPreview}
+            onCardMove={handlers.handleCardMove}
+            onDrawCard={() => handlers.handleDrawCard(true)}
+            onDeckMill={(count) => handlers.handleDeckMill(count, true)}
+          />
+        </div>
+        
+        {/* Player Hand */}
+        <div className="h-32 border-t border-slate-600 bg-slate-800/30">
+          <PlayerHand
+            hand={gameState.playerHand}
+            selectedCard={gameState.selectedCardFromHand}
+            onCardSelect={handlers.handleHandCardSelect}
+            onCardPreview={handlers.handleCardPreview}
+          />
+        </div>
       </div>
 
-      {/* Desktop Dual Sidebars */}
+      {/* Sidebars */}
       <GameSidebar
-        enemyLifePoints={enemyLifePoints}
-        playerLifePoints={playerLifePoints}
-        currentPhase={currentPhase}
-        isPlayerTurn={isPlayerTurn}
-        timeRemaining={timeRemaining}
-        chatMessages={chatMessages}
-        onLifePointsChange={handleLifePointsChange}
-        onPhaseChange={handlePhaseChange}
-        onEndTurn={handleEndTurn}
-        onTimeUp={handleTimeUp}
-        onTimeChange={setTimeRemaining}
-        onSendMessage={handleSendMessage}
+        enemyLifePoints={gameState.enemyLifePoints}
+        playerLifePoints={gameState.playerLifePoints}
+        currentPhase={gameState.currentPhase}
+        isPlayerTurn={gameState.isPlayerTurn}
+        timeRemaining={gameState.timeRemaining}
+        chatMessages={gameState.chatMessages}
+        actionLog={gameState.actionLog}
+        onLifePointsChange={(amount, isEnemy) => {
+          if (isEnemy) {
+            handlers.handleLifePointsChange(gameState.enemyLifePoints + amount, false);
+          } else {
+            handlers.handleLifePointsChange(gameState.playerLifePoints + amount, true);
+          }
+        }}
+        onPhaseChange={handlers.handlePhaseChange}
+        onEndTurn={handlers.handleEndTurn}
+        onTimeUp={handlers.handleTimeUp}
+        onTimeChange={handlers.handleTimeChange}
+        onSendMessage={handlers.handleSendMessage}
       />
-      
-      {/* MAIN GAME AREA - With margins for sidebars */}
-      <div className="main-game-area-desktop">
-        <ResponsiveGameBoard 
-          playerField={playerField}
-          enemyField={enemyField}
-          playerHand={playerHand}
-          enemyHandCount={enemyHandCount}
-          enemyRevealedCard={enemyRevealedCard}
-          enemyRevealedHand={enemyRevealedHand}
-          onAttack={handleAttack}
-          onCardPlace={handleCardPlace}
-          selectedCardFromHand={selectedCardFromHand}
-          onCardPreview={setPreviewCard}
-          onCardMove={handleCardMove}
-          onDeckMill={handleDeckMill}
-          onDrawCard={handleDrawCard}
-          setSelectedCardFromHand={setSelectedCardFromHand}
-        />
-      </div>
-      
-      {/* Card Preview Modal */}
-      {previewCard && (
-        <CardPreview 
-          card={previewCard}
-          onClose={() => setPreviewCard(null)}
+
+      {/* Card Preview */}
+      {gameState.previewCard && (
+        <CardPreview
+          card={gameState.previewCard}
+          onClose={() => handlers.handleCardPreview(null)}
         />
       )}
     </div>

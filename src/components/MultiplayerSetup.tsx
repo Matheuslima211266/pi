@@ -43,12 +43,21 @@ const MultiplayerSetup = ({
 
   // Memoizza lo stato per evitare render loops
   const currentState = useMemo(() => ({
-    gameStarted: gameState?.gameStarted,
+    gameStarted: gameState?.gameStarted || false,
     currentSession: !!gameState?.currentSession,
-    bothPlayersReady: gameState?.bothPlayersReady,
-    playerReady: gameState?.playerReady,
-    opponentReady: gameState?.opponentReady
+    bothPlayersReady: gameState?.bothPlayersReady || false,
+    playerReady: gameState?.playerReady || false,
+    opponentReady: gameState?.opponentReady || false
   }), [gameState?.gameStarted, gameState?.currentSession, gameState?.bothPlayersReady, gameState?.playerReady, gameState?.opponentReady]);
+
+  console.log('[SETUP] MultiplayerSetup component rendered', {
+    gameStarted: currentState.gameStarted,
+    currentSession: currentState.currentSession,
+    bothPlayersReady: currentState.bothPlayersReady,
+    showDeckBuilder,
+    deckLoaded,
+    gameIdFromUrl
+  });
 
   // Check URL for game parameter - solo una volta al mount
   useEffect(() => {
@@ -73,12 +82,13 @@ const MultiplayerSetup = ({
     }
 
     if (isCreatingGame) return; // Prevent double calls
+    console.log('[SETUP] Host attempting to create game', { playerName, deckLoaded });
 
     setIsCreatingGame(true);
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
     try {
-      console.log('[SETUP] Creating game with ID:', newGameId);
+      console.log('[SETUP] Creating game with ID', { gameId: newGameId });
       
       const gameData = {
         gameId: newGameId,
@@ -94,6 +104,7 @@ const MultiplayerSetup = ({
         setIsHost(true);
         setGameSessionCreated(true);
         console.log('[SETUP] Game created successfully');
+        console.log('Game created successfully - showing link');
       } else {
         console.error('[SETUP] Failed to create game session');
         alert('Failed to create game session. Please try again.');
@@ -213,6 +224,8 @@ const MultiplayerSetup = ({
 
   // Show waiting screen quando il gioco è iniziato e c'è una sessione attiva
   if (currentState.gameStarted && currentState.currentSession && !currentState.bothPlayersReady) {
+    console.log('[SETUP] Showing waiting screen');
+    console.log('=== SHOWING WAITING SCREEN ===');
     return (
       <WaitingForPlayersScreen
         gameData={gameState.gameData}
@@ -248,6 +261,8 @@ const MultiplayerSetup = ({
   }
 
   // Show setup screen
+  console.log('[SETUP] Showing setup screen');
+  console.log('=== SHOWING SETUP SCREEN ===');
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
