@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
 import DiceAndCoin from '@/components/DiceAndCoin';
@@ -9,6 +9,7 @@ import ChatBox from '@/components/ChatBox';
 import TurnTimer from '@/components/TurnTimer';
 import MobileSidebar from '@/components/MobileSidebar';
 import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
+import { RotateCcw } from 'lucide-react';
 
 const GameLayout = ({
   gameData,
@@ -17,6 +18,7 @@ const GameLayout = ({
 }) => {
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
+  const [sidebarPosition, setSidebarPosition] = useState('bottom'); // 'bottom' or 'side'
 
   const {
     playerField,
@@ -59,7 +61,7 @@ const GameLayout = ({
 
   if (isSmallMobile) {
     return (
-      <div className="game-container">
+      <div className={`game-container ${sidebarPosition === 'side' ? 'sidebar-side' : ''}`}>
         {/* Game ID Display */}
         <div className="game-header">
           {gameData?.gameId && (
@@ -68,6 +70,15 @@ const GameLayout = ({
               {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
             </div>
           )}
+          
+          {/* Sidebar Position Toggle */}
+          <button
+            onClick={() => setSidebarPosition(prev => prev === 'bottom' ? 'side' : 'bottom')}
+            className="fixed top-4 right-4 z-60 bg-slate-800/90 border border-slate-600 rounded p-2 text-white hover:bg-slate-700/90 transition-colors"
+            title={`Switch to ${sidebarPosition === 'bottom' ? 'side' : 'bottom'} sidebar`}
+          >
+            <RotateCcw size={16} />
+          </button>
         </div>
         
         {/* Mobile Sidebar */}
@@ -82,6 +93,7 @@ const GameLayout = ({
           onEndTurn={handleEndTurn}
           onTimeUp={handleTimeUp}
           onTimeChange={setTimeRemaining}
+          sidebarPosition={sidebarPosition}
         />
         
         {/* Area principale del campo */}

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -520,36 +519,78 @@
   }
 
   .game-container {
-    flex-direction: row;
+    flex-direction: column;
     height: 100vh;
     min-height: 100vh;
     overflow: hidden;
   }
 
+  /* Sidebar in basso per default mobile */
   .sidebar {
+    order: 3;
+    width: 100%;
+    height: auto;
+    max-height: 25vh;
+    min-height: 120px;
+    flex-direction: row;
+    border-right: none;
+    border-top: 2px solid #4a5568;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem;
+    position: relative;
+    left: auto;
+    top: auto;
+    z-index: 40;
+    background: rgba(0, 0, 0, 0.95);
+    gap: 0.5rem;
+  }
+
+  /* Layout con sidebar laterale quando specificato */
+  .game-container.sidebar-side {
+    flex-direction: row;
+  }
+
+  .game-container.sidebar-side .sidebar {
+    order: 1;
     width: clamp(80px, 20vw, 120px);
     min-width: 80px;
     height: 100vh;
+    max-height: 100vh;
+    min-height: auto;
     flex-direction: column;
+    border-top: none;
     border-right: 2px solid #4a5568;
-    border-bottom: none;
-    overflow-y: auto;
     overflow-x: hidden;
+    overflow-y: auto;
     padding: 0.25rem;
     position: fixed;
     left: 0;
     top: 0;
     z-index: 50;
-    background: rgba(0, 0, 0, 0.95);
+    gap: 0.25rem;
+  }
+
+  .game-container.sidebar-side .field-area {
+    margin-left: clamp(80px, 20vw, 120px);
+    order: 2;
   }
   
   .field-area {
+    order: 2;
     flex: 1;
-    margin-left: clamp(80px, 20vw, 120px);
+    margin-left: 0;
     padding: 0.25rem;
     overflow-x: auto;
     overflow-y: hidden;
-    height: 100vh;
+    height: auto;
+    min-height: 0;
+  }
+
+  .game-header {
+    order: 1;
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
   }
   
   .battlefield-container {
@@ -564,6 +605,16 @@
   .hand-zone {
     min-width: 500px;
     gap: clamp(0.1rem, 0.3vw, 0.2rem);
+  }
+
+  /* Assicuriamo che l'opponent zone sia sempre specchiata */
+  .opponent-zone {
+    transform: rotate(180deg);
+  }
+
+  /* Assicuriamo che la mano dell'avversario sia specchiata */
+  .opponent-hand {
+    transform: rotate(180deg);
   }
   
   .center-zone {
@@ -592,6 +643,23 @@
     width: clamp(20px, 4vw, 35px);
     height: clamp(28px, 5.6vw, 49px);
     font-size: clamp(0.6rem, 1vw, 0.8rem);
+  }
+
+  /* Sidebar sections per layout orizzontale */
+  .sidebar .sidebar-section {
+    flex-shrink: 0;
+    min-width: 120px;
+    padding: 0.25rem;
+    margin-bottom: 0;
+    margin-right: 0.25rem;
+  }
+
+  /* Sidebar sections per layout verticale quando laterale */
+  .game-container.sidebar-side .sidebar .sidebar-section {
+    min-width: auto;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 0.25rem;
   }
 
   /* Enhanced Mobile Deck Builder */

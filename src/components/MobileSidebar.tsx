@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
 import TurnTimer from '@/components/TurnTimer';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 
 const MobileSidebar = ({
   enemyLifePoints,
@@ -15,28 +15,58 @@ const MobileSidebar = ({
   onPhaseChange,
   onEndTurn,
   onTimeUp,
-  onTimeChange
+  onTimeChange,
+  sidebarPosition = 'bottom' // 'bottom' o 'side'
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const isBottom = sidebarPosition === 'bottom';
+  const toggleIcon = isBottom 
+    ? (isCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />)
+    : (isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />);
+
+  const toggleButtonStyle = isBottom 
+    ? {
+        position: 'fixed' as const,
+        bottom: isCollapsed ? '4px' : 'auto',
+        top: isCollapsed ? 'auto' : 'calc(75vh - 20px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 60
+      }
+    : {
+        position: 'fixed' as const,
+        top: '4px',
+        left: '2px',
+        zIndex: 60
+      };
+
+  const sidebarStyle = isBottom 
+    ? {
+        transform: isCollapsed ? 'translateY(100%)' : 'translateY(0)',
+        width: '100%'
+      }
+    : {
+        transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',
+        width: 'clamp(80px, 20vw, 120px)',
+        minWidth: '80px'
+      };
+
   return (
     <>
-      {/* Toggle button - sempre visibile */}
+      {/* Toggle button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 left-2 z-60 bg-slate-800/90 border border-slate-600 rounded p-1 text-white hover:bg-slate-700/90 transition-colors"
-        style={{ fontSize: '12px', padding: '4px' }}
+        className="bg-slate-800/90 border border-slate-600 rounded p-1 text-white hover:bg-slate-700/90 transition-colors"
+        style={{ ...toggleButtonStyle, fontSize: '12px', padding: '4px' }}
       >
-        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {toggleIcon}
       </button>
 
       {/* Sidebar */}
       <div 
-        className={`sidebar transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}`}
-        style={{ 
-          width: 'clamp(80px, 20vw, 120px)',
-          minWidth: '80px'
-        }}
+        className={`sidebar transition-transform duration-300`}
+        style={sidebarStyle}
       >
         {/* Enemy Life Points - Ultra compressed */}
         <div className="sidebar-section">
