@@ -1,4 +1,3 @@
-
 export const useGameZoneActions = ({ 
   field, 
   onCardPlace, 
@@ -22,6 +21,8 @@ export const useGameZoneActions = ({
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
       
+      console.log('Creating placement menu at:', x, y);
+      
       setPlacementMenu({
         zoneName,
         slotIndex,
@@ -35,12 +36,18 @@ export const useGameZoneActions = ({
   const handlePlacementChoice = (choice, placementMenu) => {
     console.log('Placement choice:', choice, placementMenu);
     
-    if (!placementMenu || !selectedCardFromHand) return;
+    if (!placementMenu || !selectedCardFromHand) {
+      console.log('Missing placement menu or selected card');
+      return;
+    }
 
     const { zoneName, slotIndex } = placementMenu;
     
+    console.log('Processing placement for zone:', zoneName, 'slot:', slotIndex, 'choice:', choice);
+    
     switch (zoneName) {
       case 'monsters':
+        console.log('Placing monster with choice:', choice);
         if (choice === 'attack') {
           onCardPlace && onCardPlace(selectedCardFromHand, zoneName, slotIndex, false, 'attack');
         } else if (choice === 'defense') {
@@ -51,6 +58,7 @@ export const useGameZoneActions = ({
         break;
         
       case 'spellsTraps':
+        console.log('Placing spell/trap with choice:', choice);
         if (choice === 'activate') {
           onCardPlace && onCardPlace(selectedCardFromHand, zoneName, slotIndex, false);
         } else if (choice === 'set') {
@@ -59,10 +67,12 @@ export const useGameZoneActions = ({
         break;
         
       case 'fieldSpell':
+        console.log('Placing field spell');
         onCardPlace && onCardPlace(selectedCardFromHand, zoneName, 0, false);
         break;
         
       case 'deadZone':
+        console.log('Moving to dead zone');
         onCardMove && onCardMove(selectedCardFromHand, 'hand', 'deadZone');
         break;
         
@@ -93,6 +103,7 @@ export const useGameZoneActions = ({
         break;
     }
     
+    console.log('Closing placement menu');
     setPlacementMenu(null);
   };
 
