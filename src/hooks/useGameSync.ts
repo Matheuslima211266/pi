@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -7,7 +8,6 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
   const [channelSetup, setChannelSetup] = useState(false);
   const actionChannelRef = useRef<any>(null);
   const processingRef = useRef(false);
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   console.log('[GAME_SYNC] Hook status', {
     hasUser: !!user,
@@ -223,45 +223,37 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
   const syncCompleteGameState = useCallback(async () => {
     if (!user || !gameSessionId) return;
 
-    // Clear existing timeout
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
+    try {
+      const gameStateData = {
+        player_life_points: gameState.playerLifePoints || 8000,
+        player_hand_count: gameState.playerHand?.length || 0,
+        current_phase: gameState.currentPhase || 'draw',
+        is_player_turn: gameState.isPlayerTurn || false,
+        time_remaining: gameState.timeRemaining || 60,
+        player_ready: gameState.playerReady || false,
+        last_update: new Date().toISOString()
+      };
 
-    // Debounce the sync operation
-    syncTimeoutRef.current = setTimeout(async () => {
-      try {
-        const gameStateData = {
-          player_life_points: gameState.playerLifePoints || 8000,
-          player_hand_count: gameState.playerHand?.length || 0,
-          current_phase: gameState.currentPhase || 'draw',
-          is_player_turn: gameState.isPlayerTurn || false,
-          time_remaining: gameState.timeRemaining || 60,
-          player_ready: gameState.playerReady || false,
-          last_update: new Date().toISOString()
-        };
+      console.log('[GAME_SYNC] Syncing complete game state:', gameStateData);
 
-        console.log('[GAME_SYNC] Syncing complete game state:', gameStateData);
+      // Use upsert to avoid conflicts
+      const { error } = await supabase
+        .from('game_states')
+        .upsert({
+          game_session_id: gameSessionId,
+          player_id: user.id,
+          player_field: JSON.stringify(gameState.playerField || {}),
+          ...gameStateData
+        });
 
-        // Use upsert to avoid conflicts
-        const { error } = await supabase
-          .from('game_states')
-          .upsert({
-            game_session_id: gameSessionId,
-            player_id: user.id,
-            player_field: JSON.stringify(gameState.playerField || {}),
-            ...gameStateData
-          });
-
-        if (error) {
-          console.error('[GAME_SYNC] Error syncing complete game state:', error);
-        } else {
-          console.log('[GAME_SYNC] Complete game state synced successfully');
-        }
-      } catch (error) {
-        console.error('[GAME_SYNC] Exception syncing complete game state:', error);
+      if (error) {
+        console.error('[GAME_SYNC] Error syncing complete game state:', error);
+      } else {
+        console.log('[GAME_SYNC] Complete game state synced successfully');
       }
-    }, 1000);
+    } catch (error) {
+      console.error('[GAME_SYNC] Exception syncing complete game state:', error);
+    }
   }, [user, gameSessionId, gameState]);
 
   return {
@@ -271,3 +263,4 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     channelSetup
   };
 };
+</lov-code>
