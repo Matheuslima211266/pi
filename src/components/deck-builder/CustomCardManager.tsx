@@ -54,7 +54,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
 
   useEffect(() => {
     updateAvailableCards(customCards, showSampleCards);
-  }, [showSampleCards]);
+  }, [showSampleCards, customCards]);
 
   const saveCustomCards = (cards: any[]) => {
     setCustomCards(cards);

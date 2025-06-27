@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +8,11 @@ import { ArrowLeft, Save } from 'lucide-react';
 
 // Import the refactored components
 import DeckSlotManager from './deck-builder/DeckSlotManager';
-import CardPreview from './deck-builder/CardPreview';
 import CustomCardManager from './deck-builder/CustomCardManager';
 import CardList from './deck-builder/CardList';
 import DeckView from './deck-builder/DeckView';
+// Import the main CardPreview for hover behavior
+import CardPreview from './CardPreview';
 
 interface DeckBuilderProps {
   onBack?: () => void;
@@ -108,7 +110,7 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
       setExtraDeck(newExtraDeck);
       setDeckName(deckData.name || 'Deck Importato');
       
-      // Assicurati che tutte le carte del deck siano disponibili
+      // FIXED: Assicurati che tutte le carte del deck siano disponibili
       const allDeckCards = [...(deckData.mainDeck || []), ...(deckData.extraDeck || [])];
       const uniqueDeckCards = allDeckCards.reduce((acc: any[], card: any) => {
         if (!acc.find(c => c.id === card.id)) {
@@ -128,14 +130,34 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
         const updatedCustomCards = [...customCards, ...newCards];
         localStorage.setItem('yugiduel_custom_cards', JSON.stringify(updatedCustomCards));
         
-        // Aggiorna le carte disponibili
-        setAvailableCards(prev => [...prev, ...newCards]);
+        // FIXED: Aggiorna le carte disponibili immediatamente
+        const updatedAvailableCards = [...availableCards, ...newCards];
+        setAvailableCards(updatedAvailableCards);
+        
+        console.log(`Added ${newCards.length} new cards to database and available cards`);
       }
     } else {
       // Caricamento da slot (già nel formato corretto)
       setMainDeck({});
       setExtraDeck({});
       setDeckName(deckData.name || 'Deck Caricato');
+      
+      // FIXED: Assicurati che tutte le carte del deck siano disponibili anche per gli slot
+      const allDeckCards = [...(deckData.mainDeck || []), ...(deckData.extraDeck || [])];
+      const uniqueDeckCards = allDeckCards.reduce((acc: any[], card: any) => {
+        if (!acc.find(c => c.id === card.id)) {
+          acc.push(card);
+        }
+        return acc;
+      }, []);
+      
+      const existingIds = new Set(availableCards.map(c => c.id));
+      const newCards = uniqueDeckCards.filter(card => !existingIds.has(card.id));
+      
+      if (newCards.length > 0) {
+        const updatedAvailableCards = [...availableCards, ...newCards];
+        setAvailableCards(updatedAvailableCards);
+      }
       
       // Converte gli array in oggetti con conteggi
       setTimeout(() => {
@@ -203,7 +225,7 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
   const extraDeckCount = Object.values(extraDeck).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -250,7 +272,7 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
           </div>
 
           {/* Center Panel - Cards and Deck */}
-          <div className="col-span-6 space-y-6">
+          <div className="col-span-9 space-y-6">
             {/* Custom Card Manager */}
             <CustomCardManager
               onCardsUpdate={handleCardsUpdate}
@@ -293,13 +315,16 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
               />
             </div>
           </div>
-
-          {/* Right Panel - Card Preview */}
-          <div className="col-span-3">
-            <CardPreview card={previewCard} />
-          </div>
         </div>
       </div>
+
+      {/* Card Preview - Positioned like in-game */}
+      {previewCard && (
+        <CardPreview 
+          card={previewCard} 
+          onClose={() => setPreviewCard(null)} 
+        />
+      )}
     </div>
   );
 };
