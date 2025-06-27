@@ -86,129 +86,122 @@ const ResponsiveGameBoard = ({
   const playerFieldMemo = useMemo(() => playerField, [playerField]);
   const enemyFieldMemo = useMemo(() => enemyField, [enemyField]);
 
+  const boardStyles = `
+    .battlefield-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      transform-origin: center center;
+      transition: transform 0.2s ease-in-out;
+    }
+    
+    @media (max-width: 1200px) {
+      .battlefield-container {
+        transform: scale(0.8);
+      }
+    }
+    
+    @media (max-width: 800px) {
+      .battlefield-container {
+        transform: scale(0.6);
+      }
+    }
+    
+    .hand-zone {
+      flex-shrink: 0;
+      padding: 0.5rem;
+      background: rgba(15, 23, 42, 0.8);
+      border-top: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    
+    .opponent-zone, .player-zone {
+      flex-shrink: 0;
+      padding: 0.5rem;
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    
+    .center-zone {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      margin: 0.5rem 0;
+    }
+    
+    .center-group {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .battle-field-label {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      padding: 0.5rem 1rem;
+      background: linear-gradient(45deg, #1e40af, #7c3aed);
+      border-radius: 0.5rem;
+      border: 2px solid #fbbf24;
+    }
+    
+    .card-slot {
+      width: 4rem;
+      height: 6rem;
+      border: 2px dashed rgba(148, 163, 184, 0.5);
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.8);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .card-slot:hover {
+      border-color: #fbbf24;
+      background: rgba(59, 130, 246, 0.2);
+      transform: scale(1.05);
+    }
+    
+    .zone-label {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    
+    .zone-count {
+      font-size: 0.8rem;
+      color: #fbbf24;
+      font-weight: bold;
+      position: absolute;
+      top: -0.5rem;
+      right: -0.5rem;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0.1rem 0.3rem;
+      border-radius: 50%;
+      min-width: 1.2rem;
+      text-align: center;
+    }
+    
+    .field-spell-zone {
+      background: linear-gradient(135deg, #059669, #0d9488);
+    }
+    
+    .dead-zone-slot {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+    }
+  `;
+
   return (
     <div className="battlefield-container w-full h-full overflow-hidden">
-      <style jsx>{`
-        .battlefield-container {
-          display: flex;
-          flex-direction: column;
-          min-height: 100vh;
-          transform-origin: center center;
-          transition: transform 0.2s ease-in-out;
-        }
-        
-        @media (max-width: 1200px) {
-          .battlefield-container {
-            transform: scale(0.8);
-          }
-        }
-        
-        @media (max-width: 800px) {
-          .battlefield-container {
-            transform: scale(0.6);
-          }
-        }
-        
-        .hand-zone {
-          flex-shrink: 0;
-          padding: 0.5rem;
-          background: rgba(15, 23, 42, 0.8);
-          border-top: 1px solid rgba(148, 163, 184, 0.3);
-        }
-        
-        .opponent-zone, .player-zone {
-          flex-shrink: 0;
-          padding: 0.5rem;
-          background: rgba(30, 41, 59, 0.5);
-          border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-        }
-        
-        .center-zone {
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem;
-          background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
-          border: 2px solid rgba(148, 163, 184, 0.3);
-          margin: 0.5rem 0;
-        }
-        
-        .center-group {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-        }
-        
-        .battle-field-label {
-          font-size: 1.2rem;
-          font-weight: bold;
-          color: #fff;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-          padding: 0.5rem 1rem;
-          background: linear-gradient(45deg, #1e40af, #7c3aed);
-          border-radius: 0.5rem;
-          border: 2px solid #fbbf24;
-        }
-        
-        .card-slot {
-          width: 4rem;
-          height: 6rem;
-          border: 2px dashed rgba(148, 163, 184, 0.5);
-          border-radius: 0.5rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: rgba(15, 23, 42, 0.8);
-          transition: all 0.2s ease;
-          position: relative;
-        }
-        
-        .card-slot:hover {
-          border-color: #fbbf24;
-          background: rgba(59, 130, 246, 0.2);
-          transform: scale(1.05);
-        }
-        
-        .zone-label {
-          font-size: 0.7rem;
-          color: #94a3b8;
-          text-align: center;
-          margin-bottom: 0.25rem;
-        }
-        
-        .zone-count {
-          font-size: 0.8rem;
-          color: #fbbf24;
-          font-weight: bold;
-          position: absolute;
-          top: -0.5rem;
-          right: -0.5rem;
-          background: rgba(0, 0, 0, 0.8);
-          padding: 0.1rem 0.3rem;
-          border-radius: 50%;
-          min-width: 1.2rem;
-          text-align: center;
-        }
-        
-        .field-spell-zone {
-          background: linear-gradient(135deg, #059669, #0d9488);
-        }
-        
-        .dead-zone-slot {
-          background: linear-gradient(135deg, #dc2626, #991b1b);
-        }
-      `}</style>
-
-      {/* Mano Avversario (Ruotata 180°) - Solo icona per non duplicare */}
-      <div className="hand-zone opponent-hand">
-        <EnemyHand 
-          handCount={enemyHandCount}
-          revealedCard={enemyRevealedCard}
-          revealedHand={enemyRevealedHand}
-        />
-      </div>
+      <style dangerouslySetInnerHTML={{ __html: boardStyles }} />
 
       {/* Zona Avversario - Prima riga: Magie/Trappole */}
       <div className="opponent-zone">
@@ -323,7 +316,7 @@ const ResponsiveGameBoard = ({
         />
       </div>
 
-      {/* Mano Giocatore - Unica visualizzazione nell'area principale */}
+      {/* Mano Giocatore */}
       <div className="hand-zone">
         <PlayerHand 
           cards={playerHand}

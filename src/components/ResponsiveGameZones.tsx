@@ -147,6 +147,8 @@ const ResponsiveGameZones = ({
           onFieldCardAction={handleFieldCardAction}
           onCardClick={handleCardClick}
           isEffectActivated={isEffectActivated}
+          zoneLabel={zoneName}
+          enemyField={enemyField}
         />
       );
     });
@@ -156,7 +158,7 @@ const ResponsiveGameZones = ({
         {slots}
       </div>
     );
-  }, [selectedCardFromHand, isEnemy, handleSlotClickWithPlacement, onCardPreview, handleFieldCardAction, handleCardClick, isEffectActivated]);
+  }, [selectedCardFromHand, isEnemy, handleSlotClickWithPlacement, onCardPreview, handleFieldCardAction, handleCardClick, isEffectActivated, enemyField]);
 
   // Memoize field data
   const memoizedField = useMemo(() => field, [field]);
