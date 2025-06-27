@@ -19,7 +19,7 @@ const GameLayout = ({
 }) => {
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
-  const [sidebarPosition, setSidebarPosition] = useState('bottom'); // 'bottom' or 'side'
+  const [sidebarPosition, setSidebarPosition] = useState<'bottom' | 'side'>('bottom');
 
   const {
     playerField,
@@ -94,7 +94,7 @@ const GameLayout = ({
           onTimeUp={handleTimeUp}
           onTimeChange={setTimeRemaining}
           sidebarPosition={sidebarPosition}
-          onSidebarPositionChange={setSidebarPosition}
+          onSidebarPositionChange={(position: 'bottom' | 'side') => setSidebarPosition(position)}
         />
         
         {/* Main game area */}
@@ -155,7 +155,7 @@ const GameLayout = ({
           onTimeUp={handleTimeUp}
           onTimeChange={setTimeRemaining}
           sidebarPosition={sidebarPosition}
-          onSidebarPositionChange={setSidebarPosition}
+          onSidebarPositionChange={(position: 'bottom' | 'side') => setSidebarPosition(position)}
         />
         
         {/* Main game area */}

@@ -1,143 +1,102 @@
-import sampleCardsData from '@/data/sampleCards.json';
+import { useState, useCallback } from 'react';
 import { shuffleArray, generateUniqueCardId } from '@/utils/gameHelpers';
 
-export const useGameInitialization = ({ 
-  gameData, 
+export const useGameInitialization = ({
+  gameData,
   playerDeckData,
   setPlayerDeck,
-  setEnemyDeck, 
-  setPlayerHand, 
+  setEnemyDeck,
+  setPlayerHand,
   setEnemyHandCount,
   setPlayerField,
-  setEnemyField 
+  setEnemyField
 }) => {
-  const initializeGame = () => {
-    console.log('[useGameInitialization] Initializing game...');
-    console.log('[useGameInitialization] Player deck data:', playerDeckData);
-    console.log('[useGameInitialization] Game data:', gameData);
-    
-    // Use player deck data if available, otherwise use sample data
-    let playerCards = [];
-    
-    if (playerDeckData) {
-      // Check if deck has the new structure (mainDeck + extraDeck)
-      if (playerDeckData.mainDeck && playerDeckData.extraDeck) {
-        console.log('[useGameInitialization] Using mainDeck + extraDeck structure');
-        playerCards = [...playerDeckData.mainDeck, ...playerDeckData.extraDeck];
-      } 
-      // Check if deck has cards array
-      else if (playerDeckData.cards) {
-        console.log('[useGameInitialization] Using cards array structure');
-        playerCards = playerDeckData.cards;
-      }
-      // Fallback to direct array
-      else if (Array.isArray(playerDeckData)) {
-        console.log('[useGameInitialization] Using direct array structure');
-        playerCards = playerDeckData;
-      }
-    }
-    
-    // Fallback to sample data if no deck is loaded
-    if (!playerCards || playerCards.length === 0) {
-      console.log('[useGameInitialization] Using sample cards as fallback');
-      playerCards = sampleCardsData.cards;
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const initializeGame = useCallback(() => {
+    if (!playerDeckData || isInitialized) {
+      console.log('Game initialization skipped:', { playerDeckData: !!playerDeckData, isInitialized });
+      return;
     }
 
-    // Separate main deck and extra deck cards for player
-    const playerMainDeckCards = playerCards.filter((card: any) => !card.extra_deck);
-    const playerExtraDeckCards = playerCards.filter((card: any) => card.extra_deck);
+    console.log('🎮 Initializing game with deck data:', playerDeckData);
 
-    console.log('[useGameInitialization] Player deck analysis:', {
-      totalPlayerCards: playerCards.length,
-      playerMainDeckCards: playerMainDeckCards.length,
-      playerExtraDeckCards: playerExtraDeckCards.length,
-      playerDeckStructure: playerDeckData ? Object.keys(playerDeckData) : 'none'
-    });
+    try {
+      // Create deck with unique IDs for each player
+      const playerPrefix = gameData?.isHost ? 'host' : 'guest';
+      const enemyPrefix = gameData?.isHost ? 'guest' : 'host';
+      
+      const createDeckWithUniqueIds = (deckData, prefix) => {
+        return deckData.map((card, index) => ({
+          ...card,
+          id: generateUniqueCardId(prefix, index, card.name)
+        }));
+      };
 
-    // Create player main deck with unique IDs
-    const playerMainDeck = playerMainDeckCards.map((card: any, index: number) => ({
-      ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player', index)
-    }));
-    
-    const playerExtraDeck = playerExtraDeckCards.map((card: any, index: number) => ({
-      ...card,
-      id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
-    }));
+      const playerDeckWithIds = createDeckWithUniqueIds(playerDeckData, playerPrefix);
+      const enemyDeckWithIds = createDeckWithUniqueIds(playerDeckData, enemyPrefix);
 
-    // For enemy deck: 
-    // - If in multiplayer, enemy will have their own deck (this runs on both clients)
-    // - If single player, always use sample data to ensure different deck
-    let enemyCards = sampleCardsData.cards;
-    
-    // In multiplayer, if we're the guest, we might want to use our own deck for enemy
-    // But to keep it simple, always use sample data for enemy to ensure different decks
-    console.log('[useGameInitialization] Using sample data for enemy deck');
-    
-    const enemyMainDeckCards = enemyCards.filter((card: any) => !card.extra_deck);
-    const enemyExtraDeckCards = enemyCards.filter((card: any) => card.extra_deck);
+      // Shuffle both decks independently
+      const shuffledPlayerDeck = shuffleArray([...playerDeckWithIds]);
+      const shuffledEnemyDeck = shuffleArray([...enemyDeckWithIds]);
 
-    const enemyMainDeck = enemyMainDeckCards.map((card: any, index: number) => ({
-      ...card,
-      id: generateUniqueCardId(card.id, 'enemy', index)
-    }));
+      console.log('🎲 Decks created:', {
+        playerDeck: shuffledPlayerDeck.length,
+        enemyDeck: shuffledEnemyDeck.length,
+        playerFirstCard: shuffledPlayerDeck[0]?.id,
+        enemyFirstCard: shuffledEnemyDeck[0]?.id
+      });
 
-    const enemyExtraDeck = enemyExtraDeckCards.map((card: any, index: number) => ({
-      ...card,
-      id: generateUniqueCardId(card.id, 'enemy', `extra_${index}`)
-    }));
+      // Set up initial hands (draw 5 cards each)
+      const initialPlayerHand = shuffledPlayerDeck.slice(0, 5);
+      const remainingPlayerDeck = shuffledPlayerDeck.slice(5);
+      const remainingEnemyDeck = shuffledEnemyDeck.slice(5); // Enemy draws 5 too but we don't see them
 
-    // Shuffle and deal cards
-    const shuffledPlayerDeck = shuffleArray([...playerMainDeck]);
-    const playerStartingHand = shuffledPlayerDeck.slice(0, 5);
-    const playerRemainingDeck = shuffledPlayerDeck.slice(5);
+      setPlayerHand(initialPlayerHand);
+      setEnemyHandCount(5);
+      setPlayerDeck(remainingPlayerDeck);
+      setEnemyDeck(remainingEnemyDeck);
 
-    const shuffledEnemyDeck = shuffleArray([...enemyMainDeck]);
-    const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
-    const enemyRemainingDeck = shuffledEnemyDeck.slice(5);
+      // Initialize player field with new zones
+      setPlayerField({
+        monsters: Array(5).fill(null),
+        spellsTraps: Array(5).fill(null),
+        fieldSpell: [],
+        deck: remainingPlayerDeck,
+        graveyard: [],
+        deadZone: [], // New zone
+        banished: [],
+        banishedFaceDown: [],
+        extraDeck: [],
+        magia: [], // New zone
+        terreno: [] // New zone
+      });
 
-    // Set correct enemy hand count to match actual starting hand
-    const actualEnemyHandCount = enemyStartingHand.length;
+      // Initialize enemy field with new zones (keeping decks separate)
+      setEnemyField({
+        monsters: Array(5).fill(null),
+        spellsTraps: Array(5).fill(null),
+        fieldSpell: [],
+        deck: remainingEnemyDeck, // Independent enemy deck
+        graveyard: [],
+        deadZone: [], // New zone
+        banished: [],
+        banishedFaceDown: [],
+        extraDeck: [],
+        magia: [], // New zone
+        terreno: [] // New zone
+      });
 
-    console.log('[useGameInitialization] Final initialization:', {
-      playerDeckSize: playerRemainingDeck.length,
-      enemyDeckSize: enemyRemainingDeck.length,
-      playerHandSize: playerStartingHand.length,
-      enemyHandSize: actualEnemyHandCount,
-      playerExtraDeckSize: playerExtraDeck.length,
-      enemyExtraDeckSize: enemyExtraDeck.length,
-      isMultiplayer: !!gameData?.gameId,
-      playerName: gameData?.playerName
-    });
+      setIsInitialized(true);
+      console.log('✅ Game initialization completed');
 
-    // Set all the state
-    setPlayerDeck(playerRemainingDeck);
-    setEnemyDeck(enemyRemainingDeck);
-    setPlayerHand(playerStartingHand);
-    setEnemyHandCount(actualEnemyHandCount);
-    
-    setPlayerField((prev: any) => ({ 
-      ...prev, 
-      extraDeck: playerExtraDeck,
-      deck: playerRemainingDeck,
-      deadZone: [],
-      banished: [],
-      banishedFaceDown: []
-    }));
-    
-    setEnemyField((prev: any) => ({ 
-      ...prev, 
-      extraDeck: enemyExtraDeck,
-      deck: enemyRemainingDeck,
-      deadZone: [],
-      banished: [],
-      banishedFaceDown: []
-    }));
-
-    console.log('[useGameInitialization] Game initialized successfully');
-  };
+    } catch (error) {
+      console.error('❌ Error initializing game:', error);
+    }
+  }, [playerDeckData, gameData, isInitialized, setPlayerDeck, setEnemyDeck, setPlayerHand, setEnemyHandCount, setPlayerField, setEnemyField]);
 
   return {
-    initializeGame
+    initializeGame,
+    isInitialized
   };
 };

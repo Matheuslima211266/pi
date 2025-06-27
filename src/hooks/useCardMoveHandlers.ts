@@ -2,16 +2,25 @@
 export const useCardMoveHandlers = (gameState, syncGameState) => {
   const {
     gameData,
+    playerField,
+    enemyField,
     setPlayerField,
+    setEnemyField,
     setPlayerHand,
+    setEnemyHandCount,
     setPlayerLifePoints,
     setEnemyLifePoints,
     setActionLog,
     shuffleArray
   } = gameState;
 
-  const handleCardMove = (card, fromZone, toZone, slotIndex = null) => {
-    console.log(`Moving card ${card.name || 'card'} from ${fromZone} to ${toZone}`, { card, fromZone, toZone, slotIndex });
+  const handleCardMove = (card, fromZone, toZone, slotIndex = null, isPlayer = true) => {
+    console.log(`🔄 Moving card ${card.name || 'card'} from ${fromZone} to ${toZone} for ${isPlayer ? 'player' : 'enemy'}`, { card, fromZone, toZone, slotIndex, isPlayer });
+    
+    // Choose the correct field and setters based on isPlayer
+    const currentField = isPlayer ? playerField : enemyField;
+    const setField = isPlayer ? setPlayerField : setEnemyField;
+    const setHand = isPlayer ? setPlayerHand : null;
     
     // Handle damage dealing
     if (fromZone === 'damage' && toZone === 'lifePoints') {
@@ -33,9 +42,10 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
       return;
     }
     
+    // Handle flip in place
     if (toZone === 'flip_in_place') {
       if (fromZone === 'monsters') {
-        setPlayerField(prev => {
+        setField(prev => {
           const newField = { ...prev };
           newField.monsters = [...prev.monsters];
           newField.monsters[slotIndex] = card;
@@ -43,7 +53,7 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
           return newField;
         });
       } else if (fromZone === 'spellsTraps') {
-        setPlayerField(prev => {
+        setField(prev => {
           const newField = { ...prev };
           newField.spellsTraps = [...prev.spellsTraps];
           newField.spellsTraps[slotIndex] = card;
@@ -66,7 +76,7 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
     // Handle ATK update
     if (toZone === 'updateATK') {
       if (fromZone === 'monsters') {
-        setPlayerField(prev => {
+        setField(prev => {
           const newField = { ...prev };
           newField.monsters = [...prev.monsters];
           newField.monsters[slotIndex] = card;
@@ -88,14 +98,18 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
 
     // Remove from source zone
     if (fromZone === 'hand') {
-      setPlayerHand(hand => hand.filter(c => c.id !== card.id));
+      if (isPlayer && setHand) {
+        setHand(hand => hand.filter(c => c.id !== card.id));
+      } else if (!isPlayer) {
+        setEnemyHandCount(prev => Math.max(0, prev - 1));
+      }
     } else if (fromZone === 'deck') {
-      setPlayerField(prev => ({
+      setField(prev => ({
         ...prev,
         deck: prev.deck.filter(c => c.id !== card.id)
       }));
     } else {
-      setPlayerField(prev => {
+      setField(prev => {
         const newField = { ...prev };
 
         if (fromZone === 'monsters') {
@@ -110,12 +124,18 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
           newField.fieldSpell = [];
         } else if (fromZone === 'graveyard') {
           newField.graveyard = prev.graveyard.filter(c => c.id !== card.id);
+        } else if (fromZone === 'deadZone') {
+          newField.deadZone = prev.deadZone.filter(c => c.id !== card.id);
         } else if (fromZone === 'banished') {
           newField.banished = prev.banished.filter(c => c.id !== card.id);
         } else if (fromZone === 'banishedFaceDown') {
           newField.banishedFaceDown = prev.banishedFaceDown.filter(c => c.id !== card.id);
         } else if (fromZone === 'extraDeck') {
           newField.extraDeck = prev.extraDeck.filter(c => c.id !== card.id);
+        } else if (fromZone === 'magia') {
+          newField.magia = prev.magia.filter(c => c.id !== card.id);
+        } else if (fromZone === 'terreno') {
+          newField.terreno = prev.terreno.filter(c => c.id !== card.id);
         }
 
         return newField;
@@ -124,9 +144,13 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
 
     // Add to destination zone
     if (toZone === 'hand') {
-      setPlayerHand(hand => [...hand, card]);
+      if (isPlayer && setHand) {
+        setHand(hand => [...hand, card]);
+      } else if (!isPlayer) {
+        setEnemyHandCount(prev => prev + 1);
+      }
     } else {
-      setPlayerField(prev => {
+      setField(prev => {
         const newField = { ...prev };
 
         if (toZone === 'monsters') {
@@ -153,12 +177,18 @@ export const useCardMoveHandlers = (gameState, syncGameState) => {
           newField.fieldSpell = [card];
         } else if (toZone === 'graveyard') {
           newField.graveyard = [...(prev.graveyard || []), card];
+        } else if (toZone === 'deadZone') {
+          newField.deadZone = [...(prev.deadZone || []), card];
         } else if (toZone === 'banished') {
           newField.banished = [...(prev.banished || []), card];
         } else if (toZone === 'banishedFaceDown') {
           newField.banishedFaceDown = [...(prev.banishedFaceDown || []), card];
         } else if (toZone === 'extraDeck') {
           newField.extraDeck = [...(prev.extraDeck || []), card];
+        } else if (toZone === 'magia') {
+          newField.magia = [...(prev.magia || []), card];
+        } else if (toZone === 'terreno') {
+          newField.terreno = [...(prev.terreno || []), card];
         } else if (toZone === 'deck_top') {
           newField.deck = [card, ...(prev.deck || [])];
         } else if (toZone === 'deck_bottom') {

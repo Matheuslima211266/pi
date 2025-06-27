@@ -3,37 +3,45 @@ export const useDeckHandlers = (gameState, syncGameState) => {
   const {
     gameData,
     playerField,
+    enemyField,
     setPlayerField,
+    setEnemyField,
     setPlayerHand,
+    setEnemyHandCount,
     setActionLog,
     shuffleArray
   } = gameState;
 
-  const handleDeckMill = (millCount = 1) => {
-    if ((playerField.deck || []).length === 0) {
+  const handleDeckMill = (millCount = 1, isPlayer = true) => {
+    console.log(`🎲 Mill ${millCount} cards for ${isPlayer ? 'player' : 'enemy'}`);
+    
+    const currentField = isPlayer ? playerField : enemyField;
+    const setField = isPlayer ? setPlayerField : setEnemyField;
+    
+    if ((currentField.deck || []).length === 0) {
       const newAction = {
         id: Date.now() + Math.random(),
         player: gameData?.playerName || 'Player',
-        action: 'deck is empty - cannot mill cards',
+        action: `${isPlayer ? 'player' : 'enemy'} deck is empty - cannot mill cards`,
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
       return;
     }
 
-    const deckCards = playerField.deck || [];
+    const deckCards = currentField.deck || [];
     const cardsToMill = deckCards.slice(0, Math.min(millCount, deckCards.length));
     
-    setPlayerField(prev => ({
+    setField(prev => ({
       ...prev,
       deck: prev.deck.slice(millCount),
-      graveyard: [...(prev.graveyard || []), ...cardsToMill]
+      deadZone: [...(prev.deadZone || []), ...cardsToMill]
     }));
 
     const newAction = {
       id: Date.now() + Math.random(),
       player: gameData?.playerName || 'Player',
-      action: `milled ${cardsToMill.length} card${cardsToMill.length > 1 ? 's' : ''} from deck to graveyard`,
+      action: `${isPlayer ? 'player' : 'enemy'} milled ${cardsToMill.length} card${cardsToMill.length > 1 ? 's' : ''} from deck to dead zone`,
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
@@ -41,16 +49,28 @@ export const useDeckHandlers = (gameState, syncGameState) => {
     setTimeout(() => syncGameState(), 100);
   };
 
-  const handleDrawCard = () => {
-    if (playerField.deck.length > 0) {
-      const drawnCard = playerField.deck[0];
-      setPlayerHand(prevHand => [...prevHand, drawnCard]);
-      setPlayerField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
+  const handleDrawCard = (isPlayer = true) => {
+    console.log(`🎴 Draw card for ${isPlayer ? 'player' : 'enemy'}`);
+    
+    const currentField = isPlayer ? playerField : enemyField;
+    const setField = isPlayer ? setPlayerField : setEnemyField;
+    
+    if (currentField.deck.length > 0) {
+      const drawnCard = currentField.deck[0];
+      
+      if (isPlayer) {
+        setPlayerHand(prevHand => [...prevHand, drawnCard]);
+      } else {
+        // For enemy, just update the hand count
+        setEnemyHandCount(prev => prev + 1);
+      }
+      
+      setField(prev => ({ ...prev, deck: prev.deck.slice(1) }));
       
       const newAction = {
         id: Date.now() + Math.random(),
         player: gameData?.playerName || 'Player',
-        action: 'drew a card',
+        action: `${isPlayer ? 'player' : 'enemy'} drew a card`,
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
@@ -59,7 +79,7 @@ export const useDeckHandlers = (gameState, syncGameState) => {
       const newAction = {
         id: Date.now() + Math.random(),
         player: gameData?.playerName || 'Player',
-        action: 'deck is empty!',
+        action: `${isPlayer ? 'player' : 'enemy'} deck is empty!`,
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);

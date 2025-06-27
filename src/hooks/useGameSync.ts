@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
@@ -29,8 +30,10 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
           player_id: user.id,
           player_name: gameState.gameData?.playerName || 'Player',
           action_type: actionType,
-          action_data: actionData,
-          created_at: new Date().toISOString()
+          action_data: {
+            ...actionData,
+            isPlayer: true // Always true for the sender
+          }
         });
 
       if (error) {
@@ -96,13 +99,15 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
           gameState.setEnemyField((prev: any) => {
             const newField = { ...prev };
             
-            // Preserve private data
+            // Preserve private data (deck, extraDeck, deadZone, banished, banishedFaceDown)
             const privateData = {
               deck: prev.deck,
               extraDeck: prev.extraDeck,
               deadZone: prev.deadZone,
               banished: prev.banished,
-              banishedFaceDown: prev.banishedFaceDown
+              banishedFaceDown: prev.banishedFaceDown,
+              magia: prev.magia,
+              terreno: prev.terreno
             };
             
             // Update only public zones
@@ -121,6 +126,34 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         }
         break;
 
+      case 'CARD_MOVED':
+        // Handle card movement with proper player/enemy separation
+        if (gameState.handleCardMove) {
+          // The action comes from opponent, so isPlayer = false for us
+          gameState.handleCardMove(
+            action_data.card, 
+            action_data.fromZone, 
+            action_data.toZone, 
+            action_data.slotIndex, 
+            false // isPlayer = false because it's the opponent's action
+          );
+        }
+        break;
+
+      case 'CARD_DRAWN':
+        if (gameState.handleDrawCard) {
+          // Enemy drew a card, so isPlayer = false
+          gameState.handleDrawCard(false);
+        }
+        break;
+
+      case 'DECK_MILLED':
+        if (gameState.handleDeckMill) {
+          // Enemy milled cards, so isPlayer = false
+          gameState.handleDeckMill(action_data.millCount || 1, false);
+        }
+        break;
+
       case 'HAND_UPDATED':
         if (gameState.setEnemyHandCount) {
           gameState.setEnemyHandCount(action_data.handCount);
@@ -128,8 +161,11 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         break;
 
       case 'LIFE_POINTS_CHANGED':
-        if (gameState.setEnemyLifePoints) {
-          gameState.setEnemyLifePoints(action_data.newLifePoints);
+        if (action_data.isPlayer) {
+          // Opponent's life points changed, update our view of enemy LP
+          if (gameState.setEnemyLifePoints) {
+            gameState.setEnemyLifePoints(action_data.newLifePoints);
+          }
         }
         break;
 
@@ -145,45 +181,6 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         }
         if (gameState.setCurrentPhase) {
           gameState.setCurrentPhase('draw');
-        }
-        break;
-
-      case 'CARD_DRAWN':
-        if (gameState.addActionLog) {
-          gameState.addActionLog(`${action_data.playerName} drew a card`);
-        }
-        break;
-
-      case 'CARD_MOVED':
-        // Handle card movement between zones with private data preservation
-        if (gameState.setEnemyField) {
-          gameState.setEnemyField((prev: any) => {
-            const newField = { ...prev };
-            
-            // Preserve private data
-            const privateData = {
-              deck: prev.deck,
-              extraDeck: prev.extraDeck,
-              deadZone: prev.deadZone,
-              banished: prev.banished,
-              banishedFaceDown: prev.banishedFaceDown
-            };
-            
-            // Handle public zone moves only
-            if (action_data.toZone === 'monsters' || action_data.toZone === 'spellsTraps' || action_data.toZone === 'fieldSpell') {
-              // Update public zones
-              if (newField[action_data.toZone]) {
-                newField[action_data.toZone] = [...newField[action_data.toZone]];
-                if (action_data.slotIndex !== undefined) {
-                  newField[action_data.toZone][action_data.slotIndex] = action_data.card;
-                } else {
-                  newField[action_data.toZone].push(action_data.card);
-                }
-              }
-            }
-            
-            return { ...newField, ...privateData };
-          });
         }
         break;
 
@@ -265,7 +262,7 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         console.log('[GAME_SYNC] Action listener subscription status', status);
         if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
           console.log('[GAME_SYNC] Successfully subscribed to game actions');
-        } else if (status === 'TIMED_OUT' || status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        } else if (status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT || status === REALTIME_SUBSCRIBE_STATES.CLOSED || status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
           console.error('[GAME_SYNC] Failed to subscribe to game actions:', status);
         }
       });

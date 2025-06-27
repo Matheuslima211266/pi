@@ -26,7 +26,7 @@ const Index = () => {
     });
   });
 
-  // Enhanced handlers that also sync to database
+  // Enhanced handlers that also sync to database with proper player/enemy separation
   const enhancedHandlers = {
     ...handlers,
     handleSendMessage: (message: string) => {
@@ -55,7 +55,7 @@ const Index = () => {
       handlers.handleLifePointsChange(newLifePoints, isPlayer);
       gameSync.sendGameAction('LIFE_POINTS_CHANGED', {
         newLifePoints,
-        isPlayer: true
+        isPlayer: true // Always true for the sender
       });
     },
     handlePhaseChange: (newPhase: string) => {
@@ -73,6 +73,13 @@ const Index = () => {
         handCount: gameState.playerHand.length + 1
       });
     },
+    handleDeckMill: (millCount: number = 1) => {
+      handlers.handleDeckMill(millCount);
+      gameSync.sendGameAction('DECK_MILLED', {
+        millCount,
+        playerName: gameState.gameData?.playerName || 'Player'
+      });
+    },
     handleEndTurn: () => {
       // Prima cambia il turno localmente
       handlers.handleEndTurn();
@@ -85,7 +92,8 @@ const Index = () => {
       multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
     },
     handleCardMove: (card: any, fromZone: string, toZone: string, slotIndex?: number) => {
-      handlers.handleCardMove(card, fromZone, toZone, slotIndex);
+      // Local action is always for player (isPlayer = true)
+      handlers.handleCardMove(card, fromZone, toZone, slotIndex, true);
       gameSync.sendGameAction('CARD_MOVED', {
         card,
         fromZone,
