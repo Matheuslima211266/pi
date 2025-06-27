@@ -28,31 +28,39 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
   };
 
   const syncCustomCardsForMultiplayer = (gameData) => {
-    // Se sei l'host, condividi le tue carte personalizzate
+    // Ogni giocatore mantiene il proprio database di carte
+    // L'host e il guest possono avere carte diverse e deck indipendenti
+    
     if (gameData.isHost) {
-      const customCards = localStorage.getItem('yugiduel_custom_cards');
-      if (customCards) {
-        // Salva le carte personalizzate con un key specifico per la partita
-        localStorage.setItem(`yugiduel_shared_cards_${gameData.gameId}`, customCards);
+      console.log('[MULTIPLAYER] Host: mantengo il mio database di carte');
+      // L'host usa le sue carte personalizzate
+      const hostCards = localStorage.getItem('yugiduel_custom_cards');
+      if (hostCards) {
+        // Opzionalmente, l'host può condividere alcune carte
+        const sharedKey = `yugiduel_shared_cards_${gameData.gameId}`;
+        localStorage.setItem(sharedKey, hostCards);
+        console.log('[MULTIPLAYER] Host: carte condivise salvate');
       }
     } else {
-      // Se sei il guest, prova a caricare le carte condivise dall'host
+      console.log('[MULTIPLAYER] Guest: mantengo il mio database di carte');
+      // Il guest mantiene le sue carte personalizzate
+      // Ma può anche accedere alle carte condivise dall'host se disponibili
       const sharedCards = localStorage.getItem(`yugiduel_shared_cards_${gameData.gameId}`);
       if (sharedCards) {
-        // Unisci le carte condivise con quelle personali del guest
-        const existingCards = localStorage.getItem('yugiduel_custom_cards');
-        let combinedCards = [];
-        
         try {
           const shared = JSON.parse(sharedCards);
-          const existing = existingCards ? JSON.parse(existingCards) : [];
+          const existingCards = localStorage.getItem('yugiduel_custom_cards');
+          let guestCards = existingCards ? JSON.parse(existingCards) : [];
           
-          // Evita duplicati basandosi sull'ID
-          const existingIds = new Set(existing.map(c => c.id));
+          // Aggiungi le carte condivise al database del guest (senza sovrascrivere)
+          const existingIds = new Set(guestCards.map(c => c.id));
           const uniqueShared = shared.filter(card => !existingIds.has(card.id));
           
-          combinedCards = [...existing, ...uniqueShared];
-          localStorage.setItem('yugiduel_custom_cards', JSON.stringify(combinedCards));
+          if (uniqueShared.length > 0) {
+            guestCards = [...guestCards, ...uniqueShared];
+            localStorage.setItem('yugiduel_custom_cards', JSON.stringify(guestCards));
+            console.log(`[MULTIPLAYER] Guest: ${uniqueShared.length} carte condivise aggiunte al database`);
+          }
         } catch (error) {
           console.error('Error syncing shared cards:', error);
         }
@@ -170,6 +178,27 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
       deckName: deckData.name || 'Unnamed Deck',
       cardLimitChecks: Array.from(cardCounts.entries()).filter(([_, count]) => count > 3)
     });
+
+    // Assicurati che tutte le carte del deck siano nel database personale
+    const allDeckCards = [...deckData.mainDeck, ...deckData.extraDeck];
+    const uniqueDeckCards = allDeckCards.reduce((acc, card) => {
+      if (!acc.find(c => c.id === card.id)) {
+        acc.push(card);
+      }
+      return acc;
+    }, []);
+
+    // Salva le carte mancanti nel database personale
+    const savedCards = localStorage.getItem('yugiduel_custom_cards');
+    const customCards = savedCards ? JSON.parse(savedCards) : [];
+    const existingIds = new Set(customCards.map(c => c.id));
+    const newCards = uniqueDeckCards.filter(card => !existingIds.has(card.id));
+
+    if (newCards.length > 0) {
+      const updatedCustomCards = [...customCards, ...newCards];
+      localStorage.setItem('yugiduel_custom_cards', JSON.stringify(updatedCustomCards));
+      console.log(`${newCards.length} nuove carte aggiunte al database personale`);
+    }
 
     setPlayerDeckData(deckData);
     alert(`Deck "${deckData.name || 'Unnamed Deck'}" caricato con successo!\nMain Deck: ${mainDeckCount} carte\nExtra Deck: ${extraDeckCount} carte`);

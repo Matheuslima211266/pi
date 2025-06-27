@@ -72,7 +72,8 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
       mainDeck: deck.mainDeck,
       extraDeck: deck.extraDeck,
       cards: [...deck.mainDeck, ...deck.extraDeck],
-      totalCards: deck.totalCards
+      totalCards: deck.totalCards,
+      source: 'slot'
     });
     alert(`Deck "${deck.name}" caricato!`);
   };
@@ -112,25 +113,18 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
         const data = JSON.parse(e.target?.result as string);
         
         if (data.mainDeck && data.extraDeck) {
-          // File deck completo
-          const slotId = parseInt(prompt('In quale slot salvare questo deck? (1-10)') || '0');
-          if (slotId >= 1 && slotId <= 10) {
-            const deckSlot: DeckSlot = {
-              id: slotId,
-              name: data.name || `Deck Importato ${slotId}`,
-              mainDeck: data.mainDeck,
-              extraDeck: data.extraDeck,
-              totalCards: data.mainDeck.length + data.extraDeck.length,
-              lastModified: new Date().toLocaleString()
-            };
-
-            const updatedDecks = { ...savedDecks, [slotId]: deckSlot };
-            setSavedDecks(updatedDecks);
-            localStorage.setItem('yugiduel_saved_decks', JSON.stringify(updatedDecks));
-            alert(`Deck "${deckSlot.name}" importato nello slot ${slotId}!`);
-          }
+          // Carica direttamente nel costruttore del deck
+          onLoadDeck({
+            name: data.name || 'Deck Importato',
+            mainDeck: data.mainDeck,
+            extraDeck: data.extraDeck,
+            cards: [...data.mainDeck, ...data.extraDeck],
+            totalCards: data.mainDeck.length + data.extraDeck.length,
+            source: 'import'
+          });
+          alert(`Deck "${data.name || 'Deck Importato'}" caricato nel costruttore!`);
         } else {
-          alert('Questo file non contiene un deck valido. Assicurati che contenga mainDeck e extraDeck.');
+          alert('Questo file non contiene un deck valido. Deve contenere mainDeck e extraDeck.');
         }
       } catch (error) {
         console.error('Deck import error:', error);
@@ -165,12 +159,12 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
 
   return (
     <Card className="p-4 bg-slate-900 border-2 border-purple-400 h-full">
-      <h3 className="text-lg font-bold text-white mb-3">Slot Deck Salvati</h3>
+      <h3 className="text-lg font-bold text-white mb-3">Gestione Mazzi</h3>
       
       <div className="mb-3 p-2 bg-purple-900/30 rounded border border-purple-400">
         <p className="text-purple-200 text-xs">
           <FileText size={12} className="inline mr-1" />
-          Qui puoi salvare/caricare deck completi
+          Qui puoi salvare/caricare mazzi completi. Usa "Importa Deck" per caricare direttamente un deck nel costruttore.
         </p>
       </div>
 
@@ -178,7 +172,7 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
         <label className="cursor-pointer flex-1">
           <Button variant="outline" size="sm" className="w-full text-xs">
             <Upload size={12} />
-            Import Deck
+            Importa Deck
           </Button>
           <input
             type="file"
