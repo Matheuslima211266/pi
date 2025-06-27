@@ -376,7 +376,31 @@
   white-space: nowrap;
 }
 
-/* ==== RESPONSIVE BREAKPOINTS ==== */
+/* ==== DECK BUILDER MOBILE OPTIMIZATIONS ==== */
+.deck-builder-mobile {
+  padding: 0.5rem;
+}
+
+.deck-builder-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.deck-builder-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.deck-builder-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+/* ==== RESPONSIVE BREAKPOINTS - ENHANCED FOR MOBILE ==== */
 @media (max-width: 1200px) and (min-width: 769px) {
   .sidebar {
     width: clamp(200px, 18vw, 280px);
@@ -394,6 +418,7 @@
   }
 }
 
+/* ==== TABLET OPTIMIZATIONS ==== */
 @media (max-width: 768px) and (min-width: 481px) {
   .game-container {
     flex-direction: column;
@@ -401,7 +426,7 @@
   
   .sidebar {
     width: 100%;
-    height: clamp(120px, 20vh, 180px);
+    height: clamp(100px, 15vh, 150px);
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
@@ -414,63 +439,184 @@
   .field-area {
     flex: 1;
     min-height: 0;
+    padding: 0.5rem;
   }
   
   .card-slot {
-    width: clamp(40px, 7vw, 65px);
-    height: clamp(56px, 9.8vw, 91px);
+    width: clamp(35px, 6vw, 60px);
+    height: clamp(49px, 8.4vw, 84px);
   }
 
   .hand-card {
-    width: clamp(25px, 5vw, 45px);
-    height: clamp(35px, 7vw, 63px);
+    width: clamp(25px, 4.5vw, 40px);
+    height: clamp(35px, 6.3vw, 56px);
   }
   
   .opponent-zone,
   .player-zone {
     max-width: min(98vw, 700px);
-    gap: clamp(0.2rem, 0.6vw, 0.4rem);
+    gap: clamp(0.15rem, 0.4vw, 0.3rem);
   }
 
   .hand-zone {
     max-width: min(98vw, 700px);
   }
+
+  /* Deck Builder for tablets */
+  .deck-builder-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .deck-builder-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
 }
 
+/* ==== MOBILE PHONE OPTIMIZATIONS - ENHANCED ==== */
 @media (max-width: 480px) {
+  body {
+    overflow: auto;
+  }
+
+  .game-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
   .sidebar {
-    height: clamp(100px, 15vh, 140px);
+    width: 100%;
+    height: auto;
+    min-height: 80px;
+    max-height: 120px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    border-right: none;
+    border-bottom: 2px solid #4a5568;
+    overflow-x: auto;
+    overflow-y: hidden;
     padding: 0.5rem;
   }
   
+  .field-area {
+    flex: 1;
+    min-height: calc(100vh - 120px);
+    padding: 0.25rem;
+  }
+  
   .card-slot {
-    width: clamp(35px, 6.5vw, 55px);
-    height: clamp(49px, 9.1vw, 77px);
-    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    width: clamp(30px, 5.5vw, 45px);
+    height: clamp(42px, 7.7vw, 63px);
+    font-size: clamp(0.6rem, 1.2vw, 0.8rem);
   }
 
   .hand-card {
-    width: clamp(22px, 4.5vw, 40px);
-    height: clamp(31px, 6.3vw, 56px);
-    font-size: clamp(0.7rem, 1.2vw, 1rem);
+    width: clamp(20px, 4vw, 35px);
+    height: clamp(28px, 5.6vw, 49px);
+    font-size: clamp(0.6rem, 1vw, 0.8rem);
   }
   
   .opponent-zone,
   .player-zone,
   .hand-zone {
-    gap: clamp(0.15rem, 0.4vw, 0.25rem);
+    gap: clamp(0.1rem, 0.3vw, 0.2rem);
+    max-width: 98vw;
   }
 
   .battlefield-container {
-    gap: clamp(0.2rem, 0.8vw, 0.5rem);
+    gap: clamp(0.15rem, 0.6vw, 0.4rem);
+    padding: 0.25rem;
   }
 
   .center-zone {
-    gap: clamp(0.3rem, 1vw, 0.6rem);
+    gap: clamp(0.25rem, 0.8vw, 0.5rem);
+    margin: clamp(0.2rem, 0.6vh, 0.5rem) 0;
   }
 
   .center-group {
-    gap: clamp(0.3rem, 0.8vw, 0.5rem);
+    gap: clamp(0.2rem, 0.6vw, 0.4rem);
+  }
+
+  .battle-field-label {
+    font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+    padding: 0.25rem 0.5rem;
+    letter-spacing: 1px;
+  }
+
+  /* Enhanced Mobile Deck Builder */
+  .deck-builder-mobile {
+    padding: 0.25rem;
+  }
+
+  .deck-builder-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .deck-builder-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .deck-builder-buttons button {
+    width: 100%;
+    min-height: 44px; /* Touch target size */
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+  
+  .deck-builder-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.25rem;
+  }
+
+  /* Card preview for mobile */
+  .card-preview-mobile {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
+    max-width: 300px !important;
+    height: auto !important;
+    z-index: 9999 !important;
+  }
+
+  /* Mobile-friendly input fields */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Mobile-friendly buttons */
+  button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Scrollable areas for mobile */
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ==== VERY SMALL MOBILE SCREENS ==== */
+@media (max-width: 320px) {
+  .card-slot {
+    width: clamp(25px, 5vw, 35px);
+    height: clamp(35px, 7vw, 49px);
+    font-size: 0.6rem;
+  }
+
+  .hand-card {
+    width: clamp(18px, 3.5vw, 28px);
+    height: clamp(25px, 4.9vw, 39px);
+    font-size: 0.5rem;
+  }
+
+  .deck-builder-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   }
 }
 
@@ -532,23 +678,65 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* Responsive per sidebar */
-@media (max-width: 768px) and (min-width: 481px) {
+/* Responsive per sidebar su mobile */
+@media (max-width: 768px) {
   .sidebar {
-    display: none; /* Nascondi sidebar su tablet per ora */
+    display: flex;
+    flex-direction: row;
+    height: auto;
+    padding: 0.5rem;
   }
   
-  .field-area {
-    width: 100%;
+  .sidebar-section {
+    margin-bottom: 0;
+    margin-right: 1rem;
+    padding: 0.5rem;
+    min-width: fit-content;
+  }
+  
+  .sidebar-section:last-child {
+    margin-right: 0;
   }
 }
 
-@media (max-width: 480px) {
-  .sidebar {
-    display: none; /* Nascondi sidebar su mobile per ora */
+/* ==== MOBILE TOUCH IMPROVEMENTS ==== */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  .card-slot, .hand-card {
+    touch-action: manipulation;
   }
   
-  .field-area {
-    width: 100%;
+  /* Prevent double-tap zoom */
+  * {
+    touch-action: manipulation;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ==== LANDSCAPE MOBILE OPTIMIZATIONS ==== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .game-container {
+    flex-direction: row;
+  }
+  
+  .sidebar {
+    width: clamp(150px, 15vw, 200px);
+    height: 100vh;
+    flex-direction: column;
+    border-right: 2px solid #4a5568;
+    border-bottom: none;
+  }
+  
+  .battlefield-container {
+    gap: clamp(0.2rem, 0.8vw, 0.5rem);
+  }
+  
+  .card-slot {
+    width: clamp(35px, 6vw, 55px);
+    height: clamp(49px, 8.4vw, 77px);
   }
 }
