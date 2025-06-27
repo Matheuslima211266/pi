@@ -47,16 +47,74 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
 
   const handleDeckLoad = (deckData) => {
     console.log('Deck loaded:', deckData);
+    
+    // Improved validation
+    if (!deckData) {
+      console.error('No deck data provided');
+      alert('Errore: Nessun dato deck fornito');
+      return;
+    }
+
+    // Validate deck structure
+    let isValid = false;
+    let mainDeckCount = 0;
+    let extraDeckCount = 0;
+    
+    if (deckData.mainDeck && Array.isArray(deckData.mainDeck)) {
+      mainDeckCount = deckData.mainDeck.length;
+      isValid = true;
+    }
+    
+    if (deckData.extraDeck && Array.isArray(deckData.extraDeck)) {
+      extraDeckCount = deckData.extraDeck.length;
+    }
+    
+    if (deckData.cards && Array.isArray(deckData.cards)) {
+      // Fallback: if only cards array is provided, separate main and extra
+      const mainCards = deckData.cards.filter(card => !card.extra_deck);
+      const extraCards = deckData.cards.filter(card => card.extra_deck);
+      
+      if (!deckData.mainDeck) {
+        deckData.mainDeck = mainCards;
+        mainDeckCount = mainCards.length;
+      }
+      
+      if (!deckData.extraDeck) {
+        deckData.extraDeck = extraCards;
+        extraDeckCount = extraCards.length;
+      }
+      
+      isValid = true;
+    }
+
+    if (!isValid || mainDeckCount === 0) {
+      console.error('Invalid deck structure:', deckData);
+      alert('Errore: Deck non valido. Assicurati che il deck contenga almeno carte nel Main Deck.');
+      return;
+    }
+
+    // Check deck size limits
+    if (mainDeckCount < 40 || mainDeckCount > 60) {
+      alert(`Attenzione: Il Main Deck deve avere tra 40 e 60 carte (attualmente: ${mainDeckCount})`);
+    }
+    
+    if (extraDeckCount > 15) {
+      alert(`Attenzione: L'Extra Deck può avere massimo 15 carte (attualmente: ${extraDeckCount})`);
+    }
+
     console.log('Deck structure check:', {
       hasCards: !!deckData.cards,
       cardCount: deckData.cards?.length || 0,
       hasMainDeck: !!deckData.mainDeck,
-      mainDeckCount: deckData.mainDeck?.length || 0,
+      mainDeckCount,
       hasExtraDeck: !!deckData.extraDeck,
-      extraDeckCount: deckData.extraDeck?.length || 0,
-      totalCards: deckData.totalCards
+      extraDeckCount,
+      totalCards: deckData.totalCards || (mainDeckCount + extraDeckCount),
+      deckName: deckData.name || 'Unnamed Deck'
     });
+
     setPlayerDeckData(deckData);
+    alert(`Deck "${deckData.name || 'Unnamed Deck'}" caricato con successo!\nMain Deck: ${mainDeckCount} carte\nExtra Deck: ${extraDeckCount} carte`);
   };
 
   return {

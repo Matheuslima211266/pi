@@ -65,7 +65,7 @@ export const useGameInitialization = ({
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    // Create enemy deck using sample data (not player's deck)
+    // ALWAYS use sample data for enemy deck to ensure independent decks
     const enemyCards = sampleCardsData.cards;
     const enemyMainDeckCards = enemyCards.filter((card: any) => !card.extra_deck);
     const enemyExtraDeckCards = enemyCards.filter((card: any) => card.extra_deck);
@@ -89,7 +89,7 @@ export const useGameInitialization = ({
     const enemyStartingHand = shuffledEnemyDeck.slice(0, 5);
     const enemyRemainingDeck = shuffledEnemyDeck.slice(5);
 
-    // Set correct enemy hand count
+    // Set correct enemy hand count to match actual starting hand
     const actualEnemyHandCount = enemyStartingHand.length;
 
     console.log('[useGameInitialization] Final initialization:', {
@@ -105,7 +105,7 @@ export const useGameInitialization = ({
     setPlayerDeck(playerRemainingDeck);
     setEnemyDeck(enemyRemainingDeck);
     setPlayerHand(playerStartingHand);
-    setEnemyHandCount(actualEnemyHandCount);
+    setEnemyHandCount(actualEnemyHandCount); // Use actual count, not a fixed number
     
     setPlayerField((prev: any) => ({ 
       ...prev, 

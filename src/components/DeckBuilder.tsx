@@ -1,101 +1,18 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, Download, Plus, Minus, Search, Save, X } from 'lucide-react';
+import { FileText, Search, Save, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-// Componente CardPreview migliorato
-const ImprovedCardPreview = ({ card, onClose }) => {
-  if (!card) return null;
-
-  return (
-    <Card className="p-4 bg-slate-900 border-2 border-purple-400 shadow-2xl">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-bold text-white truncate pr-2">{card.name}</h3>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 h-auto"
-          >
-            <X size={16} />
-          </Button>
-        )}
-      </div>
-      
-      {/* Immagine carta */}
-      {card.art_link && (
-        <div className="mb-3">
-          <img 
-            src={card.art_link} 
-            alt={card.name}
-            className="w-full h-48 object-cover rounded-lg border border-purple-300"
-            onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
-        </div>
-      )}
-
-      {/* Info carta */}
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-300">Tipo:</span>
-          <span className="text-white font-medium">{card.type}</span>
-        </div>
-        
-        {card.attribute && (
-          <div className="flex justify-between">
-            <span className="text-gray-300">Attributo:</span>
-            <span className="text-white font-medium">{card.attribute}</span>
-          </div>
-        )}
-        
-        {card.star && (
-          <div className="flex justify-between">
-            <span className="text-gray-300">Livello:</span>
-            <span className="text-white font-medium">⭐ {card.star}</span>
-          </div>
-        )}
-        
-        {(card.atk !== undefined || card.def !== undefined) && (
-          <div className="flex justify-between">
-            <span className="text-gray-300">ATK/DEF:</span>
-            <span className="text-white font-medium">
-              {card.atk || '?'} / {card.def || '?'}
-            </span>
-          </div>
-        )}
-
-        {card.cost && (
-          <div className="flex justify-between">
-            <span className="text-gray-300">Costo:</span>
-            <span className="text-white font-medium">{card.cost}</span>
-          </div>
-        )}
-        
-        {card.extra_deck && (
-          <Badge className="bg-purple-600 text-white">Extra Deck</Badge>
-        )}
-      </div>
-
-      {/* Effetto */}
-      {card.effect && (
-        <div className="mt-3 pt-3 border-t border-slate-600">
-          <h4 className="text-sm font-semibold text-gray-300 mb-2">Effetto:</h4>
-          <p className="text-xs text-gray-200 bg-slate-800/50 p-2 rounded max-h-32 overflow-y-auto">
-            {card.effect}
-          </p>
-        </div>
-      )}
-    </Card>
-  );
-};
+import DeckSlotManager from './deck-builder/DeckSlotManager';
+import CardPreview from './deck-builder/CardPreview';
+import CustomCardManager from './deck-builder/CustomCardManager';
+import CardList from './deck-builder/CardList';
+import DeckView from './deck-builder/DeckView';
 
 interface DeckBuilderProps {
   availableCards: any[];
@@ -103,9 +20,11 @@ interface DeckBuilderProps {
   initialDeck?: any;
 }
 
-const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderProps) => {
+const DeckBuilder = ({ availableCards: initialAvailableCards, onDeckSave, initialDeck }: DeckBuilderProps) => {
   const [deckName, setDeckName] = useState(initialDeck?.name || 'Il Mio Deck');
-  // Modificato: ogni carta nel deck ha solo l'ID originale + count
+  const [availableCards, setAvailableCards] = useState(initialAvailableCards);
+  
+  // Deck state - ogni carta nel deck ha solo l'ID originale + count
   const [mainDeck, setMainDeck] = useState<{[cardId: number]: number}>(
     initialDeck?.mainDeck ? 
     initialDeck.mainDeck.reduce((acc, card) => {
@@ -113,6 +32,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       return acc;
     }, {}) : {}
   );
+  
   const [extraDeck, setExtraDeck] = useState<{[cardId: number]: number}>(
     initialDeck?.extraDeck ? 
     initialDeck.extraDeck.reduce((acc, card) => {
@@ -120,6 +40,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       return acc;
     }, {}) : {}
   );
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [previewCard, setPreviewCard] = useState<any>(null);
 
@@ -131,11 +52,13 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     return {
       mainDeckCards: main.filter(card => 
         card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.type.toLowerCase().includes(searchTerm.toLowerCase())
+        (card.type && card.type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (card.attribute && card.attribute.toLowerCase().includes(searchTerm.toLowerCase()))
       ),
       extraDeckCards: extra.filter(card => 
         card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.type.toLowerCase().includes(searchTerm.toLowerCase())
+        (card.type && card.type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (card.attribute && card.attribute.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     };
   }, [availableCards, searchTerm]);
@@ -188,7 +111,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
   };
 
   // Converti deck format per export/save
-  const convertDeckToArray = (deckObj: {[cardId: number]: number}, isExtra: boolean = false) => {
+  const convertDeckToArray = (deckObj: {[cardId: number]: number}) => {
     const result: any[] = [];
     Object.entries(deckObj).forEach(([cardId, count]) => {
       const card = availableCards.find(c => c.id === parseInt(cardId));
@@ -199,82 +122,6 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
       }
     });
     return result;
-  };
-
-  // Import da JSON
-  const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const deckData = JSON.parse(e.target?.result as string);
-        if (deckData.name) setDeckName(deckData.name);
-        
-        // Converti array in oggetto conteggio
-        if (deckData.mainDeck) {
-          const mainCount: {[cardId: number]: number} = {};
-          deckData.mainDeck.forEach((card: any) => {
-            mainCount[card.id] = (mainCount[card.id] || 0) + 1;
-          });
-          setMainDeck(mainCount);
-        }
-        
-        if (deckData.extraDeck) {
-          const extraCount: {[cardId: number]: number} = {};
-          deckData.extraDeck.forEach((card: any) => {
-            extraCount[card.id] = (extraCount[card.id] || 0) + 1;
-          });
-          setExtraDeck(extraCount);
-        }
-        
-        alert('Deck importato con successo!');
-      } catch (error) {
-        alert('Errore nell\'importazione del file JSON');
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  };
-
-  // Import da Excel
-  const importFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        const newMainDeck: {[cardId: number]: number} = {};
-        const newExtraDeck: {[cardId: number]: number} = {};
-
-        jsonData.forEach((row: any) => {
-          const card = availableCards.find(c => c.name === row.Nome);
-          if (card) {
-            const quantity = parseInt(row.Quantità) || 1;
-            if (row.Deck === 'Extra') {
-              newExtraDeck[card.id] = (newExtraDeck[card.id] || 0) + quantity;
-            } else {
-              newMainDeck[card.id] = (newMainDeck[card.id] || 0) + quantity;
-            }
-          }
-        });
-
-        setMainDeck(newMainDeck);
-        setExtraDeck(newExtraDeck);
-        alert('Deck importato da Excel con successo!');
-      } catch (error) {
-        alert('Errore nell\'importazione del file Excel');
-      }
-    };
-    reader.readAsArrayBuffer(file);
-    event.target.value = '';
   };
 
   // Valida il deck
@@ -303,7 +150,7 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     }
 
     const mainDeckArray = convertDeckToArray(mainDeck);
-    const extraDeckArray = convertDeckToArray(extraDeck, true);
+    const extraDeckArray = convertDeckToArray(extraDeck);
 
     const deckData = {
       name: deckName,
@@ -315,28 +162,6 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
 
     onDeckSave(deckData);
     alert('Deck salvato con successo!');
-  };
-
-  // Export JSON
-  const exportJSON = () => {
-    const mainDeckArray = convertDeckToArray(mainDeck);
-    const extraDeckArray = convertDeckToArray(extraDeck, true);
-
-    const deckData = {
-      name: deckName,
-      mainDeck: mainDeckArray,
-      extraDeck: extraDeckArray,
-      cards: [...mainDeckArray, ...extraDeckArray]
-    };
-
-    const dataStr = JSON.stringify(deckData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${deckName.replace(/\s+/g, '_')}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   // Export Excel
@@ -383,28 +208,50 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
     XLSX.writeFile(workbook, `${deckName.replace(/\s+/g, '_')}.xlsx`);
   };
 
+  // Carica deck da slot
+  const handleLoadDeck = (deckData: any) => {
+    if (deckData.name) setDeckName(deckData.name);
+    
+    // Converti array in oggetto conteggio
+    if (deckData.mainDeck) {
+      const mainCount: {[cardId: number]: number} = {};
+      deckData.mainDeck.forEach((card: any) => {
+        mainCount[card.id] = (mainCount[card.id] || 0) + 1;
+      });
+      setMainDeck(mainCount);
+    }
+    
+    if (deckData.extraDeck) {
+      const extraCount: {[cardId: number]: number} = {};
+      deckData.extraDeck.forEach((card: any) => {
+        extraCount[card.id] = (extraCount[card.id] || 0) + 1;
+      });
+      setExtraDeck(extraCount);
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto p-4">
       <div className="flex gap-4">
-        {/* Card Preview - Left Side */}
+        {/* Left Panel - Deck Slots */}
         <div className="w-80 flex-shrink-0">
-          {previewCard ? (
-            <ImprovedCardPreview 
-              card={previewCard} 
-              onClose={() => setPreviewCard(null)} 
-            />
-          ) : (
-            <Card className="p-6 bg-slate-900 border-2 border-purple-400 h-96 flex items-center justify-center">
-              <div className="text-center text-gray-400">
-                <FileText size={48} className="mx-auto mb-4" />
-                <p>Seleziona una carta per vedere i dettagli</p>
-              </div>
-            </Card>
-          )}
+          <DeckSlotManager
+            onLoadDeck={handleLoadDeck}
+            currentDeck={{ name: deckName, mainDeck, extraDeck }}
+            availableCards={availableCards}
+          />
         </div>
 
-        {/* Main Deck Builder - Right Side */}
-        <div className="flex-1">
+        {/* Center - Card Preview */}
+        <div className="w-80 flex-shrink-0">
+          <CardPreview 
+            card={previewCard} 
+            onClose={() => setPreviewCard(null)} 
+          />
+        </div>
+
+        {/* Right Panel - Main Deck Builder */}
+        <div className="flex-1 min-w-0">
           <Card className="p-4 bg-slate-900 border-2 border-purple-400">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -412,40 +259,6 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                 <h2 className="text-xl font-bold text-white">Deck Builder</h2>
               </div>
               <div className="flex gap-2">
-                {/* Import Buttons */}
-                <label className="cursor-pointer">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>
-                      <Upload size={16} />
-                      JSON
-                    </span>
-                  </Button>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={importFromJSON}
-                    className="hidden"
-                  />
-                </label>
-                <label className="cursor-pointer">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>
-                      <Upload size={16} />
-                      Excel
-                    </span>
-                  </Button>
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={importFromExcel}
-                    className="hidden"
-                  />
-                </label>
-                {/* Export Buttons */}
-                <Button onClick={exportJSON} variant="outline" size="sm">
-                  <Download size={16} />
-                  JSON
-                </Button>
                 <Button onClick={exportExcel} variant="outline" size="sm">
                   <Download size={16} />
                   Excel
@@ -462,6 +275,12 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                 className="bg-slate-800 text-white border-slate-600"
               />
             </div>
+
+            {/* Custom Card Manager */}
+            <CustomCardManager
+              onCardsUpdate={setAvailableCards}
+              availableCards={availableCards}
+            />
 
             {/* Contatori deck */}
             <div className="flex gap-4 mb-4">
@@ -493,142 +312,42 @@ const DeckBuilder = ({ availableCards, onDeckSave, initialDeck }: DeckBuilderPro
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Main Deck Cards */}
-                  <Card className="p-4 bg-slate-800/50">
-                    <h3 className="text-lg font-semibold text-white mb-3">Carte Main Deck</h3>
-                    <div className="max-h-96 overflow-y-auto space-y-2">
-                      {mainDeckCards.map(card => (
-                        <div 
-                          key={card.id} 
-                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
-                          onMouseEnter={() => setPreviewCard(card)}
-                        >
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{card.name}</div>
-                            <div className="text-gray-400 text-sm">{card.type}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {mainDeck[card.id] || 0}/3
-                            </Badge>
-                            <Button
-                              size="sm"
-                              onClick={() => addCardToDeck(card)}
-                              disabled={(mainDeck[card.id] || 0) >= 3}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <Plus size={14} />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
+                  <CardList
+                    cards={mainDeckCards}
+                    title="Carte Main Deck"
+                    deckCounts={mainDeck}
+                    onAddCard={(card) => addCardToDeck(card, false)}
+                    onCardHover={setPreviewCard}
+                  />
 
-                  {/* Extra Deck Cards */}
-                  <Card className="p-4 bg-slate-800/50">
-                    <h3 className="text-lg font-semibold text-white mb-3">Carte Extra Deck</h3>
-                    <div className="max-h-96 overflow-y-auto space-y-2">
-                      {extraDeckCards.map(card => (
-                        <div 
-                          key={card.id} 
-                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
-                          onMouseEnter={() => setPreviewCard(card)}
-                        >
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{card.name}</div>
-                            <div className="text-gray-400 text-sm">{card.type}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {extraDeck[card.id] || 0}/3
-                            </Badge>
-                            <Button
-                              size="sm"
-                              onClick={() => addCardToDeck(card, true)}
-                              disabled={(extraDeck[card.id] || 0) >= 3}
-                              className="bg-purple-600 hover:bg-purple-700"
-                            >
-                              <Plus size={14} />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
+                  <CardList
+                    cards={extraDeckCards}
+                    title="Carte Extra Deck"
+                    deckCounts={extraDeck}
+                    onAddCard={(card) => addCardToDeck(card, true)}
+                    onCardHover={setPreviewCard}
+                  />
                 </div>
               </TabsContent>
 
               <TabsContent value="main-deck">
-                <Card className="p-4 bg-slate-800/50">
-                  <h3 className="text-lg font-semibold text-white mb-3">Main Deck ({mainDeckTotal})</h3>
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    {Object.entries(mainDeck).map(([cardId, count]) => {
-                      const card = availableCards.find(c => c.id === parseInt(cardId));
-                      if (!card) return null;
-                      return (
-                        <div 
-                          key={cardId}
-                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
-                          onMouseEnter={() => setPreviewCard(card)}
-                        >
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{card.name}</div>
-                            <div className="text-gray-400 text-sm">{card.type}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {count}x
-                            </Badge>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeCardFromDeck(card.id)}
-                            >
-                              <Minus size={14} />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Card>
+                <DeckView
+                  title="Main Deck"
+                  deckCards={mainDeck}
+                  availableCards={availableCards}
+                  onRemoveCard={(cardId) => removeCardFromDeck(cardId, false)}
+                  onCardHover={setPreviewCard}
+                />
               </TabsContent>
 
               <TabsContent value="extra-deck">
-                <Card className="p-4 bg-slate-800/50">
-                  <h3 className="text-lg font-semibold text-white mb-3">Extra Deck ({extraDeckTotal})</h3>
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    {Object.entries(extraDeck).map(([cardId, count]) => {
-                      const card = availableCards.find(c => c.id === parseInt(cardId));
-                      if (!card) return null;
-                      return (
-                        <div 
-                          key={cardId}
-                          className="flex items-center justify-between p-2 bg-slate-700/50 rounded cursor-pointer hover:bg-slate-700/70"
-                          onMouseEnter={() => setPreviewCard(card)}
-                        >
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{card.name}</div>
-                            <div className="text-gray-400 text-sm">{card.type}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {count}x
-                            </Badge>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeCardFromDeck(card.id, true)}
-                            >
-                              <Minus size={14} />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Card>
+                <DeckView
+                  title="Extra Deck"
+                  deckCards={extraDeck}
+                  availableCards={availableCards}
+                  onRemoveCard={(cardId) => removeCardFromDeck(cardId, true)}
+                  onCardHover={setPreviewCard}
+                />
               </TabsContent>
             </Tabs>
 
