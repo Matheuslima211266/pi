@@ -1,9 +1,7 @@
 
-import { useSupabaseMultiplayer } from './useSupabaseMultiplayer';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useGameSync = (user, sessionId, gameState) => {
-  const { supabase } = useSupabaseMultiplayer(user, gameState);
-  
   const syncCompleteGameState = async () => {
     if (!sessionId || !user) {
       console.log('[GAME_SYNC] Cannot sync - missing session or user');
