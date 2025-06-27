@@ -133,6 +133,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
     alert(`${uniqueCards.length} ${source} importate con successo nel database!`);
   };
 
+  // Aggiornata per supportare la nuova struttura Excel
   const importCardsFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -145,18 +146,42 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const newCards = jsonData.map((row: any, index: number) => ({
-          id: row.ID || Date.now() + index,
-          name: row.Nome || row.Name || `Carta ${index + 1}`,
-          type: row.Tipo || row.Type || 'Monster',
-          attribute: row.Attributo || row.Attribute || null,
-          star: row.Livello || row.Level || null,
-          atk: row.ATK || null,
-          def: row.DEF || null,
-          effect: row.Effetto || row.Effect || null,
-          extra_deck: (row.Deck === 'Extra' || row.ExtraDeck === true),
-          art_link: row.Immagine || row.Image || null
-        }));
+        const newCards = jsonData.map((row: any, index: number) => {
+          // Gestione della nuova struttura Excel
+          const isExtraDeck = ['fusion', 'synchro', 'xyz', 'link', 'pendulum'].includes(
+            (row.Frame || row.Type || '').toLowerCase()
+          );
+          
+          // Determina il tipo di carta dalla colonna Frame o Type Ability
+          let cardType = 'Monster';
+          const frameValue = (row.Frame || '').toLowerCase();
+          const typeAbility = (row['Type Ability'] || '').toLowerCase();
+          
+          if (frameValue.includes('spell') || frameValue.includes('magic') || typeAbility.includes('magia')) {
+            cardType = 'Spell';
+          } else if (frameValue.includes('trap') || typeAbility.includes('trappola')) {
+            cardType = 'Trap';
+          } else if (frameValue === 'effect' || typeAbility.includes('effetto')) {
+            cardType = 'Effect Monster';
+          }
+
+          return {
+            id: row.ID || Date.now() + index + Math.random(),
+            name: row.Name || row.Nome || `Carta ${index + 1}`,
+            type: cardType,
+            attribute: row.Attribute || row.Attributo || null,
+            star: parseInt(row.Star || row.Livello || 0) || null,
+            atk: parseInt(row.ATK || 0) || null,
+            def: parseInt(row.DEF || 0) || null,
+            effect: row.Effect || row.Effetto || null,
+            extra_deck: isExtraDeck,
+            art_link: row['Art Link'] || row.Immagine || row.Image || null,
+            // Nuovi campi dalla struttura Excel
+            frame: row.Frame || null,
+            spellTrapIcon: row['Spell/Trap Icon'] || null,
+            typeAbility: row['Type Ability'] || null
+          };
+        });
 
         importCards(newCards, 'carte da Excel');
       } catch (error) {
@@ -202,7 +227,8 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
       <div className="mb-3 p-3 bg-blue-900/30 rounded border border-blue-400">
         <p className="text-blue-200 text-sm">
           <FileText size={16} className="inline mr-2" />
-          <strong>Gestisci il tuo database di carte:</strong> Importa carte qui per aggiungerle al tuo database personale. Potrai poi usarle per costruire i tuoi mazzi.
+          <strong>Gestisci il tuo database di carte:</strong> Importa carte qui per aggiungerle al tuo database personale. 
+          Supporta Excel con colonne: Frame, Name, Attribute, Star, Spell/Trap Icon, Art Link, Type Ability, Effect, ATK, DEF.
         </p>
       </div>
       

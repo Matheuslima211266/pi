@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,55 +41,44 @@ const MultiplayerSetup = ({
   const [availableCards, setAvailableCards] = useState(sampleCardsData.cards);
   const [currentDeck, setCurrentDeck] = useState<any>(null);
 
-  useEffect(() => {
-    console.log('[SETUP] MultiplayerSetup component rendered', {
-      gameStarted: gameState?.gameStarted,
-      currentSession: !!gameState?.currentSession,
-      bothPlayersReady: gameState?.bothPlayersReady,
-      playerReady: gameState?.playerReady,
-      opponentReady: gameState?.opponentReady,
-      gameId,
-      gameIdFromUrl,
-      isHost,
-      gameSessionCreated,
-      isJoiningGame,
-      showDeckBuilder
-    });
-  });
+  // Memoizza lo stato per evitare render loops
+  const currentState = useMemo(() => ({
+    gameStarted: gameState?.gameStarted,
+    currentSession: !!gameState?.currentSession,
+    bothPlayersReady: gameState?.bothPlayersReady,
+    playerReady: gameState?.playerReady,
+    opponentReady: gameState?.opponentReady
+  }), [gameState?.gameStarted, gameState?.currentSession, gameState?.bothPlayersReady, gameState?.playerReady, gameState?.opponentReady]);
 
-  // Check URL for game parameter
+  // Check URL for game parameter - solo una volta al mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const gameFromUrl = urlParams.get('game');
-    if (gameFromUrl) {
-      console.log('[SETUP] Game ID detected from URL', { gameFromUrl });
-      console.log('Game ID detected from URL:', gameFromUrl);
+    if (gameFromUrl && !gameIdFromUrl) {
+      console.log('[SETUP] Game ID detected from URL:', gameFromUrl);
       setGameIdFromUrl(gameFromUrl);
       setGameId(gameFromUrl);
     }
-  }, []);
+  }, []); // Solo al mount
 
-  const createGame = async () => {
-    console.log('[SETUP] Host attempting to create game', { playerName, deckLoaded });
-    
+  const createGame = useCallback(async () => {
     if (!playerName.trim()) {
-      console.error('[SETUP] Host missing player name');
       alert('Please enter your name first');
       return;
     }
     
     if (!deckLoaded) {
-      console.error('[SETUP] Host missing deck');
       alert('Please create or upload a deck first');
       return;
     }
+
+    if (isCreatingGame) return; // Prevent double calls
 
     setIsCreatingGame(true);
     const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
     try {
-      console.log('[SETUP] Creating game with ID', { newGameId, playerName });
-      console.log('Creating game with ID:', newGameId);
+      console.log('[SETUP] Creating game with ID:', newGameId);
       
       const gameData = {
         gameId: newGameId,
@@ -99,60 +88,46 @@ const MultiplayerSetup = ({
       };
       
       const success = await onGameStart(gameData);
-      console.log('[SETUP] Game creation result', { success, gameData });
-      console.log('Game creation result:', success);
       
       if (success) {
         setGameId(newGameId);
         setIsHost(true);
         setGameSessionCreated(true);
-        console.log('[SETUP] Game created successfully', { gameId: newGameId });
-        console.log('Game created successfully - showing link');
+        console.log('[SETUP] Game created successfully');
       } else {
         console.error('[SETUP] Failed to create game session');
         alert('Failed to create game session. Please try again.');
       }
     } catch (error) {
-      console.error('[SETUP] Exception creating game', error);
-      console.error('Error creating game:', error);
+      console.error('[SETUP] Exception creating game:', error);
       alert('Failed to create game session. Please try again.');
     } finally {
       setIsCreatingGame(false);
     }
-  };
+  }, [playerName, deckLoaded, isCreatingGame, onGameStart]);
 
-  const joinGame = async () => {
+  const joinGame = useCallback(async () => {
     const targetGameId = gameId.trim().toUpperCase() || gameIdFromUrl;
     
-    console.log('[SETUP] Guest attempting to join game', { 
-      originalGameId: gameId, 
-      targetGameId, 
-      playerName, 
-      deckLoaded,
-      gameIdFromUrl 
-    });
-    
     if (!targetGameId) {
-      console.error('[SETUP] Guest missing game ID');
       alert('Please enter a Game ID');
       return;
     }
     
     if (!playerName.trim()) {
-      console.error('[SETUP] Guest missing player name');
       alert('Please enter your name');
       return;
     }
     
     if (!deckLoaded) {
-      console.error('[SETUP] Guest missing deck');
       alert('Please create or upload a deck first');
       return;
     }
 
+    if (isJoiningGame) return; // Prevent double calls
+
     setIsJoiningGame(true);
-    console.log('[SETUP] Setting isJoiningGame to true, calling onGameStart', { targetGameId });
-    console.log('=== ATTEMPTING TO JOIN GAME ===', targetGameId);
+    console.log('[SETUP] Attempting to join game:', targetGameId);
     
     try {
       const gameData = { 
@@ -162,98 +137,87 @@ const MultiplayerSetup = ({
         deckLoaded: true 
       };
       
-      console.log('[SETUP] Calling onGameStart for guest', gameData);
       const success = await onGameStart(gameData);
       
-      console.log('[SETUP] onGameStart result for guest', { success, gameData });
-      
       if (!success) {
-        console.error('[SETUP] Guest join failed - onGameStart returned false');
         alert('Failed to join game. Please check the Game ID and try again.');
         setIsJoiningGame(false);
       } else {
-        console.log('[SETUP] Guest successfully joined', { targetGameId });
-        console.log('=== SUCCESSFULLY JOINED GAME ===', targetGameId);
+        console.log('[SETUP] Successfully joined game:', targetGameId);
         setIsHost(false);
       }
     } catch (error) {
-      console.error('[SETUP] Exception during guest join', error);
-      console.error('Error joining game:', error);
+      console.error('[SETUP] Exception during guest join:', error);
       alert('Failed to join game. Please try again.');
       setIsJoiningGame(false);
     }
-  };
+  }, [gameId, gameIdFromUrl, playerName, deckLoaded, isJoiningGame, onGameStart]);
 
-  const copyGameLink = () => {
+  const copyGameLink = useCallback(() => {
     const gameLink = `${window.location.origin}?game=${gameId}`;
     navigator.clipboard.writeText(gameLink);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 3000);
-  };
+  }, [gameId]);
 
-  const handleDeckUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeckUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const result = e.target?.result;
-          if (typeof result === 'string') {
-            const deckData = JSON.parse(result);
-            setCurrentDeck(deckData);
-            onDeckLoad(deckData);
-            setDeckLoaded(true);
-            
-            // Se il deck contiene carte, aggiungile alle disponibili
-            if (deckData.cards) {
-              const newCards = deckData.cards.filter((card: any) => 
-                !availableCards.some(existing => existing.id === card.id)
-              );
-              setAvailableCards([...availableCards, ...newCards]);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          const deckData = JSON.parse(result);
+          setCurrentDeck(deckData);
+          onDeckLoad(deckData);
+          setDeckLoaded(true);
+          
+          // Se il deck contiene carte, aggiungile alle disponibili
+          if (deckData.cards) {
+            const newCards = deckData.cards.filter((card: any) => 
+              !availableCards.some(existing => existing.id === card.id)
+            );
+            if (newCards.length > 0) {
+              setAvailableCards(prev => [...prev, ...newCards]);
             }
           }
-        } catch (error) {
-          console.error('Error loading deck:', error);
-          alert('Invalid deck file format');
         }
-      };
-      reader.readAsText(file);
-    }
-  };
+      } catch (error) {
+        console.error('Error loading deck:', error);
+        alert('Invalid deck file format');
+      }
+    };
+    reader.readAsText(file);
+  }, [onDeckLoad, availableCards]);
 
-  const handleDeckBuilderSave = (deckData: any) => {
+  const handleDeckBuilderSave = useCallback((deckData: any) => {
     setCurrentDeck(deckData);
     onDeckLoad(deckData);
     setDeckLoaded(true);
     setShowDeckBuilder(false);
-  };
+  }, [onDeckLoad]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     window.location.reload();
-  };
+  }, []);
 
-  const handleEnterWaitingRoom = () => {
-    console.log('=== HOST ENTERING WAITING ROOM ===');
+  const handleEnterWaitingRoom = useCallback(() => {
+    console.log('[SETUP] Host entering waiting room');
     if (onHostEnterWaiting) {
       onHostEnterWaiting();
     }
-  };
+  }, [onHostEnterWaiting]);
 
   // Show waiting screen quando il gioco è iniziato e c'è una sessione attiva
-  if (gameState?.gameStarted && gameState?.currentSession && !gameState?.bothPlayersReady) {
-    console.log('[SETUP] Showing waiting screen', {
-      gameStarted: gameState.gameStarted,
-      hasCurrentSession: !!gameState.currentSession,
-      bothPlayersReady: gameState.bothPlayersReady
-    });
-    console.log('=== SHOWING WAITING SCREEN ===');
-    
+  if (currentState.gameStarted && currentState.currentSession && !currentState.bothPlayersReady) {
     return (
       <WaitingForPlayersScreen
         gameData={gameState.gameData}
-        playerReady={gameState.playerReady || false}
-        opponentReady={gameState.opponentReady || false}
+        playerReady={currentState.playerReady || false}
+        opponentReady={currentState.opponentReady || false}
         onPlayerReady={onPlayerReady}
         onSignOut={handleSignOut}
         onGameStart={onBothPlayersReady}
@@ -284,9 +248,6 @@ const MultiplayerSetup = ({
   }
 
   // Show setup screen
-  console.log('[SETUP] Showing setup screen');
-  console.log('=== SHOWING SETUP SCREEN ===');
-  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
@@ -332,7 +293,7 @@ const MultiplayerSetup = ({
           </div>
 
           {/* Messaggio speciale se c'è un gameId dall'URL */}
-          {gameIdFromUrl && !gameState?.gameStarted && (
+          {gameIdFromUrl && !currentState.gameStarted && (
             <div className="p-4 bg-blue-900/40 rounded-lg border border-blue-400/50">
               <p className="text-blue-400 font-semibold text-center mb-2">
                 🎮 Invitato a partecipare!
@@ -347,7 +308,7 @@ const MultiplayerSetup = ({
           )}
 
           {/* Sezione di creazione/join del gioco */}
-          {!gameState?.gameStarted && (
+          {!currentState.gameStarted && (
             <GameCreationSection
               gameId={gameId}
               setGameId={setGameId}
@@ -361,7 +322,7 @@ const MultiplayerSetup = ({
           )}
 
           {/* Mostra il GameStatusDisplay quando il gioco è stato creato ma non è ancora iniziato */}
-          {gameId && isHost && gameSessionCreated && !gameState?.gameStarted && (
+          {gameId && isHost && gameSessionCreated && !currentState.gameStarted && (
             <GameStatusDisplay
               gameId={gameId}
               isHost={isHost}
