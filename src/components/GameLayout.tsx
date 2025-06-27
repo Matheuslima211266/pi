@@ -41,7 +41,7 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
         {/* Enemy hand at top */}
         <div className="h-20 flex items-center justify-center bg-black/20 border-b border-blue-500/30">
           <EnemyHand 
-            cardCount={gameState.enemyHandCount} 
+            handCount={gameState.enemyHandCount} 
             revealedCard={gameState.enemyRevealedCard}
             revealedHand={gameState.enemyRevealedHand}
           />
@@ -54,12 +54,17 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
             <ResponsiveGameBoard
               playerField={gameState.playerField}
               enemyField={gameState.enemyField}
+              playerHand={gameState.playerHand}
+              enemyHandCount={gameState.enemyHandCount}
+              enemyRevealedCard={gameState.enemyRevealedCard}
+              enemyRevealedHand={gameState.enemyRevealedHand}
+              onAttack={handlers.handleAttack}
+              onCardPlace={handlers.handleCardPlace}
+              onCardMove={handlers.handleCardMove}
+              onCardPreview={handlers.handleCardPreview}
+              onDrawCard={handlers.handleDrawCard}
               selectedCardFromHand={gameState.selectedCardFromHand}
-              onSlotClick={handlers.handleSlotClick}
-              onCardClick={handlers.handleCardClick}
-              onPlacementChoice={handlers.handlePlacementChoice}
-              gameState={gameState}
-              handlers={handlers}
+              setSelectedCardFromHand={gameState.setSelectedCardFromHand}
             />
           </div>
 
@@ -92,9 +97,12 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
         <div className="h-32 bg-black/20 border-t border-blue-500/30 p-2">
           <PlayerHand
             cards={gameState.playerHand}
-            selectedCard={gameState.selectedCardFromHand}
-            onCardSelect={handlers.handleCardSelect}
-            onCardClick={handlers.handleCardClick}
+            onPlayCard={handlers.handleCardPlace}
+            isPlayerTurn={gameState.isPlayerTurn}
+            onCardPreview={handlers.handleCardPreview}
+            onCardMove={handlers.handleCardMove}
+            onShowCard={handlers.handleShowCard}
+            onShowHand={handlers.handleShowHand}
           />
         </div>
       </div>

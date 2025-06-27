@@ -13,7 +13,7 @@ import {
   Zap, 
   Users,
   Dice6,
-  Calculator,
+  Calculator as CalcIcon,
   Eye,
   EyeOff,
   RotateCcw,
@@ -94,7 +94,7 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
               value="tools" 
               className="text-xs px-2 py-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
-              <Calculator size={14} className="mr-1" />
+              <CalcIcon size={14} className="mr-1" />
               Tools
             </TabsTrigger>
           </TabsList>
@@ -113,11 +113,20 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
                         <span className="text-sm font-medium text-white">Life Points</span>
                       </div>
                     </div>
-                    <LifePointsControl
-                      playerLifePoints={gameState.playerLifePoints}
-                      enemyLifePoints={gameState.enemyLifePoints}
-                      onLifePointsChange={handlers.handleLifePointsChange}
-                    />
+                    <div className="space-y-2">
+                      <LifePointsControl
+                        playerName="You"
+                        lifePoints={gameState.playerLifePoints}
+                        onLifePointsChange={handlers.handleLifePointsChange}
+                        color="blue"
+                      />
+                      <LifePointsControl
+                        playerName="Enemy"
+                        lifePoints={gameState.enemyLifePoints}
+                        onLifePointsChange={(value) => handlers.handleLifePointsChange(value, false)}
+                        color="red"
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -140,7 +149,12 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
                 {/* Turn Timer */}
                 <Card className="bg-slate-800/50 border-blue-500/20">
                   <CardContent className="p-3">
-                    <TurnTimer timeRemaining={gameState.timeRemaining} />
+                    <TurnTimer 
+                      timeRemaining={gameState.timeRemaining}
+                      isActive={gameState.isPlayerTurn}
+                      onTimeUp={() => handlers.handleEndTurn?.()}
+                      onTimeChange={() => {}}
+                    />
                   </CardContent>
                 </Card>
 
@@ -253,7 +267,6 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
                   <ChatBox
                     messages={gameState.chatMessages}
                     onSendMessage={handlers.handleSendMessage}
-                    playerName={gameState.gameData?.playerName || 'Player'}
                   />
                 </div>
               </CardContent>
@@ -270,7 +283,10 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
                       <Dice6 className="text-yellow-400" size={16} />
                       <span className="text-sm font-medium text-white">Dice & Coin</span>
                     </div>
-                    <DiceAndCoin />
+                    <DiceAndCoin 
+                      onDiceRoll={() => {}}
+                      onCoinFlip={() => {}}
+                    />
                   </CardContent>
                 </Card>
 
@@ -278,7 +294,7 @@ const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSideb
                 <Card className="bg-slate-800/50 border-blue-500/20">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Calculator className="text-green-400" size={16} />
+                      <CalcIcon className="text-green-400" size={16} />
                       <span className="text-sm font-medium text-white">Calculator</span>
                     </div>
                     <div className="max-h-64">

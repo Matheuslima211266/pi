@@ -309,7 +309,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
       )
       .subscribe((status) => {
         console.log('[GAME_SYNC] Action listener subscription status', status);
-        if (status === 'SUBSCRIPTION_ERROR') {
+        if (status !== 'SUBSCRIBED') {
           console.error('[GAME_SYNC] Subscription error, attempting to reconnect...');
           setTimeout(() => {
             channel.unsubscribe();
