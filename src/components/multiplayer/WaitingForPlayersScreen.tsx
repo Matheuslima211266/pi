@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,8 +25,7 @@ const WaitingForPlayersScreen = ({
 }: WaitingForPlayersScreenProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [gameStarting, setGameStarting] = useState(false);
-  const gameStartedRef = useRef(false); // Per evitare chiamate multiple
+  const gameStartedRef = useRef(false);
   
   const bothReady = playerReady && opponentReady;
 
@@ -33,7 +33,6 @@ const WaitingForPlayersScreen = ({
     playerReady,
     opponentReady,
     bothReady,
-    gameStarting,
     gameStarted: gameStartedRef.current,
     gameData: gameData?.gameId
   });
@@ -73,26 +72,20 @@ const WaitingForPlayersScreen = ({
     return () => clearInterval(interval);
   }, [gameData?.gameId]);
 
-  // Start game immediately when both players are ready
+  // Start game IMMEDIATELY when both players are ready - NO COUNTDOWN
   useEffect(() => {
-    if (bothReady && onGameStart && !gameStartedRef.current && !gameStarting) {
-      console.log('Both players ready, starting game immediately...');
+    if (bothReady && onGameStart && !gameStartedRef.current) {
+      console.log('Both players ready, starting game IMMEDIATELY...');
       gameStartedRef.current = true;
-      setGameStarting(true);
-      
-      // Piccolo delay per mostrare il messaggio "Starting Game"
-      setTimeout(() => {
-        onGameStart();
-      }, 1000);
+      onGameStart();
     }
-  }, [bothReady, onGameStart, gameStarting]);
+  }, [bothReady, onGameStart]);
 
   // Reset game state when players become not ready
   useEffect(() => {
     if (!bothReady && gameStartedRef.current) {
       console.log('Players not ready anymore, resetting game state');
       gameStartedRef.current = false;
-      setGameStarting(false);
     }
   }, [bothReady]);
 
@@ -162,7 +155,7 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Ready button */}
-            {!playerReady && onPlayerReady && !gameStarting && (
+            {!playerReady && onPlayerReady && (
               <Button
                 onClick={() => {
                   console.log('Ready button clicked');
@@ -176,7 +169,7 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Waiting for opponent */}
-            {playerReady && !opponentReady && !gameStarting && (
+            {playerReady && !opponentReady && (
               <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
                 <p className="text-green-400 font-semibold">You are ready!</p>
                 <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
@@ -187,23 +180,12 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Both ready - immediate start */}
-            {bothReady && !gameStarting && (
+            {bothReady && (
               <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
-                <p className="text-blue-400 font-semibold text-lg">🎮 Both players ready!</p>
-                <p className="text-sm text-gray-300 mt-1">Starting game now...</p>
-                <div className="mt-2">
-                  <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto"></div>
-                </div>
-              </div>
-            )}
-
-            {/* Starting game */}
-            {gameStarting && (
-              <div className="text-center p-4 bg-purple-900/30 rounded-lg border border-purple-400">
-                <p className="text-purple-400 font-semibold text-lg">🎮 Starting Game...</p>
+                <p className="text-blue-400 font-semibold text-lg">🎮 Starting Game!</p>
                 <p className="text-sm text-gray-300 mt-1">Loading duel arena...</p>
                 <div className="mt-2">
-                  <div className="animate-spin w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full mx-auto"></div>
+                  <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto"></div>
                 </div>
               </div>
             )}
