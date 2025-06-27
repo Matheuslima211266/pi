@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -94,6 +93,78 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Arial', sans-serif;
+  }
+}
+
+/* ==== NEW DESKTOP LAYOUT - DUAL SIDEBARS ==== */
+.desktop-game-container {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  overflow: hidden;
+}
+
+.game-header-desktop {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+.game-id-desktop {
+  background: #f59e0b;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+/* MAIN GAME AREA - With sidebar margins */
+.main-game-area-desktop {
+  height: 100vh;
+  margin-left: 192px; /* 48 * 4 = 192px for left sidebar */
+  margin-right: 192px; /* 48 * 4 = 192px for right sidebar */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* SIDEBAR STYLING */
+.fixed.left-0,
+.fixed.right-0 {
+  backdrop-filter: blur(8px);
+}
+
+/* Hide old desktop layout elements */
+.new-game-container,
+.left-sidebar,
+.right-sidebar,
+.main-game-area {
+  display: none !important;
+}
+
+/* Responsive: Only show dual sidebars on desktop */
+@media (max-width: 768px) {
+  .desktop-game-container {
+    display: none;
+  }
+  
+  .game-container {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .game-container {
+    display: none;
+  }
+  
+  .desktop-game-container {
+    display: block;
   }
 }
 

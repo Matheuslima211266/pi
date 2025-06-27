@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
@@ -14,6 +13,7 @@ import PhaseControls from '@/components/PhaseControls';
 import TimerControls from '@/components/TimerControls';
 import GameControlsPanel from '@/components/GameControlsPanel';
 import ChatArea from '@/components/ChatArea';
+import GameSidebar from '@/components/GameSidebar';
 import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
 import { RotateCcw } from 'lucide-react';
 
@@ -242,30 +242,37 @@ const GameLayout = ({
     );
   }
 
-  // Desktop layout - FIXED: Right sidebar positioning
+  // Desktop layout - NEW: Dual sidebar layout
   return (
-    <div className="new-game-container">
+    <div className="desktop-game-container">
       {/* Game ID Display */}
-      <div className="game-header-new">
+      <div className="game-header-desktop">
         {gameData?.gameId && (
-          <div className="game-id-new">
+          <div className="game-id-desktop">
             Game ID: {gameData.gameId}
             {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
           </div>
         )}
       </div>
 
-      {/* LEFT SIDEBAR - Life Points Only */}
-      <div className="left-sidebar">
-        <LifePointsPanel
-          playerLifePoints={playerLifePoints}
-          enemyLifePoints={enemyLifePoints}
-          onLifePointsChange={handleLifePointsChange}
-        />
-      </div>
+      {/* Dual Sidebars */}
+      <GameSidebar
+        enemyLifePoints={enemyLifePoints}
+        playerLifePoints={playerLifePoints}
+        currentPhase={currentPhase}
+        isPlayerTurn={isPlayerTurn}
+        timeRemaining={timeRemaining}
+        chatMessages={chatMessages}
+        onLifePointsChange={handleLifePointsChange}
+        onPhaseChange={handlePhaseChange}
+        onEndTurn={handleEndTurn}
+        onTimeUp={handleTimeUp}
+        onTimeChange={setTimeRemaining}
+        onSendMessage={handleSendMessage}
+      />
       
-      {/* MAIN GAME AREA - Just the two fields */}
-      <div className="main-game-area">
+      {/* MAIN GAME AREA - With margins for sidebars */}
+      <div className="main-game-area-desktop">
         <ResponsiveGameBoard 
           playerField={playerField}
           enemyField={enemyField}
@@ -281,34 +288,6 @@ const GameLayout = ({
           onDeckMill={handleDeckMill}
           onDrawCard={handleDrawCard}
           setSelectedCardFromHand={setSelectedCardFromHand}
-        />
-      </div>
-
-      {/* RIGHT SIDEBAR - All Controls - CRITICAL FIX */}
-      <div className="right-sidebar">
-        <PhaseControls
-          currentPhase={currentPhase}
-          isPlayerTurn={isPlayerTurn}
-          onPhaseChange={handlePhaseChange}
-          onEndTurn={handleEndTurn}
-        />
-        
-        <TimerControls
-          isActive={isPlayerTurn}
-          onTimeUp={handleTimeUp}
-          timeRemaining={timeRemaining}
-          onTimeChange={setTimeRemaining}
-        />
-        
-        <GameControlsPanel
-          onDrawCard={handleDrawCard}
-          onDiceRoll={handleDiceRoll}
-          onCoinFlip={handleCoinFlip}
-        />
-        
-        <ChatArea
-          messages={chatMessages}
-          onSendMessage={handleSendMessage}
         />
       </div>
       
