@@ -1,7 +1,6 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import ResponsiveGameZones from './ResponsiveGameZones';
-import EnemyHand from './EnemyHand';
 import PlayerHand from './PlayerHand';
 import ZoneManager from './ZoneManager';
 import ZoneActionMenu from './ZoneActionMenu';
@@ -68,7 +67,6 @@ const ResponsiveGameBoard = ({
     return field[zoneName] || [];
   }, [playerField, enemyField]);
 
-  // Enhanced card placement handler
   const handleCardPlacement = useCallback((card, zoneName, slotIndex, isFaceDown = false, position = null) => {
     console.log('🎴 Placing card:', card.name, 'in', zoneName, 'at slot', slotIndex);
     
@@ -76,13 +74,11 @@ const ResponsiveGameBoard = ({
       onCardPlace(card, zoneName, slotIndex, isFaceDown, position);
     }
     
-    // Clear selection after placement
     if (setSelectedCardFromHand) {
       setSelectedCardFromHand(null);
     }
   }, [onCardPlace, setSelectedCardFromHand]);
 
-  // Memoize field data to prevent unnecessary re-renders
   const playerFieldMemo = useMemo(() => playerField, [playerField]);
   const enemyFieldMemo = useMemo(() => enemyField, [enemyField]);
 
@@ -107,13 +103,6 @@ const ResponsiveGameBoard = ({
           .battlefield-container {
             transform: scale(0.6);
           }
-        }
-        
-        .hand-zone {
-          flex-shrink: 0;
-          padding: 0.5rem;
-          background: rgba(15, 23, 42, 0.8);
-          border-top: 1px solid rgba(148, 163, 184, 0.3);
         }
         
         .opponent-zone, .player-zone {
@@ -199,16 +188,14 @@ const ResponsiveGameBoard = ({
         .dead-zone-slot {
           background: linear-gradient(135deg, #dc2626, #991b1b);
         }
+        
+        .hand-zone {
+          flex-shrink: 0;
+          padding: 0.75rem;
+          background: rgba(15, 23, 42, 0.8);
+          border-top: 1px solid rgba(148, 163, 184, 0.3);
+        }
       `}</style>
-
-      {/* Mano Avversario (Ruotata 180°) */}
-      <div className="hand-zone opponent-hand">
-        <EnemyHand 
-          handCount={enemyHandCount}
-          revealedCard={enemyRevealedCard}
-          revealedHand={enemyRevealedHand}
-        />
-      </div>
 
       {/* Zona Avversario - Prima riga: Magie/Trappole */}
       <div className="opponent-zone">
@@ -323,7 +310,7 @@ const ResponsiveGameBoard = ({
         />
       </div>
 
-      {/* Mano Giocatore */}
+      {/* Mano Giocatore - SOLO QUESTA */}
       <div className="hand-zone">
         <PlayerHand 
           cards={playerHand}
