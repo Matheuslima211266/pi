@@ -29,6 +29,10 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
           <ResponsiveGameBoard
             playerField={gameState.playerField}
             enemyField={gameState.enemyField}
+            playerHand={gameState.playerHand}
+            enemyHandCount={gameState.enemyHandCount}
+            enemyRevealedCard={gameState.enemyRevealedCard}
+            enemyRevealedHand={gameState.enemyRevealedHand}
             onAttack={handlers.handleAttack}
             onCardPlace={handlers.handleCardPlace}
             selectedCardFromHand={gameState.selectedCardFromHand}
@@ -36,16 +40,20 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
             onCardMove={handlers.handleCardMove}
             onDrawCard={() => handlers.handleDrawCard(true)}
             onDeckMill={(count) => handlers.handleDeckMill(count, true)}
+            setSelectedCardFromHand={handlers.handleHandCardSelect}
           />
         </div>
         
         {/* Player Hand */}
         <div className="h-32 border-t border-slate-600 bg-slate-800/30">
           <PlayerHand
-            hand={gameState.playerHand}
-            selectedCard={gameState.selectedCardFromHand}
-            onCardSelect={handlers.handleHandCardSelect}
+            cards={gameState.playerHand}
+            onPlayCard={handlers.handleHandCardSelect}
+            isPlayerTurn={gameState.isPlayerTurn}
             onCardPreview={handlers.handleCardPreview}
+            onCardMove={handlers.handleCardMove}
+            onShowCard={handlers.handleShowCard}
+            onShowHand={handlers.handleShowHand}
           />
         </div>
       </div>

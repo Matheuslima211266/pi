@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -344,27 +343,38 @@ export const useSupabaseMultiplayer = (user: User, gameState: any) => {
     }
   }, [currentSession, user]);
 
-  // Sync game state to database
+  // Sync game state to database - Fixed version
   const syncGameState = useCallback(async () => {
     if (!currentSession || !user) return;
+    
     try {
+      // Only sync basic game state data, not complex objects
+      const gameStateData = {
+        player_life_points: gameState.playerLifePoints || 8000,
+        player_hand_count: gameState.playerHand?.length || 0,
+        current_phase: gameState.currentPhase || 'draw',
+        is_player_turn: gameState.isPlayerTurn || false,
+        time_remaining: gameState.timeRemaining || 60,
+        player_ready: gameState.playerReady || false,
+        last_update: new Date().toISOString()
+      };
+
+      console.log('[MULTIPLAYER] Syncing game state:', gameStateData);
+
       const { error } = await supabase
         .from('game_states')
-        .upsert({
+        .insert({
           game_session_id: currentSession.id,
           player_id: user.id,
-          player_field: gameState.playerField,
-          player_life_points: gameState.playerLifePoints,
-          player_hand_count: gameState.playerHand?.length || 0,
-          current_phase: gameState.currentPhase,
-          is_player_turn: gameState.isPlayerTurn,
-          time_remaining: gameState.timeRemaining,
-          player_ready: gameState.playerReady,
-          last_update: new Date().toISOString()
+          player_field: JSON.stringify(gameState.playerField || {}),
+          ...gameStateData
         });
+
       if (error) {
         console.error('[MULTIPLAYER] Failed to sync game state', error);
         console.error('Error syncing game state:', error);
+      } else {
+        console.log('[MULTIPLAYER] Game state synced successfully');
       }
     } catch (error) {
       console.error('[MULTIPLAYER] Exception in syncGameState', error);

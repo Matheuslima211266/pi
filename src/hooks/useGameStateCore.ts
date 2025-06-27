@@ -12,7 +12,7 @@ export const useGameStateCore = () => {
   const [enemyDeck, setEnemyDeck] = useState([]);
   const [enemyHandCount, setEnemyHandCount] = useState(5);
   const [enemyRevealedCard, setEnemyRevealedCard] = useState(null);
-  const [enemyRevealedHand, setEnemyRevealedHand] = useState(null);
+  const [enemyRevealedHand, setEnemyRevealedHand] = useState([]);
   const [previewCard, setPreviewCard] = useState(null);
   const [selectedCardFromHand, setSelectedCardFromHand] = useState(null);
   const [currentPhase, setCurrentPhase] = useState('draw');
@@ -20,13 +20,13 @@ export const useGameStateCore = () => {
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [actionLog, setActionLog] = useState([]);
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, player: 'Sistema', message: 'Duello iniziato!' },
+    { id: 1, player: 'Sistema', message: 'Duello iniziato!', timestamp: new Date().toLocaleTimeString() },
   ]);
   const [bothPlayersReady, setBothPlayersReady] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
   const [opponentConnected, setOpponentConnected] = useState(false);
 
-  // Field states with guaranteed arrays
+  // Field states with guaranteed arrays and proper initialization
   const [playerField, setPlayerField] = useState({
     monsters: Array(5).fill(null),
     spellsTraps: Array(5).fill(null),
@@ -36,6 +36,9 @@ export const useGameStateCore = () => {
     banishedFaceDown: [],
     extraDeck: [],
     deck: [],
+    graveyard: [],
+    magia: [],
+    terreno: []
   });
   
   const [enemyField, setEnemyField] = useState({
@@ -47,6 +50,9 @@ export const useGameStateCore = () => {
     banishedFaceDown: [],
     extraDeck: [],
     deck: [],
+    graveyard: [],
+    magia: [],
+    terreno: []
   });
 
   return {
