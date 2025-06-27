@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
@@ -26,12 +25,11 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
       const { error } = await supabase
         .from('game_actions_realtime')
         .insert({
-          id: actionId,
           game_session_id: gameSessionId,
           player_id: user.id,
+          player_name: gameState.gameData?.playerName || 'Player',
           action_type: actionType,
-          action_data: actionData,
-          created_at: new Date().toISOString()
+          action_data: actionData
         });
 
       if (error) {
@@ -217,8 +215,8 @@ export const useGameSync = (user: any, gameSessionId: string | null, gameState: 
         console.log('[GAME_SYNC] Action listener subscription status', status);
         if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
           console.log('[GAME_SYNC] Successfully subscribed to game actions');
-        } else if (status === 'SUBSCRIPTION_ERROR') {
-          console.error('[GAME_SYNC] Failed to subscribe to game actions');
+        } else if (status === 'TIMED_OUT' || status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.error('[GAME_SYNC] Failed to subscribe to game actions:', status);
         }
       });
 

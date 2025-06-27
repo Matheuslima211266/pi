@@ -97,9 +97,10 @@
   }
 }
 
-/* ==== NEW DESKTOP LAYOUT ==== */
+/* ==== NEW DESKTOP LAYOUT - CRITICAL FIX ==== */
 .new-game-container {
   display: flex;
+  flex-direction: row; /* CRITICAL: Must be row, not column! */
   height: 100vh;
   width: 100vw;
   background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -134,6 +135,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  order: 1;
 }
 
 /* MAIN GAME AREA - Takes most space */
@@ -144,9 +146,10 @@
   padding: 20px;
   min-width: 800px;
   overflow: hidden;
+  order: 2;
 }
 
-/* RIGHT SIDEBAR - All controls */
+/* RIGHT SIDEBAR - All controls - FIXED POSITIONING */
 .right-sidebar {
   width: 250px;
   min-width: 250px;
@@ -157,6 +160,13 @@
   flex-direction: column;
   gap: 15px;
   overflow-y: auto;
+  order: 3; /* CRITICAL: Must be on the right side */
+}
+
+/* Remove any bottom positioning classes */
+.bottom-sidebar,
+.sidebar-bottom {
+  display: none !important;
 }
 
 /* Sidebar section styling */
@@ -224,7 +234,7 @@
   display: none !important;
 }
 
-/* ==== MOBILE LAYOUT - KEEP EXISTING ==== */
+/* ==== MOBILE LAYOUT - KEEP EXISTING BUT ENSURE PROPER ORDERING ==== */
 .game-container {
   display: flex;
   flex-direction: column;
@@ -353,7 +363,7 @@
   padding: 0.25rem;
 }
 
-/* ==== ZONA AVVERSARIO (TOP) ==== */
+/* ==== ZONE AVVERSARIO (TOP) ==== */
 .opponent-zone {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -499,6 +509,41 @@
 .dead-zone-slot-center {
   width: clamp(30px, 5.5vw, 70px);
   height: clamp(42px, 7.7vw, 98px);
+}
+
+/* ==== NEW ZONES - Forgotten and Terrain ==== */
+.forgotten-zone {
+  background: rgba(42, 42, 62, 0.3);
+  border: 2px dashed #666;
+  position: relative;
+}
+
+.forgotten-zone::after {
+  content: "FORGOTTEN";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 8px;
+  color: #888;
+  font-weight: bold;
+}
+
+.terrain-zone {
+  background: rgba(74, 92, 42, 0.3);
+  border: 2px solid #6b8e23;
+  position: relative;
+}
+
+.terrain-zone::after {
+  content: "TERRAIN";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  color: #90ee90;
+  font-weight: bold;
 }
 
 /* ==== DEFENSE POSITION CARDS ==== */

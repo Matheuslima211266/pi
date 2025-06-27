@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
@@ -241,7 +242,7 @@ const GameLayout = ({
     );
   }
 
-  // Desktop layout - completely restructured
+  // Desktop layout - FIXED: Right sidebar positioning
   return (
     <div className="new-game-container">
       {/* Game ID Display */}
@@ -283,7 +284,7 @@ const GameLayout = ({
         />
       </div>
 
-      {/* RIGHT SIDEBAR - All Controls */}
+      {/* RIGHT SIDEBAR - All Controls - CRITICAL FIX */}
       <div className="right-sidebar">
         <PhaseControls
           currentPhase={currentPhase}
