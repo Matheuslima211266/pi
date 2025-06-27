@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -192,6 +191,23 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
         }, 5000);
         break;
 
+      case 'POSITION_CHANGED':
+        console.log('[GAME_SYNC] Applying POSITION_CHANGED', action_data);
+        gameState.setEnemyField((prev: any) => {
+          const newField = { ...prev };
+          if (action_data.zoneName === 'monsters' && action_data.slotIndex !== undefined) {
+            newField.monsters = [...prev.monsters];
+            if (newField.monsters[action_data.slotIndex]) {
+              newField.monsters[action_data.slotIndex] = {
+                ...newField.monsters[action_data.slotIndex],
+                position: action_data.newPosition
+              };
+            }
+          }
+          return newField;
+        });
+        break;
+
       default:
         console.log('[GAME_SYNC] Unknown action type', action_type);
     }
@@ -216,6 +232,8 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
         return `ha mostrato ${actionData.card.name}`;
       case 'SHOW_HAND':
         return `ha mostrato la sua mano`;
+      case 'POSITION_CHANGED':
+        return `ha cambiato la posizione di ${actionData.card?.name} in ${actionData.newPosition}`;
       default:
         return `ha eseguito un'azione: ${actionType}`;
     }

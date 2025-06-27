@@ -1,149 +1,327 @@
 
 import React, { useState } from 'react';
-import LifePointsControl from '@/components/LifePointsControl';
-import GamePhases from '@/components/GamePhases';
-import TurnTimer from '@/components/TurnTimer';
-import { ChevronRight, ChevronLeft, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  MessageSquare, 
+  Activity, 
+  Clock, 
+  Heart, 
+  Zap, 
+  Users,
+  Dice6,
+  Calculator,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Move
+} from 'lucide-react';
+import ChatBox from './ChatBox';
+import ActionLog from './ActionLog';
+import TurnTimer from './TurnTimer';
+import LifePointsControl from './LifePointsControl';
+import GamePhases from './GamePhases';
+import DiceAndCoin from './DiceAndCoin';
+import Calculator from './Calculator';
 
-const MobileSidebar = ({
-  enemyLifePoints,
-  playerLifePoints,
-  currentPhase,
-  isPlayerTurn,
-  timeRemaining,
-  onLifePointsChange,
-  onPhaseChange,
-  onEndTurn,
-  onTimeUp,
-  onTimeChange,
-  sidebarPosition = 'bottom' // 'bottom' o 'side'
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+interface MobileSidebarProps {
+  gameState: any;
+  handlers: any;
+  position?: 'center' | 'side';
+}
 
-  const isBottom = sidebarPosition === 'bottom';
-  const toggleIcon = isBottom 
-    ? (isCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />)
-    : (isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />);
+const MobileSidebar = ({ gameState, handlers, position = 'center' }: MobileSidebarProps) => {
+  const [activeTab, setActiveTab] = useState('game');
 
-  const toggleButtonStyle = isBottom 
-    ? {
-        position: 'fixed' as const,
-        bottom: isCollapsed ? '4px' : 'auto',
-        top: isCollapsed ? 'auto' : 'calc(75vh - 20px)',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 60
-      }
-    : {
-        position: 'fixed' as const,
-        top: '4px',
-        left: '2px',
-        zIndex: 60
+  const handlePositionChange = (card: any, newPosition: 'attack' | 'defense') => {
+    console.log('[MOBILE_SIDEBAR] Position change requested:', { card, newPosition });
+    
+    // Trova la carta nel campo del giocatore
+    const monsterSlotIndex = gameState.playerField.monsters.findIndex((monster: any) => 
+      monster && monster.id === card.id
+    );
+    
+    if (monsterSlotIndex !== -1) {
+      // Aggiorna la posizione della carta localmente
+      const updatedField = { ...gameState.playerField };
+      updatedField.monsters = [...updatedField.monsters];
+      updatedField.monsters[monsterSlotIndex] = {
+        ...updatedField.monsters[monsterSlotIndex],
+        position: newPosition
       };
+      
+      gameState.setPlayerField(updatedField);
+      
+      // Invia l'azione di cambio posizione tramite multiplayer
+      handlers.handlePositionChange?.(card, newPosition);
+    }
+  };
 
-  const sidebarStyle = isBottom 
-    ? {
-        transform: isCollapsed ? 'translateY(100%)' : 'translateY(0)',
-        width: '100%'
-      }
-    : {
-        transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',
-        width: 'clamp(80px, 20vw, 120px)',
-        minWidth: '80px'
-      };
+  const baseClasses = position === 'center' 
+    ? 'bg-slate-900/95 backdrop-blur-md border border-blue-500/30 rounded-lg shadow-2xl' 
+    : 'bg-slate-900/98 backdrop-blur-md h-full border-l border-blue-500/30 shadow-2xl';
 
   return (
-    <>
-      {/* Toggle button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="bg-slate-800/90 border border-slate-600 rounded p-1 text-white hover:bg-slate-700/90 transition-colors"
-        style={{ ...toggleButtonStyle, fontSize: '12px', padding: '4px' }}
-      >
-        {toggleIcon}
-      </button>
+    <div className={baseClasses}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <div className="p-3 border-b border-blue-500/20">
+          <TabsList className="grid grid-cols-4 gap-1 bg-slate-800/50 p-1">
+            <TabsTrigger 
+              value="game" 
+              className="text-xs px-2 py-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Zap size={14} className="mr-1" />
+              Game
+            </TabsTrigger>
+            <TabsTrigger 
+              value="field" 
+              className="text-xs px-2 py-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Eye size={14} className="mr-1" />
+              Field
+            </TabsTrigger>
+            <TabsTrigger 
+              value="chat" 
+              className="text-xs px-2 py-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <MessageSquare size={14} className="mr-1" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tools" 
+              className="text-xs px-2 py-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Calculator size={14} className="mr-1" />
+              Tools
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* Sidebar */}
-      <div 
-        className={`sidebar transition-transform duration-300`}
-        style={sidebarStyle}
-      >
-        {/* Enemy Life Points - Ultra compressed */}
-        <div className="sidebar-section">
-          <div className="bg-red-900/30 border border-red-600/50 rounded p-1">
-            <div className="text-center">
-              <div className="text-red-400 text-xs font-bold mb-1">OPP</div>
-              <div className="text-white text-sm font-bold">{enemyLifePoints}</div>
-              <div className="grid grid-cols-2 gap-0.5 mt-1">
-                <button 
-                  onClick={() => onLifePointsChange(enemyLifePoints - 1000, true)}
-                  className="bg-red-700 hover:bg-red-600 text-white text-xs px-1 py-0.5 rounded"
-                >
-                  -1K
-                </button>
-                <button 
-                  onClick={() => onLifePointsChange(enemyLifePoints + 1000, true)}
-                  className="bg-red-700 hover:bg-red-600 text-white text-xs px-1 py-0.5 rounded"
-                >
-                  +1K
-                </button>
+        <div className={`flex-1 overflow-hidden ${position === 'center' ? 'max-h-96' : ''}`}>
+          <TabsContent value="game" className="h-full m-0 p-3 space-y-3">
+            <ScrollArea className="h-full">
+              <div className="space-y-3">
+                {/* Life Points */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Heart className="text-red-400" size={16} />
+                        <span className="text-sm font-medium text-white">Life Points</span>
+                      </div>
+                    </div>
+                    <LifePointsControl
+                      playerLifePoints={gameState.playerLifePoints}
+                      enemyLifePoints={gameState.enemyLifePoints}
+                      onLifePointsChange={handlers.handleLifePointsChange}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Game Phases */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="text-blue-400" size={16} />
+                      <span className="text-sm font-medium text-white">Turn & Phase</span>
+                    </div>
+                    <GamePhases
+                      currentPhase={gameState.currentPhase}
+                      isPlayerTurn={gameState.isPlayerTurn}
+                      onPhaseChange={handlers.handlePhaseChange}
+                      onEndTurn={handlers.handleEndTurn}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Turn Timer */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <TurnTimer timeRemaining={gameState.timeRemaining} />
+                  </CardContent>
+                </Card>
+
+                {/* Action Log */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="text-green-400" size={16} />
+                      <span className="text-sm font-medium text-white">Action Log</span>
+                    </div>
+                    <div className="max-h-32">
+                      <ActionLog actions={gameState.actionLog} />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Game Phases - Ultra compressed */}
-        <div className="sidebar-section">
-          <div className="bg-blue-900/30 border border-blue-600/50 rounded p-1">
-            <div className="text-center">
-              <div className="text-blue-400 text-xs font-bold mb-1">PHASE</div>
-              <div className="text-white text-xs">{currentPhase}</div>
-              <button 
-                onClick={onEndTurn}
-                className="bg-blue-700 hover:bg-blue-600 text-white text-xs px-2 py-0.5 rounded mt-1 w-full"
-                disabled={!isPlayerTurn}
-              >
-                END
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Player Life Points - Ultra compressed */}
-        <div className="sidebar-section">
-          <div className="bg-blue-900/30 border border-blue-600/50 rounded p-1">
-            <div className="text-center">
-              <div className="text-blue-400 text-xs font-bold mb-1">YOU</div>
-              <div className="text-white text-sm font-bold">{playerLifePoints}</div>
-              <div className="grid grid-cols-2 gap-0.5 mt-1">
-                <button 
-                  onClick={() => onLifePointsChange(playerLifePoints - 1000, false)}
-                  className="bg-blue-700 hover:bg-blue-600 text-white text-xs px-1 py-0.5 rounded"
-                >
-                  -1K
-                </button>
-                <button 
-                  onClick={() => onLifePointsChange(playerLifePoints + 1000, false)}
-                  className="bg-blue-700 hover:bg-blue-600 text-white text-xs px-1 py-0.5 rounded"
-                >
-                  +1K
-                </button>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="field" className="h-full m-0 p-3">
+            <ScrollArea className="h-full">
+              <div className="space-y-3">
+                {/* Player Field Summary */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <h3 className="text-sm font-medium text-white mb-2">Your Field</h3>
+                    <div className="space-y-2">
+                      {gameState.playerField.monsters.map((monster: any, index: number) => 
+                        monster && (
+                          <div key={`monster-${index}`} className="flex items-center justify-between text-xs bg-slate-700/50 p-2 rounded">
+                            <span className="text-blue-300 truncate flex-1">{monster.name}</span>
+                            <div className="flex items-center gap-1 ml-2">
+                              <Badge variant={monster.position === 'attack' ? 'destructive' : 'secondary'} className="text-xs px-1 py-0">
+                                {monster.position === 'attack' ? 'ATK' : 'DEF'}
+                              </Badge>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-xs"
+                                  onClick={() => handlePositionChange(monster, 'attack')}
+                                  disabled={monster.position === 'attack'}
+                                >
+                                  <Zap size={12} />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-xs"
+                                  onClick={() => handlePositionChange(monster, 'defense')}
+                                  disabled={monster.position === 'defense'}
+                                >
+                                  <Move size={12} />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
+                      {gameState.playerField.spellsTraps.map((spell: any, index: number) => 
+                        spell && (
+                          <div key={`spell-${index}`} className="flex items-center justify-between text-xs bg-slate-700/50 p-2 rounded">
+                            <span className="text-purple-300 truncate">{spell.name}</span>
+                            <Badge variant="outline" className="text-xs">S/T</Badge>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Enemy Field Summary */}
+                <Card className="bg-slate-800/50 border-red-500/20">
+                  <CardContent className="p-3">
+                    <h3 className="text-sm font-medium text-white mb-2">Opponent Field</h3>
+                    <div className="space-y-2">
+                      {gameState.enemyField.monsters.map((monster: any, index: number) => 
+                        monster && (
+                          <div key={`enemy-monster-${index}`} className="flex items-center justify-between text-xs bg-slate-700/50 p-2 rounded">
+                            <span className="text-red-300 truncate flex-1">{monster.name}</span>
+                            <Badge variant={monster.position === 'attack' ? 'destructive' : 'secondary'} className="text-xs px-1 py-0">
+                              {monster.position === 'attack' ? 'ATK' : 'DEF'}
+                            </Badge>
+                          </div>
+                        )
+                      )}
+                      {gameState.enemyField.spellsTraps.map((spell: any, index: number) => 
+                        spell && (
+                          <div key={`enemy-spell-${index}`} className="flex items-center justify-between text-xs bg-slate-700/50 p-2 rounded">
+                            <span className="text-red-300 truncate">{spell.name}</span>
+                            <Badge variant="outline" className="text-xs">S/T</Badge>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="chat" className="h-full m-0 p-3">
+            <Card className="bg-slate-800/50 border-blue-500/20 h-full">
+              <CardContent className="p-3 h-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="text-blue-400" size={16} />
+                  <span className="text-sm font-medium text-white">Chat</span>
+                </div>
+                <div className={position === 'center' ? 'h-64' : 'h-full'}>
+                  <ChatBox
+                    messages={gameState.chatMessages}
+                    onSendMessage={handlers.handleSendMessage}
+                    playerName={gameState.gameData?.playerName || 'Player'}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tools" className="h-full m-0 p-3">
+            <ScrollArea className="h-full">
+              <div className="space-y-3">
+                {/* Dice and Coin */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Dice6 className="text-yellow-400" size={16} />
+                      <span className="text-sm font-medium text-white">Dice & Coin</span>
+                    </div>
+                    <DiceAndCoin />
+                  </CardContent>
+                </Card>
+
+                {/* Calculator */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calculator className="text-green-400" size={16} />
+                      <span className="text-sm font-medium text-white">Calculator</span>
+                    </div>
+                    <div className="max-h-64">
+                      <Calculator />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card className="bg-slate-800/50 border-blue-500/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="text-purple-400" size={16} />
+                      <span className="text-sm font-medium text-white">Quick Actions</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => handlers.handleShowCard?.()}
+                      >
+                        <Eye size={12} className="mr-1" />
+                        Show Card
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => handlers.handleShowHand?.()}
+                      >
+                        <EyeOff size={12} className="mr-1" />
+                        Show Hand
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollArea>
+          </TabsContent>
         </div>
-        
-        {/* Timer - Ultra compressed */}
-        <div className="sidebar-section">
-          <div className="bg-purple-900/30 border border-purple-600/50 rounded p-1">
-            <div className="text-center">
-              <div className="text-purple-400 text-xs font-bold mb-1">TIME</div>
-              <div className="text-white text-xs">{Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+      </Tabs>
+    </div>
   );
 };
 

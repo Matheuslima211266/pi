@@ -3,86 +3,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -90,566 +64,109 @@
   * {
     @apply border-border;
   }
+  
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Arial', sans-serif;
-    /* REMOVED: overflow: hidden; to fix scrolling */
   }
 }
 
-/* ==== LAYOUT PRINCIPALE RESPONSIVE - MOBILE FIRST ==== */
-.game-container {
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-slate-800/50 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-blue-500/50 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-blue-400/70;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+/* Game zone animations */
+.zone-highlight {
+  @apply ring-2 ring-blue-400 ring-opacity-50;
+  animation: pulse 1s infinite;
+}
+
+/* Mobile-first approach - tutto mobile layout */
+.mobile-layout {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  overflow: hidden;
 }
 
-/* Mobile sidebar by default */
-.sidebar {
-  order: 3;
-  width: 100%;
-  height: auto;
-  max-height: 25vh;
-  min-height: 120px;
-  flex-direction: row;
-  border-right: none;
-  border-top: 2px solid #4a5568;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.5rem;
-  position: relative;
-  left: auto;
-  top: auto;
-  z-index: 40;
-  background: rgba(0, 0, 0, 0.95);
-  gap: 0.5rem;
-  display: flex;
+/* Rimuovi overflow dal body per evitare problemi di scroll */
+body {
+  overflow: hidden !important;
 }
 
-/* Layout con sidebar laterale quando specificato */
-.game-container.sidebar-side {
-  flex-direction: row;
+/* Fix per container che devono essere full screen */
+.h-screen {
+  height: 100vh !important;
 }
 
-.game-container.sidebar-side .sidebar {
-  order: 1;
-  width: clamp(80px, 20vw, 120px);
-  min-width: 80px;
-  height: 100vh;
-  max-height: 100vh;
-  min-height: auto;
-  flex-direction: column;
-  border-top: none;
-  border-right: 2px solid #4a5568;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 0.25rem;
+.w-screen {
+  width: 100vw !important;
+}
+
+/* Assicurati che i modali e overlay funzionino correttamente */
+.modal-overlay {
   position: fixed;
-  left: 0;
   top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 50;
-  gap: 0.25rem;
 }
 
-.game-container.sidebar-side .field-area {
-  margin-left: clamp(80px, 20vw, 120px);
-  order: 2;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* ==== AREA PRINCIPALE CAMPO ==== */
-.field-area {
-  order: 2;
-  flex: 1;
-  margin-left: 0;
-  padding: 0.25rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  height: auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-.game-header {
-  order: 1;
-  flex-shrink: 0;
-  margin-bottom: 0.5rem;
-  text-align: center;
-  color: white;
-}
-
-.game-id {
-  background: #f59e0b;
-  color: black;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  display: inline-block;
-  font-weight: bold;
-}
-
-/* ==== CONTAINER CAMPO DA GIOCO ==== */
-.battlefield-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: clamp(0.15rem, 0.6vw, 0.4rem);
-  min-width: 500px;
-  max-width: 100%;
-  max-height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.25rem;
-}
-
-/* ==== ZONA AVVERSARIO (TOP) ==== */
-.opponent-zone {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: clamp(0.1rem, 0.3vw, 0.2rem);
-  width: 100%;
-  max-width: min(95vw, 900px);
-  transform: rotate(180deg);
-  min-width: 500px;
-}
-
-/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS + GRAVEYARDS) ==== */
-.center-zone {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: clamp(0.25rem, 0.8vw, 0.5rem);
-  width: 100%;
-  margin: clamp(0.2rem, 0.6vh, 0.5rem) 0;
-  min-width: 500px;
-}
-
-.center-group {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.2rem, 0.6vw, 0.4rem);
-}
-
-.field-spell-slot {
-  width: clamp(30px, 5.5vw, 80px);
-  height: clamp(42px, 7.7vw, 112px);
-}
-
-.graveyard-slot-center {
-  width: clamp(30px, 5.5vw, 70px);
-  height: clamp(42px, 7.7vw, 98px);
-}
-
-.battle-field-label {
-  color: #cbd5e0;
-  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #4a5568;
-}
-
-/* ==== ZONA GIOCATORE (BOTTOM) ==== */
-.player-zone {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: clamp(0.1rem, 0.3vw, 0.2rem);
-  width: 100%;
-  max-width: min(95vw, 900px);
-  min-width: 500px;
-}
-
-/* ==== ZONE MANI ==== */
-.hand-zone {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: clamp(0.1rem, 0.3vw, 0.2rem);
-  width: 100%;
-  max-width: min(95vw, 900px);
-  padding: clamp(0.2rem, 0.6vh, 0.5rem) 0;
-  min-width: 500px;
-}
-
-.opponent-hand {
-  transform: rotate(180deg);
-}
-
-.hand-card {
-  width: clamp(20px, 4vw, 55px);
-  height: clamp(28px, 5.6vw, 77px);
-  background: rgba(75, 85, 99, 0.8);
-  border: 2px solid #6b7280;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(0.6rem, 1vw, 1.2rem);
-  color: #d1d5db;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.hand-card:hover {
-  border-color: #60a5fa;
-  background: rgba(96, 165, 250, 0.2);
-  transform: translateY(-2px);
-}
-
-/* ==== SLOT CARTE GENERICI ==== */
-.card-slot {
-  aspect-ratio: 5/7;
-  width: clamp(30px, 5.5vw, 90px);
-  height: clamp(42px, 7.7vw, 126px);
-  border: 2px dashed #4a5568;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
-}
-
-.card-slot:hover {
-  border-color: #63b3ed;
-  background: rgba(99, 179, 237, 0.1);
-  transform: scale(1.02);
-}
-
-.card-slot.highlighted {
-  border-color: #f6e05e;
-  background: rgba(246, 224, 94, 0.2);
-  animation: pulse 2s infinite;
-}
-
-/* ==== ZONE SPECIFICHE ==== */
-.extra-deck-slot {
-  background: rgba(138, 43, 226, 0.2);
-  border-color: #8a2be2;
-  color: #da70d6;
-}
-
-.main-deck-slot {
-  background: rgba(34, 139, 34, 0.2);
-  border-color: #228b22;
-  color: #90ee90;
-}
-
-.graveyard-slot {
-  background: rgba(139, 69, 19, 0.2);
-  border-color: #8b4513;
-  color: #deb887;
-}
-
-.banished-slot {
-  background: rgba(255, 20, 147, 0.2);
-  border-color: #ff1493;
-  color: #ff69b4;
-}
-
-.banished-facedown-slot {
-  background: rgba(128, 0, 128, 0.2);
-  border-color: #800080;
-  color: #dda0dd;
-}
-
-.monster-zone .card-slot {
-  background: rgba(255, 140, 0, 0.1);
-  border-color: #ff8c00;
-  color: #ffa500;
-}
-
-.spell-trap-zone .card-slot {
-  background: rgba(30, 144, 255, 0.1);
-  border-color: #1e90ff;
-  color: #87ceeb;
-}
-
-.field-spell-zone .card-slot {
-  background: rgba(0, 255, 127, 0.1);
-  border-color: #00ff7f;
-  color: #98fb98;
-}
-
-.dead-zone-slot {
-  background: rgba(139, 69, 19, 0.3);
-  border-color: #8b4513;
-  color: #deb887;
-}
-
-.dead-zone-slot-center {
-  width: clamp(30px, 5.5vw, 70px);
-  height: clamp(42px, 7.7vw, 98px);
-}
-
-/* ==== DEFENSE POSITION CARDS ==== */
-.card-defense-position {
-  transform: rotate(90deg);
-}
-
-.card-defense-position.card-slot {
-  transform: rotate(90deg) scale(1.02);
-}
-
-/* ==== ANIMAZIONI ==== */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.zone-label {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.6rem;
-  color: #a0aec0;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 2px 6px;
-  border-radius: 3px;
-  white-space: nowrap;
-}
-
-.zone-count {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  font-size: 0.6rem;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 1px 4px;
-  border-radius: 2px;
-  min-width: 12px;
-  text-align: center;
-}
-
-/* ==== SIDEBAR SECTIONS - MOBILE OPTIMIZED ==== */
-.sidebar-section {
-  flex-shrink: 0;
-  min-width: 120px;
-  padding: 0.25rem;
-  margin-bottom: 0;
-  margin-right: 0.25rem;
-}
-
-/* Sidebar sections per layout verticale quando laterale */
-.game-container.sidebar-side .sidebar .sidebar-section {
-  min-width: auto;
-  width: 100%;
-  margin-right: 0;
-  margin-bottom: 0.25rem;
-}
-
-.sidebar-section:last-child {
-  margin-bottom: 0;
-}
-
-/* Compatta i componenti nella sidebar */
-.sidebar .sidebar-section {
-  padding: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-.sidebar .sidebar-section .p-4 {
-  padding: 0.5rem !important;
-}
-
-.sidebar .sidebar-section .h-64 {
-  height: 8rem !important;
-}
-
-.sidebar .sidebar-section .h-48 {
-  height: 6rem !important;
-}
-
-.sidebar .sidebar-section h3 {
-  font-size: 0.8rem !important;
-  margin-bottom: 0.25rem !important;
-}
-
-.sidebar .sidebar-section .text-4xl {
-  font-size: 1.2rem !important;
-}
-
-.sidebar .sidebar-section .grid-cols-3 {
-  gap: 0.1rem !important;
-}
-
-.sidebar .sidebar-section .grid-cols-3 button {
-  font-size: 0.6rem !important;
-  padding: 0.1rem 0.25rem !important;
-}
-
-.sidebar .sidebar-section .space-y-4 {
-  gap: 0.25rem !important;
-}
-
-.sidebar .sidebar-section .gap-1 {
-  gap: 0.1rem !important;
-}
-
-.sidebar .sidebar-section .text-center {
-  margin-bottom: 0.25rem !important;
-}
-
-/* ==== MOBILE TOUCH IMPROVEMENTS ==== */
-.card-slot, .hand-card {
-  touch-action: manipulation;
-}
-
-* {
-  touch-action: manipulation;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-/* ==== DECK BUILDER MOBILE OPTIMIZATIONS ==== */
-.deck-builder-mobile {
-  padding: 0.25rem;
+/* Fix per gli elementi che devono scrollare */
+.scrollable-content {
   overflow-y: auto;
-  max-height: 100vh;
-}
-
-.deck-builder-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5rem;
-  overflow-y: auto;
-}
-
-.deck-builder-buttons {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.deck-builder-buttons button {
-  width: 100%;
-  min-height: 44px;
-  font-size: 0.9rem;
-  padding: 0.75rem;
-}
-
-.deck-builder-card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.25rem;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-/* Card preview for mobile */
-.card-preview-mobile {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 90vw !important;
-  max-width: 300px !important;
-  height: auto !important;
-  z-index: 9999 !important;
-}
-
-/* Mobile-friendly input fields */
-input, select, textarea {
-  min-height: 44px;
-  font-size: 16px;
-}
-
-/* Mobile-friendly buttons */
-button {
-  min-height: 44px;
-  padding: 0.75rem 1rem;
-}
-
-/* Scrollable areas */
-.overflow-auto {
   -webkit-overflow-scrolling: touch;
 }
 
-/* ==== RESPONSIVE BREAKPOINTS - ENHANCED FOR LARGER SCREENS ==== */
-@media (min-width: 768px) {
-  .battlefield-container {
-    min-width: 600px;
-  }
-  
-  .opponent-zone,
-  .player-zone,
-  .hand-zone,
-  .center-zone {
-    min-width: 600px;
-  }
-  
-  .card-slot {
-    width: clamp(35px, 6vw, 75px);
-    height: clamp(49px, 8.4vw, 105px);
-  }
-
-  .hand-card {
-    width: clamp(25px, 4.5vw, 50px);
-    height: clamp(35px, 6.3vw, 70px);
-  }
-
-  .deck-builder-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+/* Ottimizzazioni per mobile */
+@media (max-width: 768px) {
+  .mobile-optimized {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-@media (min-width: 1200px) {
-  .battlefield-container {
-    min-width: 800px;
-  }
-  
-  .opponent-zone,
-  .player-zone,
-  .hand-zone,
-  .center-zone {
-    min-width: 800px;
-  }
-  
-  .card-slot {
-    width: clamp(45px, 7vw, 90px);
-    height: clamp(63px, 9.8vw, 126px);
-  }
+/* Fix per il deck builder e game creation scroll */
+.deck-builder-container,
+.game-creation-container {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-  .hand-card {
-    width: clamp(30px, 5vw, 55px);
-    height: clamp(42px, 7vw, 77px);
-  }
-
-  .deck-builder-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
+.deck-builder-content,
+.game-creation-content {
+  min-height: 100vh;
+  padding-bottom: 2rem;
 }
