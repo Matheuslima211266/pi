@@ -147,6 +147,8 @@
   padding: clamp(0.5rem, 2vw, 1.5rem);
   box-sizing: border-box;
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .game-header {
@@ -172,8 +174,11 @@
   justify-content: center;
   align-items: center;
   gap: clamp(0.3rem, 1vw, 0.8rem);
+  min-width: 800px;
   max-width: 100%;
   max-height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* ==== ZONA AVVERSARIO (TOP) ==== */
@@ -184,6 +189,7 @@
   width: 100%;
   max-width: min(95vw, 900px);
   transform: rotate(180deg);
+  min-width: 700px;
 }
 
 /* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS + GRAVEYARDS) ==== */
@@ -194,6 +200,7 @@
   gap: clamp(0.5rem, 2vw, 1rem);
   width: 100%;
   margin: clamp(0.3rem, 1vh, 0.8rem) 0;
+  min-width: 700px;
 }
 
 .center-group {
@@ -231,6 +238,7 @@
   gap: clamp(0.25rem, 0.8vw, 0.5rem);
   width: 100%;
   max-width: min(95vw, 900px);
+  min-width: 700px;
 }
 
 /* ==== ZONE MANI ==== */
@@ -242,6 +250,7 @@
   width: 100%;
   max-width: min(95vw, 900px);
   padding: clamp(0.3rem, 1vh, 0.6rem) 0;
+  min-width: 700px;
 }
 
 .opponent-hand {
@@ -348,6 +357,17 @@
   color: #98fb98;
 }
 
+.dead-zone-slot {
+  background: rgba(139, 69, 19, 0.3);
+  border-color: #8b4513;
+  color: #deb887;
+}
+
+.dead-zone-slot-center {
+  width: clamp(45px, 7vw, 70px);
+  height: clamp(63px, 9.8vw, 98px);
+}
+
 /* ==== DEFENSE POSITION CARDS ==== */
 .card-defense-position {
   transform: rotate(90deg);
@@ -376,15 +396,32 @@
   white-space: nowrap;
 }
 
+.zone-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 0.6rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1px 4px;
+  border-radius: 2px;
+  min-width: 12px;
+  text-align: center;
+}
+
 /* ==== DECK BUILDER MOBILE OPTIMIZATIONS ==== */
 .deck-builder-mobile {
   padding: 0.5rem;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .deck-builder-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .deck-builder-buttons {
@@ -398,6 +435,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 /* ==== RESPONSIVE BREAKPOINTS - ENHANCED FOR MOBILE ==== */
@@ -421,25 +460,37 @@
 /* ==== TABLET OPTIMIZATIONS ==== */
 @media (max-width: 768px) and (min-width: 481px) {
   .game-container {
-    flex-direction: column;
+    flex-direction: row;
   }
   
   .sidebar {
-    width: 100%;
-    height: clamp(100px, 15vh, 150px);
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    border-right: none;
-    border-bottom: 2px solid #4a5568;
-    overflow-x: auto;
-    overflow-y: hidden;
+    width: clamp(120px, 25vw, 180px);
+    min-width: 120px;
+    height: 100vh;
+    flex-direction: column;
+    border-right: 2px solid #4a5568;
+    border-bottom: none;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   
   .field-area {
     flex: 1;
     min-height: 0;
     padding: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .battlefield-container {
+    min-width: 600px;
+  }
+  
+  .opponent-zone,
+  .player-zone,
+  .hand-zone,
+  .center-zone {
+    min-width: 600px;
   }
   
   .card-slot {
@@ -450,16 +501,6 @@
   .hand-card {
     width: clamp(25px, 4.5vw, 40px);
     height: clamp(35px, 6.3vw, 56px);
-  }
-  
-  .opponent-zone,
-  .player-zone {
-    max-width: min(98vw, 700px);
-    gap: clamp(0.15rem, 0.4vw, 0.3rem);
-  }
-
-  .hand-zone {
-    max-width: min(98vw, 700px);
   }
 
   /* Deck Builder for tablets */
@@ -479,57 +520,54 @@
   }
 
   .game-container {
-    flex-direction: column;
-    height: auto;
+    flex-direction: row;
+    height: 100vh;
     min-height: 100vh;
+    overflow: hidden;
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
-    min-height: 80px;
-    max-height: 120px;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    border-right: none;
-    border-bottom: 2px solid #4a5568;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0.5rem;
+    width: clamp(80px, 20vw, 120px);
+    min-width: 80px;
+    height: 100vh;
+    flex-direction: column;
+    border-right: 2px solid #4a5568;
+    border-bottom: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.95);
   }
   
   .field-area {
     flex: 1;
-    min-height: calc(100vh - 120px);
+    margin-left: clamp(80px, 20vw, 120px);
     padding: 0.25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100vh;
   }
   
-  .card-slot {
-    width: clamp(30px, 5.5vw, 45px);
-    height: clamp(42px, 7.7vw, 63px);
-    font-size: clamp(0.6rem, 1.2vw, 0.8rem);
-  }
-
-  .hand-card {
-    width: clamp(20px, 4vw, 35px);
-    height: clamp(28px, 5.6vw, 49px);
-    font-size: clamp(0.6rem, 1vw, 0.8rem);
+  .battlefield-container {
+    min-width: 500px;
+    height: 100%;
+    gap: clamp(0.15rem, 0.6vw, 0.4rem);
+    padding: 0.25rem;
   }
   
   .opponent-zone,
   .player-zone,
   .hand-zone {
+    min-width: 500px;
     gap: clamp(0.1rem, 0.3vw, 0.2rem);
-    max-width: 98vw;
   }
-
-  .battlefield-container {
-    gap: clamp(0.15rem, 0.6vw, 0.4rem);
-    padding: 0.25rem;
-  }
-
+  
   .center-zone {
+    min-width: 500px;
     gap: clamp(0.25rem, 0.8vw, 0.5rem);
     margin: clamp(0.2rem, 0.6vh, 0.5rem) 0;
   }
@@ -543,10 +581,23 @@
     padding: 0.25rem 0.5rem;
     letter-spacing: 1px;
   }
+  
+  .card-slot {
+    width: clamp(30px, 5.5vw, 45px);
+    height: clamp(42px, 7.7vw, 63px);
+    font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+  }
+
+  .hand-card {
+    width: clamp(20px, 4vw, 35px);
+    height: clamp(28px, 5.6vw, 49px);
+    font-size: clamp(0.6rem, 1vw, 0.8rem);
+  }
 
   /* Enhanced Mobile Deck Builder */
   .deck-builder-mobile {
     padding: 0.25rem;
+    margin-left: clamp(80px, 20vw, 120px);
   }
 
   .deck-builder-grid {
@@ -561,7 +612,7 @@
   
   .deck-builder-buttons button {
     width: 100%;
-    min-height: 44px; /* Touch target size */
+    min-height: 44px;
     font-size: 0.9rem;
     padding: 0.75rem;
   }
@@ -586,7 +637,7 @@
   /* Mobile-friendly input fields */
   input, select, textarea {
     min-height: 44px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
 
   /* Mobile-friendly buttons */
@@ -603,6 +654,26 @@
 
 /* ==== VERY SMALL MOBILE SCREENS ==== */
 @media (max-width: 320px) {
+  .sidebar {
+    width: 60px;
+    min-width: 60px;
+  }
+  
+  .field-area {
+    margin-left: 60px;
+  }
+  
+  .battlefield-container {
+    min-width: 450px;
+  }
+  
+  .opponent-zone,
+  .player-zone,
+  .hand-zone,
+  .center-zone {
+    min-width: 450px;
+  }
+  
   .card-slot {
     width: clamp(25px, 5vw, 35px);
     height: clamp(35px, 7vw, 49px);
@@ -618,12 +689,16 @@
   .deck-builder-card-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   }
+  
+  .deck-builder-mobile {
+    margin-left: 60px;
+  }
 }
 
-/* ==== SIDEBAR SECTIONS - FIXED SPACING ==== */
+/* ==== SIDEBAR SECTIONS - MOBILE OPTIMIZED ==== */
 .sidebar-section {
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -631,87 +706,66 @@
   margin-bottom: 0;
 }
 
-/* Compatta i componenti nella sidebar */
-.sidebar .sidebar-section .p-4 {
-  padding: 0.75rem !important;
-}
-
-.sidebar .sidebar-section .h-64 {
-  height: 12rem !important;
-}
-
-.sidebar .sidebar-section .h-48 {
-  height: 10rem !important;
-}
-
-/* Riduce le dimensioni dei titoli nella sidebar */
-.sidebar .sidebar-section h3 {
-  font-size: 1rem !important;
-  margin-bottom: 0.5rem !important;
-}
-
-/* Compatta i controlli life points */
-.sidebar .sidebar-section .text-4xl {
-  font-size: 1.8rem !important;
-}
-
-.sidebar .sidebar-section .grid-cols-3 {
-  gap: 0.25rem !important;
-}
-
-.sidebar .sidebar-section .grid-cols-3 button {
-  font-size: 0.75rem !important;
-  padding: 0.25rem 0.5rem !important;
-}
-
-/* Compatta le fasi di gioco */
-.sidebar .sidebar-section .space-y-4 {
-  gap: 0.5rem !important;
-}
-
-.sidebar .sidebar-section .gap-1 {
-  gap: 0.25rem !important;
-}
-
-/* Compatta timer */
-.sidebar .sidebar-section .text-center {
-  margin-bottom: 0.5rem !important;
-}
-
-/* Responsive per sidebar su mobile */
-@media (max-width: 768px) {
-  .sidebar {
-    display: flex;
-    flex-direction: row;
-    height: auto;
-    padding: 0.5rem;
+/* Compatta i componenti nella sidebar per mobile */
+@media (max-width: 480px) {
+  .sidebar .sidebar-section {
+    padding: 0.25rem;
+    margin-bottom: 0.25rem;
   }
   
-  .sidebar-section {
-    margin-bottom: 0;
-    margin-right: 1rem;
-    padding: 0.5rem;
-    min-width: fit-content;
+  .sidebar .sidebar-section .p-4 {
+    padding: 0.5rem !important;
   }
-  
-  .sidebar-section:last-child {
-    margin-right: 0;
+
+  .sidebar .sidebar-section .h-64 {
+    height: 8rem !important;
+  }
+
+  .sidebar .sidebar-section .h-48 {
+    height: 6rem !important;
+  }
+
+  .sidebar .sidebar-section h3 {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .sidebar .sidebar-section .text-4xl {
+    font-size: 1.2rem !important;
+  }
+
+  .sidebar .sidebar-section .grid-cols-3 {
+    gap: 0.1rem !important;
+  }
+
+  .sidebar .sidebar-section .grid-cols-3 button {
+    font-size: 0.6rem !important;
+    padding: 0.1rem 0.25rem !important;
+  }
+
+  .sidebar .sidebar-section .space-y-4 {
+    gap: 0.25rem !important;
+  }
+
+  .sidebar .sidebar-section .gap-1 {
+    gap: 0.1rem !important;
+  }
+
+  .sidebar .sidebar-section .text-center {
+    margin-bottom: 0.25rem !important;
   }
 }
 
 /* ==== MOBILE TOUCH IMPROVEMENTS ==== */
 @media (max-width: 768px) {
-  /* Larger touch targets */
   .card-slot, .hand-card {
     touch-action: manipulation;
   }
   
-  /* Prevent double-tap zoom */
   * {
     touch-action: manipulation;
   }
   
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
@@ -724,15 +778,22 @@
   }
   
   .sidebar {
-    width: clamp(150px, 15vw, 200px);
+    width: clamp(100px, 15vw, 150px);
     height: 100vh;
     flex-direction: column;
     border-right: 2px solid #4a5568;
     border-bottom: none;
+    position: relative;
+    margin-left: 0;
+  }
+  
+  .field-area {
+    margin-left: 0;
   }
   
   .battlefield-container {
     gap: clamp(0.2rem, 0.8vw, 0.5rem);
+    min-width: 600px;
   }
   
   .card-slot {

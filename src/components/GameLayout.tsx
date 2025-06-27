@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import ActionLog from '@/components/ActionLog';
@@ -8,13 +7,17 @@ import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
 import ChatBox from '@/components/ChatBox';
 import TurnTimer from '@/components/TurnTimer';
+import MobileSidebar from '@/components/MobileSidebar';
+import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
 
 const GameLayout = ({
   gameData,
   gameState,
   handlers
 }) => {
-  
+  const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
+
   const {
     playerField,
     enemyField,
@@ -53,6 +56,64 @@ const GameLayout = ({
     handleShowCard,
     handleShowHand
   } = handlers;
+
+  if (isSmallMobile) {
+    return (
+      <div className="game-container">
+        {/* Game ID Display */}
+        <div className="game-header">
+          {gameData?.gameId && (
+            <div className="game-id">
+              Game ID: {gameData.gameId}
+              {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
+            </div>
+          )}
+        </div>
+        
+        {/* Mobile Sidebar */}
+        <MobileSidebar
+          enemyLifePoints={enemyLifePoints}
+          playerLifePoints={playerLifePoints}
+          currentPhase={currentPhase}
+          isPlayerTurn={isPlayerTurn}
+          timeRemaining={timeRemaining}
+          onLifePointsChange={handleLifePointsChange}
+          onPhaseChange={handlePhaseChange}
+          onEndTurn={handleEndTurn}
+          onTimeUp={handleTimeUp}
+          onTimeChange={setTimeRemaining}
+        />
+        
+        {/* Area principale del campo */}
+        <div className="field-area">
+          <ResponsiveGameBoard 
+            playerField={playerField}
+            enemyField={enemyField}
+            playerHand={playerHand}
+            enemyHandCount={enemyHandCount}
+            enemyRevealedCard={enemyRevealedCard}
+            enemyRevealedHand={enemyRevealedHand}
+            onAttack={handleAttack}
+            onCardPlace={handleCardPlace}
+            selectedCardFromHand={selectedCardFromHand}
+            onCardPreview={setPreviewCard}
+            onCardMove={handleCardMove}
+            onDeckMill={handleDeckMill}
+            onDrawCard={handleDrawCard}
+            setSelectedCardFromHand={setSelectedCardFromHand}
+          />
+        </div>
+        
+        {/* Card Preview Modal */}
+        {previewCard && (
+          <CardPreview 
+            card={previewCard}
+            onClose={() => setPreviewCard(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="game-container">
