@@ -1,4 +1,6 @@
 
+import { useSupabaseMultiplayer } from './useSupabaseMultiplayer';
+
 export const useGameSync = (user, sessionId, gameState) => {
   const { supabase } = useSupabaseMultiplayer(user, gameState);
   
@@ -15,7 +17,6 @@ export const useGameSync = (user, sessionId, gameState) => {
         game_session_id: sessionId,
         player_id: user.id,
         player_hand_count: gameState.playerHand?.length || 0,
-        player_deck_count: gameState.playerField?.deck?.length || 0,
         player_life_points: gameState.playerLifePoints || 8000,
         player_field: JSON.stringify(gameState.playerField || {}),
         current_phase: gameState.currentPhase || 'draw',
