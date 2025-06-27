@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +13,25 @@ import CardList from './deck-builder/CardList';
 import DeckView from './deck-builder/DeckView';
 
 interface DeckBuilderProps {
-  onBack: () => void;
+  onBack?: () => void;
   onDeckSave: (deckData: any) => void;
+  availableCards?: any[];
+  initialDeck?: any;
 }
 
-const DeckBuilder = ({ onBack, onDeckSave }: DeckBuilderProps) => {
+const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards = [], initialDeck }: DeckBuilderProps) => {
   const [deckName, setDeckName] = useState('Nuovo Deck');
   const [mainDeck, setMainDeck] = useState<{[cardId: number]: number}>({});
   const [extraDeck, setExtraDeck] = useState<{[cardId: number]: number}>({});
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
+  const [availableCards, setAvailableCards] = useState<any[]>(initialAvailableCards);
   const [previewCard, setPreviewCard] = useState<any>(null);
+
+  // Load initial deck if provided
+  useEffect(() => {
+    if (initialDeck) {
+      handleLoadDeck(initialDeck);
+    }
+  }, [initialDeck]);
 
   const currentDeck = {
     name: deckName,
@@ -199,10 +207,12 @@ const DeckBuilder = ({ onBack, onDeckSave }: DeckBuilderProps) => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Button onClick={onBack} className="bg-purple-600 hover:bg-purple-700">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Torna al Menu
-          </Button>
+          {onBack && (
+            <Button onClick={onBack} className="bg-purple-600 hover:bg-purple-700">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Torna al Menu
+            </Button>
+          )}
           <h1 className="text-3xl font-bold text-white">Costruttore Deck</h1>
           <Button onClick={handleSaveDeck} className="bg-green-600 hover:bg-green-700">
             <Save className="w-4 h-4 mr-2" />
