@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Download, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Upload, Download, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface CustomCardManagerProps {
@@ -33,15 +33,20 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
     let updatedCards = [...cards];
     
     if (showSampleCards) {
-      // Aggiungi le carte sample se il toggle è attivo
-      const sampleCards = require('@/data/sampleCards.json').cards;
-      // Evita duplicati basandosi sull'ID
-      const existingIds = new Set(cards.map(c => c.id));
-      const uniqueSampleCards = sampleCards.filter((card: any) => !existingIds.has(card.id));
-      updatedCards = [...cards, ...uniqueSampleCards];
+      // Importa le sample cards direttamente invece di usare require
+      import('@/data/sampleCards.json').then(module => {
+        const sampleCards = module.default.cards;
+        const existingIds = new Set(cards.map(c => c.id));
+        const uniqueSampleCards = sampleCards.filter((card: any) => !existingIds.has(card.id));
+        const finalCards = [...cards, ...uniqueSampleCards];
+        onCardsUpdate(finalCards);
+      }).catch(error => {
+        console.error('Error loading sample cards:', error);
+        onCardsUpdate(cards);
+      });
+    } else {
+      onCardsUpdate(updatedCards);
     }
-    
-    onCardsUpdate(updatedCards);
   };
 
   useEffect(() => {
@@ -64,39 +69,30 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
         const data = JSON.parse(e.target?.result as string);
         let newCards: any[] = [];
 
+        // Controlla se è un file di carte o un deck
         if (data.cards && Array.isArray(data.cards)) {
-          // File di carte
+          // File di carte - aggiunge al database delle carte
           newCards = data.cards;
+          importCards(newCards, 'carte dal file JSON');
+        } else if (data.mainDeck && data.extraDeck) {
+          // File deck - chiede cosa fare
+          const choice = confirm(
+            'Questo sembra essere un file deck. Vuoi:\n' +
+            'OK = Importare solo le carte nel database\n' +
+            'Annulla = Questo non è supportato qui (usa "Carica Deck" negli slot)'
+          );
+          if (choice) {
+            newCards = [...(data.mainDeck || []), ...(data.extraDeck || [])];
+            importCards(newCards, 'carte dal deck');
+          }
         } else if (Array.isArray(data)) {
           // Array diretto di carte
           newCards = data;
+          importCards(newCards, 'carte dal file JSON');
         } else {
-          alert('Formato file non riconosciuto. Usa un file con array di carte o oggetto con proprietà "cards".');
+          alert('Formato file non riconosciuto. Per importare un deck completo, usa la funzione "Carica Deck" negli slot di salvataggio.');
           return;
         }
-
-        // Valida le carte
-        const validCards = newCards.filter(card => 
-          card.id && card.name && card.type
-        );
-
-        if (validCards.length === 0) {
-          alert('Nessuna carta valida trovata nel file.');
-          return;
-        }
-
-        // Evita duplicati basandosi sull'ID
-        const existingIds = new Set(customCards.map(c => c.id));
-        const uniqueCards = validCards.filter(card => !existingIds.has(card.id));
-        
-        if (uniqueCards.length === 0) {
-          alert('Tutte le carte nel file sono già state importate.');
-          return;
-        }
-
-        const updatedCards = [...customCards, ...uniqueCards];
-        saveCustomCards(updatedCards);
-        alert(`${uniqueCards.length} carte importate con successo!`);
       } catch (error) {
         console.error('Import error:', error);
         alert('Errore nell\'importazione del file JSON');
@@ -104,6 +100,31 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
     };
     reader.readAsText(file);
     event.target.value = '';
+  };
+
+  const importCards = (newCards: any[], source: string) => {
+    // Valida le carte
+    const validCards = newCards.filter(card => 
+      card.id && card.name && card.type
+    );
+
+    if (validCards.length === 0) {
+      alert(`Nessuna carta valida trovata in ${source}.`);
+      return;
+    }
+
+    // Evita duplicati basandosi sull'ID
+    const existingIds = new Set(customCards.map(c => c.id));
+    const uniqueCards = validCards.filter(card => !existingIds.has(card.id));
+    
+    if (uniqueCards.length === 0) {
+      alert(`Tutte le carte in ${source} sono già state importate.`);
+      return;
+    }
+
+    const updatedCards = [...customCards, ...uniqueCards];
+    saveCustomCards(updatedCards);
+    alert(`${uniqueCards.length} ${source} importate con successo!`);
   };
 
   const importCardsFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,23 +153,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
           cost: row.Costo || row.Cost || null
         }));
 
-        // Filtra carte valide
-        const validCards = newCards.filter(card => 
-          card.name && card.type
-        );
-
-        if (validCards.length === 0) {
-          alert('Nessuna carta valida trovata nel file Excel.');
-          return;
-        }
-
-        // Evita duplicati
-        const existingIds = new Set(customCards.map(c => c.id));
-        const uniqueCards = validCards.filter(card => !existingIds.has(card.id));
-
-        const updatedCards = [...customCards, ...uniqueCards];
-        saveCustomCards(updatedCards);
-        alert(`${uniqueCards.length} carte importate da Excel con successo!`);
+        importCards(newCards, 'carte da Excel');
       } catch (error) {
         console.error('Excel import error:', error);
         alert('Errore nell\'importazione del file Excel');
@@ -187,7 +192,14 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
 
   return (
     <Card className="p-4 bg-slate-800/50 mb-4">
-      <h3 className="text-lg font-semibold text-white mb-3">Gestione Carte</h3>
+      <h3 className="text-lg font-semibold text-white mb-3">Gestione Carte Database</h3>
+      
+      <div className="mb-3 p-3 bg-blue-900/30 rounded border border-blue-400">
+        <p className="text-blue-200 text-sm">
+          <FileText size={16} className="inline mr-2" />
+          <strong>Nota:</strong> Qui importi carte nel tuo database personale. Per caricare un deck completo, usa gli slot di salvataggio a sinistra.
+        </p>
+      </div>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {/* Toggle carte sample */}
@@ -206,7 +218,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
           <Button variant="outline" size="sm" asChild>
             <span>
               <Upload size={16} />
-              Import JSON
+              Import Carte JSON
             </span>
           </Button>
           <input
@@ -221,7 +233,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
           <Button variant="outline" size="sm" asChild>
             <span>
               <Upload size={16} />
-              Import Excel
+              Import Carte Excel
             </span>
           </Button>
           <input
@@ -240,7 +252,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
           disabled={customCards.length === 0}
         >
           <Download size={16} />
-          Export JSON
+          Export Carte JSON
         </Button>
 
         {/* Clear button */}

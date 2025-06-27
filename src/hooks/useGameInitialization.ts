@@ -1,4 +1,3 @@
-
 import sampleCardsData from '@/data/sampleCards.json';
 import { shuffleArray, generateUniqueCardId } from '@/utils/gameHelpers';
 
@@ -15,6 +14,7 @@ export const useGameInitialization = ({
   const initializeGame = () => {
     console.log('[useGameInitialization] Initializing game...');
     console.log('[useGameInitialization] Player deck data:', playerDeckData);
+    console.log('[useGameInitialization] Game data:', gameData);
     
     // Use player deck data if available, otherwise use sample data
     let playerCards = [];
@@ -65,8 +65,15 @@ export const useGameInitialization = ({
       id: generateUniqueCardId(card.id, gameData?.playerName || 'player', `extra_${index}`)
     }));
 
-    // ALWAYS use sample data for enemy deck to ensure independent decks
-    const enemyCards = sampleCardsData.cards;
+    // For enemy deck: 
+    // - If in multiplayer, enemy will have their own deck (this runs on both clients)
+    // - If single player, always use sample data to ensure different deck
+    let enemyCards = sampleCardsData.cards;
+    
+    // In multiplayer, if we're the guest, we might want to use our own deck for enemy
+    // But to keep it simple, always use sample data for enemy to ensure different decks
+    console.log('[useGameInitialization] Using sample data for enemy deck');
+    
     const enemyMainDeckCards = enemyCards.filter((card: any) => !card.extra_deck);
     const enemyExtraDeckCards = enemyCards.filter((card: any) => card.extra_deck);
 
@@ -98,14 +105,16 @@ export const useGameInitialization = ({
       playerHandSize: playerStartingHand.length,
       enemyHandSize: actualEnemyHandCount,
       playerExtraDeckSize: playerExtraDeck.length,
-      enemyExtraDeckSize: enemyExtraDeck.length
+      enemyExtraDeckSize: enemyExtraDeck.length,
+      isMultiplayer: !!gameData?.gameId,
+      playerName: gameData?.playerName
     });
 
     // Set all the state
     setPlayerDeck(playerRemainingDeck);
     setEnemyDeck(enemyRemainingDeck);
     setPlayerHand(playerStartingHand);
-    setEnemyHandCount(actualEnemyHandCount); // Use actual count, not a fixed number
+    setEnemyHandCount(actualEnemyHandCount);
     
     setPlayerField((prev: any) => ({ 
       ...prev, 

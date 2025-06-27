@@ -19,9 +19,45 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
     if (newGameData.gameId) {
       const stateKey = `yugiduel_state_${newGameData.gameId}`;
       localStorage.removeItem(stateKey);
+      
+      // Sincronizza le carte personalizzate per il multiplayer
+      syncCustomCardsForMultiplayer(newGameData);
     }
     
     initializeGame();
+  };
+
+  const syncCustomCardsForMultiplayer = (gameData) => {
+    // Se sei l'host, condividi le tue carte personalizzate
+    if (gameData.isHost) {
+      const customCards = localStorage.getItem('yugiduel_custom_cards');
+      if (customCards) {
+        // Salva le carte personalizzate con un key specifico per la partita
+        localStorage.setItem(`yugiduel_shared_cards_${gameData.gameId}`, customCards);
+      }
+    } else {
+      // Se sei il guest, prova a caricare le carte condivise dall'host
+      const sharedCards = localStorage.getItem(`yugiduel_shared_cards_${gameData.gameId}`);
+      if (sharedCards) {
+        // Unisci le carte condivise con quelle personali del guest
+        const existingCards = localStorage.getItem('yugiduel_custom_cards');
+        let combinedCards = [];
+        
+        try {
+          const shared = JSON.parse(sharedCards);
+          const existing = existingCards ? JSON.parse(existingCards) : [];
+          
+          // Evita duplicati basandosi sull'ID
+          const existingIds = new Set(existing.map(c => c.id));
+          const uniqueShared = shared.filter(card => !existingIds.has(card.id));
+          
+          combinedCards = [...existing, ...uniqueShared];
+          localStorage.setItem('yugiduel_custom_cards', JSON.stringify(combinedCards));
+        } catch (error) {
+          console.error('Error syncing shared cards:', error);
+        }
+      }
+    }
   };
 
   const handlePlayerReady = () => {
@@ -93,13 +129,34 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
       return;
     }
 
-    // Check deck size limits
-    if (mainDeckCount < 40 || mainDeckCount > 60) {
-      alert(`Attenzione: Il Main Deck deve avere tra 40 e 60 carte (attualmente: ${mainDeckCount})`);
+    // Check deck size limits with more detailed feedback
+    const errors = [];
+    if (mainDeckCount < 40) {
+      errors.push(`Main Deck troppo piccolo: ${mainDeckCount}/40 minimo`);
     }
-    
+    if (mainDeckCount > 60) {
+      errors.push(`Main Deck troppo grande: ${mainDeckCount}/60 massimo`);
+    }
     if (extraDeckCount > 15) {
-      alert(`Attenzione: L'Extra Deck può avere massimo 15 carte (attualmente: ${extraDeckCount})`);
+      errors.push(`Extra Deck troppo grande: ${extraDeckCount}/15 massimo`);
+    }
+
+    // Check for card limits (max 3 copies per card)
+    const cardCounts = new Map();
+    [...deckData.mainDeck, ...deckData.extraDeck].forEach(card => {
+      const count = cardCounts.get(card.id) || 0;
+      cardCounts.set(card.id, count + 1);
+    });
+
+    for (const [cardId, count] of cardCounts) {
+      if (count > 3) {
+        const card = [...deckData.mainDeck, ...deckData.extraDeck].find(c => c.id === cardId);
+        errors.push(`Troppe copie di "${card?.name || cardId}": ${count}/3 massimo`);
+      }
+    }
+
+    if (errors.length > 0) {
+      alert('Attenzioni/Errori nel deck:\n' + errors.join('\n') + '\n\nIl deck è stato comunque caricato.');
     }
 
     console.log('Deck structure check:', {
@@ -110,11 +167,23 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
       hasExtraDeck: !!deckData.extraDeck,
       extraDeckCount,
       totalCards: deckData.totalCards || (mainDeckCount + extraDeckCount),
-      deckName: deckData.name || 'Unnamed Deck'
+      deckName: deckData.name || 'Unnamed Deck',
+      cardLimitChecks: Array.from(cardCounts.entries()).filter(([_, count]) => count > 3)
     });
 
     setPlayerDeckData(deckData);
     alert(`Deck "${deckData.name || 'Unnamed Deck'}" caricato con successo!\nMain Deck: ${mainDeckCount} carte\nExtra Deck: ${extraDeckCount} carte`);
+    
+    // Se siamo in multiplayer, notifica il cambio deck
+    if (gameData?.gameId) {
+      const deckChangeMessage = {
+        id: Date.now() + Math.random(),
+        player: gameData?.playerName || 'Player',
+        message: `📋 Deck "${deckData.name || 'Unnamed Deck'}" caricato (${mainDeckCount + extraDeckCount} carte)`
+      };
+      setChatMessages(prev => [...prev, deckChangeMessage]);
+      setTimeout(() => syncGameState(), 100);
+    }
   };
 
   return {

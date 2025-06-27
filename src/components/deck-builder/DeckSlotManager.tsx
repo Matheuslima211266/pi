@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trash2, Upload } from 'lucide-react';
+import { Save, Trash2, Upload, Download, FileText } from 'lucide-react';
 
 interface DeckSlot {
   id: number;
@@ -102,21 +102,106 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
     return result;
   };
 
+  const importDeckFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        
+        if (data.mainDeck && data.extraDeck) {
+          // File deck completo
+          const slotId = parseInt(prompt('In quale slot salvare questo deck? (1-10)') || '0');
+          if (slotId >= 1 && slotId <= 10) {
+            const deckSlot: DeckSlot = {
+              id: slotId,
+              name: data.name || `Deck Importato ${slotId}`,
+              mainDeck: data.mainDeck,
+              extraDeck: data.extraDeck,
+              totalCards: data.mainDeck.length + data.extraDeck.length,
+              lastModified: new Date().toLocaleString()
+            };
+
+            const updatedDecks = { ...savedDecks, [slotId]: deckSlot };
+            setSavedDecks(updatedDecks);
+            localStorage.setItem('yugiduel_saved_decks', JSON.stringify(updatedDecks));
+            alert(`Deck "${deckSlot.name}" importato nello slot ${slotId}!`);
+          }
+        } else {
+          alert('Questo file non contiene un deck valido. Assicurati che contenga mainDeck e extraDeck.');
+        }
+      } catch (error) {
+        console.error('Deck import error:', error);
+        alert('Errore nell\'importazione del file deck');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  const exportDeckFromSlot = (slotId: number) => {
+    const deck = savedDecks[slotId];
+    if (!deck) return;
+
+    const deckData = {
+      name: deck.name,
+      mainDeck: deck.mainDeck,
+      extraDeck: deck.extraDeck,
+      totalCards: deck.totalCards,
+      exportDate: new Date().toISOString()
+    };
+
+    const dataStr = JSON.stringify(deckData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${deck.name.replace(/\s+/g, '_')}_deck.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Card className="p-4 bg-slate-900 border-2 border-purple-400 h-full">
-      <h3 className="text-lg font-bold text-white mb-4">Slot Deck Salvati</h3>
+      <h3 className="text-lg font-bold text-white mb-3">Slot Deck Salvati</h3>
+      
+      <div className="mb-3 p-2 bg-purple-900/30 rounded border border-purple-400">
+        <p className="text-purple-200 text-xs">
+          <FileText size={12} className="inline mr-1" />
+          Qui puoi salvare/caricare deck completi
+        </p>
+      </div>
+
+      <div className="flex gap-1 mb-3">
+        <label className="cursor-pointer flex-1">
+          <Button variant="outline" size="sm" className="w-full text-xs">
+            <Upload size={12} />
+            Import Deck
+          </Button>
+          <input
+            type="file"
+            accept=".json"
+            onChange={importDeckFromFile}
+            className="hidden"
+          />
+        </label>
+      </div>
+      
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {Array.from({ length: 10 }, (_, i) => i + 1).map(slotId => {
           const deck = savedDecks[slotId];
           return (
             <div key={slotId} className="p-3 bg-slate-800/50 rounded border border-slate-600">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-medium">Slot {slotId}</span>
+                <span className="text-white font-medium text-sm">Slot {slotId}</span>
                 <div className="flex gap-1">
                   <Button
                     size="sm"
                     onClick={() => saveDeckToSlot(slotId)}
                     className="bg-green-600 hover:bg-green-700 px-2 py-1 h-auto"
+                    title="Salva deck corrente"
                   >
                     <Save size={12} />
                   </Button>
@@ -126,14 +211,24 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
                         size="sm"
                         onClick={() => loadDeckFromSlot(slotId)}
                         className="bg-blue-600 hover:bg-blue-700 px-2 py-1 h-auto"
+                        title="Carica deck"
                       >
                         <Upload size={12} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => exportDeckFromSlot(slotId)}
+                        className="bg-yellow-600 hover:bg-yellow-700 px-2 py-1 h-auto"
+                        title="Esporta deck"
+                      >
+                        <Download size={12} />
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => deleteDeckFromSlot(slotId)}
                         className="px-2 py-1 h-auto"
+                        title="Elimina deck"
                       >
                         <Trash2 size={12} />
                       </Button>
