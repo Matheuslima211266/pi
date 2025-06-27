@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Play, LogOut, Clock, RefreshCw } from 'lucide-react';
+import { Users, Play, LogOut, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WaitingForPlayersScreenProps {
@@ -22,11 +22,10 @@ const WaitingForPlayersScreen = ({
   onSignOut,
   onGameStart 
 }: WaitingForPlayersScreenProps) => {
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [gameStarting, setGameStarting] = useState(false); // Nuovo state per evitare restart multipli
-  const countdownStartedRef = useRef(false); // Ref per tracciare se il countdown è già iniziato
+  const [gameStarting, setGameStarting] = useState(false);
+  const gameStartedRef = useRef(false); // Per evitare chiamate multiple
   
   const bothReady = playerReady && opponentReady;
 
@@ -34,9 +33,8 @@ const WaitingForPlayersScreen = ({
     playerReady,
     opponentReady,
     bothReady,
-    countdown,
     gameStarting,
-    countdownStarted: countdownStartedRef.current,
+    gameStarted: gameStartedRef.current,
     gameData: gameData?.gameId
   });
 
@@ -75,45 +73,25 @@ const WaitingForPlayersScreen = ({
     return () => clearInterval(interval);
   }, [gameData?.gameId]);
 
-  // Start countdown when both players are ready - FIXED
+  // Start game immediately when both players are ready
   useEffect(() => {
-    if (bothReady && onGameStart && !countdownStartedRef.current && !gameStarting) {
-      console.log('Both players ready, starting 5 second countdown...');
-      countdownStartedRef.current = true; // Segna che il countdown è iniziato
-      setCountdown(5);
+    if (bothReady && onGameStart && !gameStartedRef.current && !gameStarting) {
+      console.log('Both players ready, starting game immediately...');
+      gameStartedRef.current = true;
+      setGameStarting(true);
+      
+      // Piccolo delay per mostrare il messaggio "Starting Game"
+      setTimeout(() => {
+        onGameStart();
+      }, 1000);
     }
   }, [bothReady, onGameStart, gameStarting]);
 
-  // Handle countdown timer - FIXED VERSION
+  // Reset game state when players become not ready
   useEffect(() => {
-    if (countdown !== null && countdown > 0) {
-      console.log('Countdown tick:', countdown);
-      const timer = setTimeout(() => {
-        const newCountdown = countdown - 1;
-        console.log('Setting countdown to:', newCountdown);
-        
-        if (newCountdown <= 0) {
-          console.log('Countdown finished, calling onGameStart...');
-          setCountdown(null);
-          setGameStarting(true); // Imposta gameStarting a true
-          if (onGameStart) {
-            onGameStart();
-          }
-        } else {
-          setCountdown(newCountdown);
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [countdown, onGameStart]);
-
-  // Reset countdown state when players become not ready
-  useEffect(() => {
-    if (!bothReady && countdownStartedRef.current) {
-      console.log('Players not ready anymore, resetting countdown state');
-      countdownStartedRef.current = false;
-      setCountdown(null);
+    if (!bothReady && gameStartedRef.current) {
+      console.log('Players not ready anymore, resetting game state');
+      gameStartedRef.current = false;
       setGameStarting(false);
     }
   }, [bothReady]);
@@ -179,7 +157,7 @@ const WaitingForPlayersScreen = ({
                 <p className="text-gray-300">Host: {debugInfo.host_name} ({debugInfo.host_ready ? 'Ready' : 'Not Ready'})</p>
                 <p className="text-gray-300">Guest: {debugInfo.guest_name || 'None'} ({debugInfo.guest_ready ? 'Ready' : 'Not Ready'})</p>
                 <p className="text-gray-300">Status: {debugInfo.status}</p>
-                <p className="text-gray-300">Countdown Started: {countdownStartedRef.current ? 'Yes' : 'No'}</p>
+                <p className="text-gray-300">Game Started: {gameStartedRef.current ? 'Yes' : 'No'}</p>
               </div>
             )}
 
@@ -208,26 +186,19 @@ const WaitingForPlayersScreen = ({
               </div>
             )}
 
-            {/* Both ready - countdown */}
-            {bothReady && countdown !== null && countdown > 0 && !gameStarting && (
+            {/* Both ready - immediate start */}
+            {bothReady && !gameStarting && (
               <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-blue-400" />
-                  <p className="text-blue-400 font-semibold text-lg">Both players ready!</p>
+                <p className="text-blue-400 font-semibold text-lg">🎮 Both players ready!</p>
+                <p className="text-sm text-gray-300 mt-1">Starting game now...</p>
+                <div className="mt-2">
+                  <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto"></div>
                 </div>
-                <p className="text-sm text-gray-300 mb-3">Starting game in {countdown} seconds...</p>
-                <div className="w-full bg-blue-800 rounded-full h-3 mb-2">
-                  <div 
-                    className="bg-blue-400 h-3 rounded-full transition-all duration-1000"
-                    style={{ width: `${((5 - countdown) / 5) * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-blue-300">Get ready to duel! 🎮</p>
               </div>
             )}
 
             {/* Starting game */}
-            {(gameStarting || (bothReady && countdown === null)) && (
+            {gameStarting && (
               <div className="text-center p-4 bg-purple-900/30 rounded-lg border border-purple-400">
                 <p className="text-purple-400 font-semibold text-lg">🎮 Starting Game...</p>
                 <p className="text-sm text-gray-300 mt-1">Loading duel arena...</p>
