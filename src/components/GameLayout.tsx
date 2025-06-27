@@ -1,111 +1,236 @@
-
 import React, { useState } from 'react';
-import { Swords, RotateCcw } from 'lucide-react';
-import ResponsiveGameBoard from './ResponsiveGameBoard';
-import PlayerHand from './PlayerHand';
-import EnemyHand from './EnemyHand';
-import MobileSidebar from './MobileSidebar';
+import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
+import ActionLog from '@/components/ActionLog';
+import DiceAndCoin from '@/components/DiceAndCoin';
+import CardPreview from '@/components/CardPreview';
+import LifePointsControl from '@/components/LifePointsControl';
+import GamePhases from '@/components/GamePhases';
+import ChatBox from '@/components/ChatBox';
+import TurnTimer from '@/components/TurnTimer';
+import MobileSidebar from '@/components/MobileSidebar';
+import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
+import { RotateCcw } from 'lucide-react';
 
-interface GameLayoutProps {
-  gameData: any;
-  gameState: any;
-  handlers: any;
-}
+const GameLayout = ({
+  gameData,
+  gameState,
+  handlers
+}) => {
+  const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
+  const [sidebarPosition, setSidebarPosition] = useState('bottom'); // 'bottom' or 'side'
 
-const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
-  const [sidebarPosition, setSidebarPosition] = useState<'center' | 'side'>('center');
-  
-  console.log('[GAMELAYOUT] Rendering with state:', {
-    playerField: gameState.playerField,
-    enemyField: gameState.enemyField,
-    playerHand: gameState.playerHand?.length,
-    enemyHandCount: gameState.enemyHandCount
-  });
+  const {
+    playerField,
+    enemyField,
+    playerHand,
+    enemyHandCount,
+    enemyRevealedCard,
+    enemyRevealedHand,
+    selectedCardFromHand,
+    previewCard,
+    actionLog,
+    playerLifePoints,
+    enemyLifePoints,
+    currentPhase,
+    isPlayerTurn,
+    timeRemaining,
+    chatMessages,
+    setPreviewCard,
+    setSelectedCardFromHand,
+    setTimeRemaining
+  } = gameState;
 
-  const toggleSidebarPosition = () => {
-    setSidebarPosition(prev => prev === 'center' ? 'side' : 'center');
-  };
+  const {
+    handleAttack,
+    handleCardPlace,
+    handleCardMove,
+    handleDeckMill,
+    handleDrawCard,
+    handleCardClick,
+    handleLifePointsChange,
+    handlePhaseChange,
+    handleEndTurn,
+    handleTimeUp,
+    handleSendMessage,
+    handleDiceRoll,
+    handleCoinFlip,
+    handleShowCard,
+    handleShowHand
+  } = handlers;
 
-  return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 overflow-hidden relative">
-      {/* Toggle button for sidebar position */}
-      <button
-        onClick={toggleSidebarPosition}
-        className="absolute top-4 right-4 z-50 bg-blue-600/80 hover:bg-blue-700/80 text-white p-2 rounded-lg backdrop-blur-sm"
-      >
-        <RotateCcw size={20} />
-      </button>
-
-      {/* Game content */}
-      <div className="h-full w-full flex flex-col">
-        {/* Enemy hand at top */}
-        <div className="h-20 flex items-center justify-center bg-black/20 border-b border-blue-500/30">
-          <EnemyHand 
-            handCount={gameState.enemyHandCount} 
-            revealedCard={gameState.enemyRevealedCard}
-            revealedHand={gameState.enemyRevealedHand}
+  if (isSmallMobile) {
+    return (
+      <div className={`game-container ${sidebarPosition === 'side' ? 'sidebar-side' : ''}`}>
+        {/* Game ID Display */}
+        <div className="game-header">
+          {gameData?.gameId && (
+            <div className="game-id">
+              Game ID: {gameData.gameId}
+              {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
+            </div>
+          )}
+          
+          {/* Sidebar Position Toggle */}
+          <button
+            onClick={() => setSidebarPosition(prev => prev === 'bottom' ? 'side' : 'bottom')}
+            className="fixed top-4 right-4 z-60 bg-slate-800/90 border border-slate-600 rounded p-2 text-white hover:bg-slate-700/90 transition-colors"
+            title={`Switch to ${sidebarPosition === 'bottom' ? 'side' : 'bottom'} sidebar`}
+          >
+            <RotateCcw size={16} />
+          </button>
+        </div>
+        
+        {/* Mobile Sidebar */}
+        <MobileSidebar
+          enemyLifePoints={enemyLifePoints}
+          playerLifePoints={playerLifePoints}
+          currentPhase={currentPhase}
+          isPlayerTurn={isPlayerTurn}
+          timeRemaining={timeRemaining}
+          onLifePointsChange={handleLifePointsChange}
+          onPhaseChange={handlePhaseChange}
+          onEndTurn={handleEndTurn}
+          onTimeUp={handleTimeUp}
+          onTimeChange={setTimeRemaining}
+          sidebarPosition={sidebarPosition}
+        />
+        
+        {/* Area principale del campo */}
+        <div className="field-area">
+          <ResponsiveGameBoard 
+            playerField={playerField}
+            enemyField={enemyField}
+            playerHand={playerHand}
+            enemyHandCount={enemyHandCount}
+            enemyRevealedCard={enemyRevealedCard}
+            enemyRevealedHand={enemyRevealedHand}
+            onAttack={handleAttack}
+            onCardPlace={handleCardPlace}
+            selectedCardFromHand={selectedCardFromHand}
+            onCardPreview={setPreviewCard}
+            onCardMove={handleCardMove}
+            onDeckMill={handleDeckMill}
+            onDrawCard={handleDrawCard}
+            setSelectedCardFromHand={setSelectedCardFromHand}
           />
         </div>
+        
+        {/* Card Preview Modal */}
+        {previewCard && (
+          <CardPreview 
+            card={previewCard}
+            onClose={() => setPreviewCard(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
-        {/* Main game area */}
-        <div className="flex-1 relative">
-          {/* Game board container */}
-          <div className={`h-full ${sidebarPosition === 'side' ? 'pr-80' : ''} transition-all duration-300`}>
-            <ResponsiveGameBoard
-              playerField={gameState.playerField}
-              enemyField={gameState.enemyField}
-              playerHand={gameState.playerHand}
-              enemyHandCount={gameState.enemyHandCount}
-              enemyRevealedCard={gameState.enemyRevealedCard}
-              enemyRevealedHand={gameState.enemyRevealedHand}
-              onAttack={handlers.handleAttack}
-              onCardPlace={handlers.handleCardPlace}
-              onCardMove={handlers.handleCardMove}
-              onCardPreview={handlers.handleCardPreview}
-              onDrawCard={handlers.handleDrawCard}
-              selectedCardFromHand={gameState.selectedCardFromHand}
-              setSelectedCardFromHand={gameState.setSelectedCardFromHand}
-            />
+  return (
+    <div className="game-container">
+      {/* Game ID Display */}
+      <div className="game-header">
+        {gameData?.gameId && (
+          <div className="game-id">
+            Game ID: {gameData.gameId}
+            {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
           </div>
-
-          {/* Central sidebar (between fields) - only show when position is center */}
-          {sidebarPosition === 'center' && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
-              <div className="w-72 max-w-[90vw]">
-                <MobileSidebar 
-                  gameState={gameState} 
-                  handlers={handlers} 
-                  position="center"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Side sidebar - only show when position is side */}
-          {sidebarPosition === 'side' && (
-            <div className="absolute top-0 right-0 h-full w-80 z-30">
-              <MobileSidebar 
-                gameState={gameState} 
-                handlers={handlers} 
-                position="side"
-              />
-            </div>
-          )}
+        )}
+      </div>
+      
+      {/* Sidebar completa con tutti i controlli */}
+      <div className="sidebar">
+        {/* Enemy Life Points */}
+        <div className="sidebar-section">
+          <LifePointsControl 
+            playerName="Avversario"
+            lifePoints={enemyLifePoints}
+            onLifePointsChange={(amount) => handleLifePointsChange(amount, true)}
+            color="red"
+          />
         </div>
-
-        {/* Player hand at bottom */}
-        <div className="h-32 bg-black/20 border-t border-blue-500/30 p-2">
-          <PlayerHand
-            cards={gameState.playerHand}
-            onPlayCard={handlers.handleCardPlace}
-            isPlayerTurn={gameState.isPlayerTurn}
-            onCardPreview={handlers.handleCardPreview}
-            onCardMove={handlers.handleCardMove}
-            onShowCard={handlers.handleShowCard}
-            onShowHand={handlers.handleShowHand}
+        
+        {/* Game Phases */}
+        <div className="sidebar-section">
+          <GamePhases 
+            currentPhase={currentPhase}
+            onPhaseChange={handlePhaseChange}
+            onEndTurn={handleEndTurn}
+            isPlayerTurn={isPlayerTurn}
+          />
+        </div>
+        
+        {/* Player Life Points */}
+        <div className="sidebar-section">
+          <LifePointsControl 
+            playerName="Giocatore"
+            lifePoints={playerLifePoints}
+            onLifePointsChange={(amount) => handleLifePointsChange(amount, false)}
+            color="blue"
+          />
+        </div>
+        
+        {/* Timer */}
+        <div className="sidebar-section">
+          <TurnTimer 
+            isActive={isPlayerTurn}
+            onTimeUp={handleTimeUp}
+            timeRemaining={timeRemaining}
+            onTimeChange={setTimeRemaining}
+          />
+        </div>
+        
+        {/* Action Log */}
+        <div className="sidebar-section flex-1">
+          <ActionLog actions={actionLog} />
+        </div>
+        
+        {/* Dice and Coin */}
+        <div className="sidebar-section">
+          <DiceAndCoin 
+            onDiceRoll={handleDiceRoll}
+            onCoinFlip={handleCoinFlip}
+          />
+        </div>
+        
+        {/* Chat */}
+        <div className="sidebar-section">
+          <ChatBox 
+            messages={chatMessages}
+            onSendMessage={handleSendMessage}
           />
         </div>
       </div>
+      
+      {/* Area principale del campo */}
+      <div className="field-area">
+        {/* Campo da gioco principale con nuovo layout */}
+        <ResponsiveGameBoard 
+          playerField={playerField}
+          enemyField={enemyField}
+          playerHand={playerHand}
+          enemyHandCount={enemyHandCount}
+          enemyRevealedCard={enemyRevealedCard}
+          enemyRevealedHand={enemyRevealedHand}
+          onAttack={handleAttack}
+          onCardPlace={handleCardPlace}
+          selectedCardFromHand={selectedCardFromHand}
+          onCardPreview={setPreviewCard}
+          onCardMove={handleCardMove}
+          onDeckMill={handleDeckMill}
+          onDrawCard={handleDrawCard}
+          setSelectedCardFromHand={setSelectedCardFromHand}
+        />
+      </div>
+      
+      {/* Card Preview Modal */}
+      {previewCard && (
+        <CardPreview 
+          card={previewCard}
+          onClose={() => setPreviewCard(null)}
+        />
+      )}
     </div>
   );
 };

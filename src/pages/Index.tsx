@@ -109,16 +109,6 @@ const Index = () => {
         hand: gameState.playerHand,
         playerName: gameState.gameData?.playerName || 'Player'
       });
-    },
-    handlePositionChange: (card: any, newPosition: 'attack' | 'defense') => {
-      console.log('[INDEX] Position change handler called:', { card, newPosition });
-      gameSync.sendGameAction('POSITION_CHANGED', {
-        card,
-        newPosition,
-        zoneName: 'monsters',
-        slotIndex: gameState.playerField.monsters.findIndex((m: any) => m && m.id === card.id)
-      });
-      multiplayerHook.logGameAction(`changed ${card.name} to ${newPosition} position`, gameState.gameData?.playerName || 'Player');
     }
   };
 
