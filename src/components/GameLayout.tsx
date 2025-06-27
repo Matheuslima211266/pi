@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import ResponsiveGameBoard from '@/components/ResponsiveGameBoard';
 import GameSidebar from '@/components/GameSidebar';
+import PlayerHand from '@/components/PlayerHand';
 import CardPreview from '@/components/CardPreview';
 
 interface GameLayoutProps {
@@ -22,27 +23,42 @@ const GameLayout = ({ gameData, gameState, handlers }: GameLayoutProps) => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 overflow-hidden">
-      {/* Game Board - Full screen without extra padding */}
-      <div className="pl-48 pr-48 h-full">
-        <ResponsiveGameBoard
-          playerField={gameState.playerField}
-          enemyField={gameState.enemyField}
-          playerHand={gameState.playerHand}
-          enemyHandCount={gameState.enemyHandCount}
-          enemyRevealedCard={gameState.enemyRevealedCard}
-          enemyRevealedHand={gameState.enemyRevealedHand}
-          onAttack={handlers.handleAttack}
-          onCardPlace={handlers.handleCardPlace}
-          selectedCardFromHand={gameState.selectedCardFromHand}
-          onCardPreview={handlers.handleCardPreview}
-          onCardMove={handlers.handleCardMove}
-          onDrawCard={() => handlers.handleDrawCard(true)}
-          onDeckMill={(count) => handlers.handleDeckMill(count, true)}
-          setSelectedCardFromHand={handlers.handleHandCardSelect}
-        />
+      {/* Game Board */}
+      <div className="pl-48 pr-48 h-full flex flex-col">
+        <div className="flex-1 p-4">
+          <ResponsiveGameBoard
+            playerField={gameState.playerField}
+            enemyField={gameState.enemyField}
+            playerHand={gameState.playerHand}
+            enemyHandCount={gameState.enemyHandCount}
+            enemyRevealedCard={gameState.enemyRevealedCard}
+            enemyRevealedHand={gameState.enemyRevealedHand}
+            onAttack={handlers.handleAttack}
+            onCardPlace={handlers.handleCardPlace}
+            selectedCardFromHand={gameState.selectedCardFromHand}
+            onCardPreview={handlers.handleCardPreview}
+            onCardMove={handlers.handleCardMove}
+            onDrawCard={() => handlers.handleDrawCard(true)}
+            onDeckMill={(count) => handlers.handleDeckMill(count, true)}
+            setSelectedCardFromHand={handlers.handleHandCardSelect}
+          />
+        </div>
+        
+        {/* Player Hand */}
+        <div className="h-32 border-t border-slate-600 bg-slate-800/30">
+          <PlayerHand
+            cards={gameState.playerHand}
+            onPlayCard={handlers.handleHandCardSelect}
+            isPlayerTurn={gameState.isPlayerTurn}
+            onCardPreview={handlers.handleCardPreview}
+            onCardMove={handlers.handleCardMove}
+            onShowCard={handlers.handleShowCard}
+            onShowHand={handlers.handleShowHand}
+          />
+        </div>
       </div>
 
-      {/* Sidebars with repositioned Action History */}
+      {/* Sidebars */}
       <GameSidebar
         enemyLifePoints={gameState.enemyLifePoints}
         playerLifePoints={gameState.playerLifePoints}

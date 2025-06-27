@@ -81,7 +81,7 @@ const GameSidebar = ({
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR - Player Life Points + Chat + Action History (repositioned closer) */}
+      {/* RIGHT SIDEBAR - Player Life Points + Chat + Action History */}
       <div className="fixed right-0 top-0 h-full w-48 bg-slate-900/95 border-l border-slate-600 z-30 flex flex-col p-2 gap-2">
         {/* Player Life Points */}
         <LifePointsControl
@@ -92,18 +92,16 @@ const GameSidebar = ({
           isCompact={true}
         />
         
-        {/* Chat - Takes more space */}
-        <div className="flex-1 bg-slate-800/95 p-2 rounded border border-slate-600 max-h-64">
+        {/* Chat */}
+        <div className="flex-1 bg-slate-800/95 p-2 rounded border border-slate-600">
           <ChatBox
             messages={chatMessages}
             onSendMessage={onSendMessage}
           />
         </div>
         
-        {/* Action History - Positioned immediately below chat with minimal gap */}
-        <div className="mt-1">
-          <ActionHistory actions={actionLog} />
-        </div>
+        {/* Action History */}
+        <ActionHistory actions={actionLog} />
       </div>
     </>
   );
