@@ -8,6 +8,11 @@ import GamePhases from '@/components/GamePhases';
 import ChatBox from '@/components/ChatBox';
 import TurnTimer from '@/components/TurnTimer';
 import MobileSidebar from '@/components/MobileSidebar';
+import LifePointsPanel from '@/components/LifePointsPanel';
+import PhaseControls from '@/components/PhaseControls';
+import TimerControls from '@/components/TimerControls';
+import GameControlsPanel from '@/components/GameControlsPanel';
+import ChatArea from '@/components/ChatArea';
 import { useIsMobile, useIsSmallMobile } from '@/hooks/use-mobile';
 import { RotateCcw } from 'lucide-react';
 
@@ -127,85 +132,139 @@ const GameLayout = ({
     );
   }
 
+  // Mobile layout - keep existing mobile sidebar approach
+  if (isMobile) {
+    return (
+      <div className="game-container">
+        {/* Game ID Display */}
+        <div className="game-header">
+          {gameData?.gameId && (
+            <div className="game-id">
+              Game ID: {gameData.gameId}
+              {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
+            </div>
+          )}
+        </div>
+        
+        {/* Sidebar completa con tutti i controlli */}
+        <div className="sidebar">
+          {/* Enemy Life Points */}
+          <div className="sidebar-section">
+            <LifePointsControl 
+              playerName="Avversario"
+              lifePoints={enemyLifePoints}
+              onLifePointsChange={(amount) => handleLifePointsChange(amount, true)}
+              color="red"
+            />
+          </div>
+          
+          {/* Game Phases */}
+          <div className="sidebar-section">
+            <GamePhases 
+              currentPhase={currentPhase}
+              onPhaseChange={handlePhaseChange}
+              onEndTurn={handleEndTurn}
+              isPlayerTurn={isPlayerTurn}
+            />
+          </div>
+          
+          {/* Player Life Points */}
+          <div className="sidebar-section">
+            <LifePointsControl 
+              playerName="Giocatore"
+              lifePoints={playerLifePoints}
+              onLifePointsChange={(amount) => handleLifePointsChange(amount, false)}
+              color="blue"
+            />
+          </div>
+          
+          {/* Timer */}
+          <div className="sidebar-section">
+            <TurnTimer 
+              isActive={isPlayerTurn}
+              onTimeUp={handleTimeUp}
+              timeRemaining={timeRemaining}
+              onTimeChange={setTimeRemaining}
+            />
+          </div>
+          
+          {/* Action Log */}
+          <div className="sidebar-section flex-1">
+            <ActionLog actions={actionLog} />
+          </div>
+          
+          {/* Dice and Coin */}
+          <div className="sidebar-section">
+            <DiceAndCoin 
+              onDiceRoll={handleDiceRoll}
+              onCoinFlip={handleCoinFlip}
+            />
+          </div>
+          
+          {/* Chat */}
+          <div className="sidebar-section">
+            <ChatBox 
+              messages={chatMessages}
+              onSendMessage={handleSendMessage}
+            />
+          </div>
+        </div>
+        
+        {/* Area principale del campo */}
+        <div className="field-area">
+          <ResponsiveGameBoard 
+            playerField={playerField}
+            enemyField={enemyField}
+            playerHand={playerHand}
+            enemyHandCount={enemyHandCount}
+            enemyRevealedCard={enemyRevealedCard}
+            enemyRevealedHand={enemyRevealedHand}
+            onAttack={handleAttack}
+            onCardPlace={handleCardPlace}
+            selectedCardFromHand={selectedCardFromHand}
+            onCardPreview={setPreviewCard}
+            onCardMove={handleCardMove}
+            onDeckMill={handleDeckMill}
+            onDrawCard={handleDrawCard}
+            setSelectedCardFromHand={setSelectedCardFromHand}
+          />
+        </div>
+        
+        {/* Card Preview Modal */}
+        {previewCard && (
+          <CardPreview 
+            card={previewCard}
+            onClose={() => setPreviewCard(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Desktop layout - completely restructured
   return (
-    <div className="game-container">
+    <div className="new-game-container">
       {/* Game ID Display */}
-      <div className="game-header">
+      <div className="game-header-new">
         {gameData?.gameId && (
-          <div className="game-id">
+          <div className="game-id-new">
             Game ID: {gameData.gameId}
             {gameData.isHost && <span className="ml-2 text-xs">(Host)</span>}
           </div>
         )}
       </div>
-      
-      {/* Sidebar completa con tutti i controlli */}
-      <div className="sidebar">
-        {/* Enemy Life Points */}
-        <div className="sidebar-section">
-          <LifePointsControl 
-            playerName="Avversario"
-            lifePoints={enemyLifePoints}
-            onLifePointsChange={(amount) => handleLifePointsChange(amount, true)}
-            color="red"
-          />
-        </div>
-        
-        {/* Game Phases */}
-        <div className="sidebar-section">
-          <GamePhases 
-            currentPhase={currentPhase}
-            onPhaseChange={handlePhaseChange}
-            onEndTurn={handleEndTurn}
-            isPlayerTurn={isPlayerTurn}
-          />
-        </div>
-        
-        {/* Player Life Points */}
-        <div className="sidebar-section">
-          <LifePointsControl 
-            playerName="Giocatore"
-            lifePoints={playerLifePoints}
-            onLifePointsChange={(amount) => handleLifePointsChange(amount, false)}
-            color="blue"
-          />
-        </div>
-        
-        {/* Timer */}
-        <div className="sidebar-section">
-          <TurnTimer 
-            isActive={isPlayerTurn}
-            onTimeUp={handleTimeUp}
-            timeRemaining={timeRemaining}
-            onTimeChange={setTimeRemaining}
-          />
-        </div>
-        
-        {/* Action Log */}
-        <div className="sidebar-section flex-1">
-          <ActionLog actions={actionLog} />
-        </div>
-        
-        {/* Dice and Coin */}
-        <div className="sidebar-section">
-          <DiceAndCoin 
-            onDiceRoll={handleDiceRoll}
-            onCoinFlip={handleCoinFlip}
-          />
-        </div>
-        
-        {/* Chat */}
-        <div className="sidebar-section">
-          <ChatBox 
-            messages={chatMessages}
-            onSendMessage={handleSendMessage}
-          />
-        </div>
+
+      {/* LEFT SIDEBAR - Life Points Only */}
+      <div className="left-sidebar">
+        <LifePointsPanel
+          playerLifePoints={playerLifePoints}
+          enemyLifePoints={enemyLifePoints}
+          onLifePointsChange={handleLifePointsChange}
+        />
       </div>
       
-      {/* Area principale del campo */}
-      <div className="field-area">
-        {/* Campo da gioco principale con nuovo layout */}
+      {/* MAIN GAME AREA - Just the two fields */}
+      <div className="main-game-area">
         <ResponsiveGameBoard 
           playerField={playerField}
           enemyField={enemyField}
@@ -221,6 +280,34 @@ const GameLayout = ({
           onDeckMill={handleDeckMill}
           onDrawCard={handleDrawCard}
           setSelectedCardFromHand={setSelectedCardFromHand}
+        />
+      </div>
+
+      {/* RIGHT SIDEBAR - All Controls */}
+      <div className="right-sidebar">
+        <PhaseControls
+          currentPhase={currentPhase}
+          isPlayerTurn={isPlayerTurn}
+          onPhaseChange={handlePhaseChange}
+          onEndTurn={handleEndTurn}
+        />
+        
+        <TimerControls
+          isActive={isPlayerTurn}
+          onTimeUp={handleTimeUp}
+          timeRemaining={timeRemaining}
+          onTimeChange={setTimeRemaining}
+        />
+        
+        <GameControlsPanel
+          onDrawCard={handleDrawCard}
+          onDiceRoll={handleDiceRoll}
+          onCoinFlip={handleCoinFlip}
+        />
+        
+        <ChatArea
+          messages={chatMessages}
+          onSendMessage={handleSendMessage}
         />
       </div>
       

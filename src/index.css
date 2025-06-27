@@ -94,11 +94,137 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Arial', sans-serif;
-    /* REMOVED: overflow: hidden; to fix scrolling */
   }
 }
 
-/* ==== LAYOUT PRINCIPALE RESPONSIVE - MOBILE FIRST ==== */
+/* ==== NEW DESKTOP LAYOUT ==== */
+.new-game-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  overflow: hidden;
+}
+
+.game-header-new {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+.game-id-new {
+  background: #f59e0b;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+/* LEFT SIDEBAR - Life Points Only */
+.left-sidebar {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 20px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* MAIN GAME AREA - Takes most space */
+.main-game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  min-width: 800px;
+  overflow: hidden;
+}
+
+/* RIGHT SIDEBAR - All controls */
+.right-sidebar {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
+}
+
+/* Sidebar section styling */
+.sidebar-section {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.sidebar-section h3 {
+  color: #fff;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+/* Life Points Panel specific styles */
+.life-points-panel {
+  width: 100%;
+  text-align: center;
+}
+
+.opponent-lp,
+.player-lp {
+  margin-bottom: 15px;
+}
+
+.lp-label {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.lp-value {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.lp-divider {
+  height: 2px;
+  margin: 15px 0;
+}
+
+.lp-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lp-row {
+  display: flex;
+  gap: 4px;
+}
+
+/* Remove battle field and center elements completely */
+.battle-field,
+.field-center,
+.center-area,
+.battle-field-label {
+  display: none !important;
+}
+
+/* Hide center zone in responsive game board */
+.center-zone {
+  display: none !important;
+}
+
+/* ==== MOBILE LAYOUT - KEEP EXISTING ==== */
 .game-container {
   display: flex;
   flex-direction: column;
@@ -236,45 +362,6 @@
   max-width: min(95vw, 900px);
   transform: rotate(180deg);
   min-width: 500px;
-}
-
-/* ==== ZONA CENTRALE (EXTRA DECK + FIELD SPELLS + GRAVEYARDS) ==== */
-.center-zone {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: clamp(0.25rem, 0.8vw, 0.5rem);
-  width: 100%;
-  margin: clamp(0.2rem, 0.6vh, 0.5rem) 0;
-  min-width: 500px;
-}
-
-.center-group {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.2rem, 0.6vw, 0.4rem);
-}
-
-.field-spell-slot {
-  width: clamp(30px, 5.5vw, 80px);
-  height: clamp(42px, 7.7vw, 112px);
-}
-
-.graveyard-slot-center {
-  width: clamp(30px, 5.5vw, 70px);
-  height: clamp(42px, 7.7vw, 98px);
-}
-
-.battle-field-label {
-  color: #cbd5e0;
-  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #4a5568;
 }
 
 /* ==== ZONA GIOCATORE (BOTTOM) ==== */
@@ -537,69 +624,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ==== DECK BUILDER MOBILE OPTIMIZATIONS ==== */
-.deck-builder-mobile {
-  padding: 0.25rem;
-  overflow-y: auto;
-  max-height: 100vh;
-}
-
-.deck-builder-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5rem;
-  overflow-y: auto;
-}
-
-.deck-builder-buttons {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.deck-builder-buttons button {
-  width: 100%;
-  min-height: 44px;
-  font-size: 0.9rem;
-  padding: 0.75rem;
-}
-
-.deck-builder-card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.25rem;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-/* Card preview for mobile */
-.card-preview-mobile {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 90vw !important;
-  max-width: 300px !important;
-  height: auto !important;
-  z-index: 9999 !important;
-}
-
-/* Mobile-friendly input fields */
-input, select, textarea {
-  min-height: 44px;
-  font-size: 16px;
-}
-
-/* Mobile-friendly buttons */
-button {
-  min-height: 44px;
-  padding: 0.75rem 1rem;
-}
-
-/* Scrollable areas */
-.overflow-auto {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ==== RESPONSIVE BREAKPOINTS - ENHANCED FOR LARGER SCREENS ==== */
+/* ==== RESPONSIVE BREAKPOINTS ==== */
 @media (min-width: 768px) {
   .battlefield-container {
     min-width: 600px;
@@ -607,8 +632,7 @@ button {
   
   .opponent-zone,
   .player-zone,
-  .hand-zone,
-  .center-zone {
+  .hand-zone {
     min-width: 600px;
   }
   
@@ -621,10 +645,6 @@ button {
     width: clamp(25px, 4.5vw, 50px);
     height: clamp(35px, 6.3vw, 70px);
   }
-
-  .deck-builder-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  }
 }
 
 @media (min-width: 1200px) {
@@ -634,8 +654,7 @@ button {
   
   .opponent-zone,
   .player-zone,
-  .hand-zone,
-  .center-zone {
+  .hand-zone {
     min-width: 800px;
   }
   
@@ -648,8 +667,29 @@ button {
     width: clamp(30px, 5vw, 55px);
     height: clamp(42px, 7vw, 77px);
   }
+}
 
-  .deck-builder-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
+/* Gold color utility classes */
+.text-gold-400 {
+  color: #fbbf24;
+}
+
+.bg-gold-600 {
+  background-color: #d97706;
+}
+
+.bg-gold-700 {
+  background-color: #b45309;
+}
+
+.border-gold-400 {
+  border-color: #fbbf24;
+}
+
+.hover\:bg-gold-400:hover {
+  background-color: #fbbf24;
+}
+
+.hover\:bg-gold-700:hover {
+  background-color: #b45309;
 }
