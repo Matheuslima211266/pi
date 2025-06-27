@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +25,9 @@ const WaitingForPlayersScreen = ({
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [gameStarting, setGameStarting] = useState(false); // Nuovo state per evitare restart multipli
+  const countdownStartedRef = useRef(false); // Ref per tracciare se il countdown è già iniziato
+  
   const bothReady = playerReady && opponentReady;
 
   console.log('=== WAITING SCREEN STATE ===', {
@@ -33,6 +35,8 @@ const WaitingForPlayersScreen = ({
     opponentReady,
     bothReady,
     countdown,
+    gameStarting,
+    countdownStarted: countdownStartedRef.current,
     gameData: gameData?.gameId
   });
 
@@ -71,13 +75,14 @@ const WaitingForPlayersScreen = ({
     return () => clearInterval(interval);
   }, [gameData?.gameId]);
 
-  // Start countdown when both players are ready
+  // Start countdown when both players are ready - FIXED
   useEffect(() => {
-    if (bothReady && onGameStart && countdown === null) {
+    if (bothReady && onGameStart && !countdownStartedRef.current && !gameStarting) {
       console.log('Both players ready, starting 5 second countdown...');
+      countdownStartedRef.current = true; // Segna che il countdown è iniziato
       setCountdown(5);
     }
-  }, [bothReady, onGameStart, countdown]);
+  }, [bothReady, onGameStart, gameStarting]);
 
   // Handle countdown timer - FIXED VERSION
   useEffect(() => {
@@ -90,6 +95,7 @@ const WaitingForPlayersScreen = ({
         if (newCountdown <= 0) {
           console.log('Countdown finished, calling onGameStart...');
           setCountdown(null);
+          setGameStarting(true); // Imposta gameStarting a true
           if (onGameStart) {
             onGameStart();
           }
@@ -101,6 +107,16 @@ const WaitingForPlayersScreen = ({
       return () => clearTimeout(timer);
     }
   }, [countdown, onGameStart]);
+
+  // Reset countdown state when players become not ready
+  useEffect(() => {
+    if (!bothReady && countdownStartedRef.current) {
+      console.log('Players not ready anymore, resetting countdown state');
+      countdownStartedRef.current = false;
+      setCountdown(null);
+      setGameStarting(false);
+    }
+  }, [bothReady]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -163,11 +179,12 @@ const WaitingForPlayersScreen = ({
                 <p className="text-gray-300">Host: {debugInfo.host_name} ({debugInfo.host_ready ? 'Ready' : 'Not Ready'})</p>
                 <p className="text-gray-300">Guest: {debugInfo.guest_name || 'None'} ({debugInfo.guest_ready ? 'Ready' : 'Not Ready'})</p>
                 <p className="text-gray-300">Status: {debugInfo.status}</p>
+                <p className="text-gray-300">Countdown Started: {countdownStartedRef.current ? 'Yes' : 'No'}</p>
               </div>
             )}
 
             {/* Ready button */}
-            {!playerReady && onPlayerReady && (
+            {!playerReady && onPlayerReady && !gameStarting && (
               <Button
                 onClick={() => {
                   console.log('Ready button clicked');
@@ -181,7 +198,7 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Waiting for opponent */}
-            {playerReady && !opponentReady && (
+            {playerReady && !opponentReady && !gameStarting && (
               <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
                 <p className="text-green-400 font-semibold">You are ready!</p>
                 <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
@@ -192,7 +209,7 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Both ready - countdown */}
-            {bothReady && countdown !== null && countdown > 0 && (
+            {bothReady && countdown !== null && countdown > 0 && !gameStarting && (
               <div className="text-center p-4 bg-blue-900/30 rounded-lg border border-blue-400">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Clock className="w-5 h-5 text-blue-400" />
@@ -210,7 +227,7 @@ const WaitingForPlayersScreen = ({
             )}
 
             {/* Starting game */}
-            {bothReady && countdown === null && (
+            {(gameStarting || (bothReady && countdown === null)) && (
               <div className="text-center p-4 bg-purple-900/30 rounded-lg border border-purple-400">
                 <p className="text-purple-400 font-semibold text-lg">🎮 Starting Game...</p>
                 <p className="text-sm text-gray-300 mt-1">Loading duel arena...</p>
