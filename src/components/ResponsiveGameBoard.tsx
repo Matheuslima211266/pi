@@ -201,7 +201,7 @@ const ResponsiveGameBoard = ({
         }
       `}</style>
 
-      {/* Mano Avversario (Ruotata 180°) */}
+      {/* Mano Avversario (Ruotata 180°) - Solo icona per non duplicare */}
       <div className="hand-zone opponent-hand">
         <EnemyHand 
           handCount={enemyHandCount}
@@ -323,7 +323,7 @@ const ResponsiveGameBoard = ({
         />
       </div>
 
-      {/* Mano Giocatore */}
+      {/* Mano Giocatore - Unica visualizzazione nell'area principale */}
       <div className="hand-zone">
         <PlayerHand 
           cards={playerHand}

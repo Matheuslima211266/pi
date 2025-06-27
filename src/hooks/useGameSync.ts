@@ -8,6 +8,7 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
   const [channelSetup, setChannelSetup] = useState(false);
   const actionChannelRef = useRef<any>(null);
   const processingRef = useRef(false);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   console.log('[GAME_SYNC] Hook status', {
     hasUser: !!user,
@@ -223,38 +224,71 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
   const syncCompleteGameState = useCallback(async () => {
     if (!user || !gameSessionId) return;
 
-    try {
-      const gameStateData = {
-        player_life_points: gameState.playerLifePoints || 8000,
-        player_hand_count: gameState.playerHand?.length || 0,
-        current_phase: gameState.currentPhase || 'draw',
-        is_player_turn: gameState.isPlayerTurn || false,
-        time_remaining: gameState.timeRemaining || 60,
-        player_ready: gameState.playerReady || false,
-        last_update: new Date().toISOString()
-      };
-
-      console.log('[GAME_SYNC] Syncing complete game state:', gameStateData);
-
-      // Use upsert to avoid conflicts
-      const { error } = await supabase
-        .from('game_states')
-        .upsert({
-          game_session_id: gameSessionId,
-          player_id: user.id,
-          player_field: JSON.stringify(gameState.playerField || {}),
-          ...gameStateData
-        });
-
-      if (error) {
-        console.error('[GAME_SYNC] Error syncing complete game state:', error);
-      } else {
-        console.log('[GAME_SYNC] Complete game state synced successfully');
-      }
-    } catch (error) {
-      console.error('[GAME_SYNC] Exception syncing complete game state:', error);
+    // Clear any existing timeout
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
     }
+
+    // Debounce the sync operation
+    syncTimeoutRef.current = setTimeout(async () => {
+      try {
+        const gameStateData = {
+          player_life_points: gameState.playerLifePoints || 8000,
+          player_hand_count: gameState.playerHand?.length || 0,
+          current_phase: gameState.currentPhase || 'draw',
+          is_player_turn: gameState.isPlayerTurn || false,
+          time_remaining: gameState.timeRemaining || 60,
+          player_ready: gameState.playerReady || false,
+          last_update: new Date().toISOString()
+        };
+
+        console.log('[GAME_SYNC] Syncing complete game state:', gameStateData);
+
+        // Simple insert/update without upsert conflict
+        const { error } = await supabase
+          .from('game_states')
+          .insert({
+            game_session_id: gameSessionId,
+            player_id: user.id,
+            player_field: JSON.stringify(gameState.playerField || {}),
+            ...gameStateData
+          });
+
+        if (error && error.code === '23505') {
+          // Duplicate key, update instead
+          const { error: updateError } = await supabase
+            .from('game_states')
+            .update({
+              player_field: JSON.stringify(gameState.playerField || {}),
+              ...gameStateData
+            })
+            .eq('game_session_id', gameSessionId)
+            .eq('player_id', user.id);
+
+          if (updateError) {
+            console.error('[GAME_SYNC] Error updating game state:', updateError);
+          } else {
+            console.log('[GAME_SYNC] Game state updated successfully');
+          }
+        } else if (error) {
+          console.error('[GAME_SYNC] Error syncing game state:', error);
+        } else {
+          console.log('[GAME_SYNC] Game state synced successfully');
+        }
+      } catch (error) {
+        console.error('[GAME_SYNC] Exception syncing game state:', error);
+      }
+    }, 1000); // 1 second debounce
   }, [user, gameSessionId, gameState]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     sendGameAction,
@@ -263,4 +297,3 @@ export const useGameSync = (user: User | null, gameSessionId: string | null, gam
     channelSetup
   };
 };
-</lov-code>
