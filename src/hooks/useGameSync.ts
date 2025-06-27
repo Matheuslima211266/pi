@@ -1,4 +1,5 @@
 
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const useGameSync = (user, sessionId, gameState) => {
@@ -19,7 +20,7 @@ export const useGameSync = (user, sessionId, gameState) => {
         player_field: JSON.stringify(gameState.playerField || {}),
         current_phase: gameState.currentPhase || 'draw',
         is_player_turn: gameState.isPlayerTurn || false,
-        updated_at: new Date().toISOString()
+        last_update: new Date().toISOString()
       };
 
       console.log('[GAME_SYNC] Attempting to upsert game state:', gameStateData);
@@ -50,14 +51,17 @@ export const useGameSync = (user, sessionId, gameState) => {
     }
 
     try {
+      // Create a descriptive action string that includes both type and data
+      const actionDescription = `${actionType}: ${JSON.stringify(actionData)}`;
+      
       const { error } = await supabase
         .from('game_actions')
         .insert({
           game_session_id: sessionId,
           player_id: user.id,
-          action_type: actionType,
-          action_data: JSON.stringify(actionData),
-          created_at: new Date().toISOString()
+          player_name: actionData.playerName || 'Unknown Player',
+          action: actionDescription,
+          timestamp: new Date().toISOString()
         });
 
       if (error) {
@@ -73,3 +77,4 @@ export const useGameSync = (user, sessionId, gameState) => {
     sendGameAction
   };
 };
+
