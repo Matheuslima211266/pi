@@ -79,21 +79,23 @@ const WaitingForPlayersScreen = ({
     }
   }, [bothReady, onGameStart, countdown]);
 
-  // Handle countdown timer
+  // Handle countdown timer - FIXED VERSION
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
+      console.log('Countdown tick:', countdown);
       const timer = setTimeout(() => {
-        setCountdown(prev => {
-          if (prev === null || prev <= 1) {
-            console.log('Countdown finished, starting game...');
-            // Use setTimeout to avoid setState during render
-            setTimeout(() => {
-              onGameStart && onGameStart();
-            }, 0);
-            return null;
+        const newCountdown = countdown - 1;
+        console.log('Setting countdown to:', newCountdown);
+        
+        if (newCountdown <= 0) {
+          console.log('Countdown finished, calling onGameStart...');
+          setCountdown(null);
+          if (onGameStart) {
+            onGameStart();
           }
-          return prev - 1;
-        });
+        } else {
+          setCountdown(newCountdown);
+        }
       }, 1000);
 
       return () => clearTimeout(timer);
