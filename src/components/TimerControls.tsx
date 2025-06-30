@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,18 +47,18 @@ const TimerControls = ({
   };
 
   return (
-    <Card className="sidebar-section bg-slate-800/70 border-slate-600 p-3">
+    <Card className="sidebar-section bg-card/70 border-border p-3">
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Clock className="text-orange-400" size={16} />
-          <h3 className="text-white text-sm font-semibold">Timer</h3>
+          <Clock className="text-primary" size={16} />
+          <h3 className="text-foreground text-sm font-semibold">Timer</h3>
         </div>
         
-        <div className="text-2xl font-bold text-white mb-2">
+        <div className="text-2xl font-bold text-foreground mb-2">
           {formatTime(timeRemaining)}
         </div>
         
-        <div className={`text-xs mb-3 ${timeRemaining < 30 ? 'text-red-400' : 'text-orange-400'}`}>
+        <div className={`text-xs mb-3 ${timeRemaining < 30 ? 'text-destructive' : 'text-primary'}`}>
           {isRunning ? 'Running' : 'Paused'}
         </div>
         
@@ -67,7 +66,7 @@ const TimerControls = ({
           <Button
             onClick={() => setIsRunning(!isRunning)}
             size="sm"
-            className="flex-1 bg-orange-600 hover:bg-orange-700 text-xs h-7"
+            className="flex-1 bg-primary text-primary-foreground text-xs h-7"
           >
             {isRunning ? <Pause size={12} /> : <Play size={12} />}
           </Button>
@@ -75,7 +74,7 @@ const TimerControls = ({
             onClick={resetTimer}
             size="sm"
             variant="outline"
-            className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black text-xs h-7"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs h-7"
           >
             <RotateCcw size={12} />
           </Button>

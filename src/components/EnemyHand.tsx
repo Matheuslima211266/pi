@@ -15,17 +15,17 @@ const EnemyHand = ({ handCount, revealedCard, revealedHand }) => {
       {backCards.map((card, index) => (
         <div
           key={card.id}
-          className="flex flex-col items-center justify-end min-w-[56px] max-w-[72px] min-h-[80px] max-h-[100px] p-1 rounded-lg bg-slate-700/50 border border-slate-600"
+          className="flex flex-col items-center justify-end min-w-[56px] max-w-[72px] min-h-[80px] max-h-[100px] p-1 rounded-lg bg-card/50 border border-border"
           style={{ fontSize: '0.7rem' }}
         >
-          <div className="w-10 h-14 bg-slate-500 rounded mb-1 flex items-center justify-center text-xs text-white">
+          <div className="w-10 h-14 bg-muted rounded mb-1 flex items-center justify-center text-xs text-muted-foreground">
             <span className="opacity-60">?</span>
           </div>
         </div>
       ))}
       {handCount === 0 && (
-        <div className="w-full text-center py-4 text-gray-400">
-          <p className="text-sm">L'avversario non ha carte in mano</p>
+        <div className="w-full text-center py-4 text-muted-foreground">
+          <p className="text-sm">The opponent has no cards in hand</p>
         </div>
       )}
       {/* Carte rivelate (se presenti) */}
@@ -38,6 +38,14 @@ const EnemyHand = ({ handCount, revealedCard, revealedHand }) => {
             isSmall={false}
             showCost={true}
             position={revealedCard.position || 'attack'}
+            onContextMenu={() => {}}
+            onDoubleClick={() => {}}
+            zoneName=""
+            slotIndex={0}
+            onFieldCardAction={() => {}}
+            enemyField={undefined}
+            onCardClick={() => {}}
+            zoneLabel=""
           />
         </div>
       )}
@@ -52,6 +60,14 @@ const EnemyHand = ({ handCount, revealedCard, revealedHand }) => {
                 isSmall={true}
                 showCost={true}
                 position={card.position || 'attack'}
+                onContextMenu={() => {}}
+                onDoubleClick={() => {}}
+                zoneName=""
+                slotIndex={0}
+                onFieldCardAction={() => {}}
+                enemyField={undefined}
+                onCardClick={() => {}}
+                zoneLabel=""
               />
             </div>
           ))}

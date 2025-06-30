@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,16 +9,16 @@ interface LifePointsControlProps {
   playerName: string;
   lifePoints: number;
   onLifePointsChange: (amount: number) => void;
-  color?: 'red' | 'blue';
   isCompact?: boolean;
+  isPlayer?: boolean;
 }
 
 const LifePointsControl = ({ 
   playerName, 
   lifePoints, 
   onLifePointsChange, 
-  color = "blue",
-  isCompact = false 
+  isCompact = false,
+  isPlayer = true,
 }: LifePointsControlProps) => {
   const [manualInput, setManualInput] = useState('');
 
@@ -36,31 +35,18 @@ const LifePointsControl = ({
     }
   };
 
-  const colorClasses = {
-    red: {
-      card: "bg-red-900/50 border-red-400",
-      icon: "text-red-400",
-      button: "bg-red-600 hover:bg-red-700"
-    },
-    blue: {
-      card: "bg-blue-900/50 border-blue-400", 
-      icon: "text-blue-400",
-      button: "bg-blue-600 hover:bg-blue-700"
-    }
-  };
-
-  const classes = colorClasses[color];
+  const colorClass = isPlayer ? 'primary' : 'destructive';
 
   return (
-    <Card className={`p-3 ${classes.card} ${isCompact ? 'text-sm' : ''}`}>
+    <Card className={`p-3 bg-card/50 border-${colorClass} ${isCompact ? 'text-sm' : ''}`}>
       <div className="text-center space-y-3">
         <div className="flex items-center justify-center gap-2">
-          <Heart className={classes.icon} size={isCompact ? 16 : 24} />
-          <h3 className={`font-semibold ${isCompact ? 'text-sm' : 'text-xl'}`}>{playerName}</h3>
+          <Heart className={`text-${colorClass}`} size={isCompact ? 16 : 24} />
+          <h3 className={`font-semibold text-foreground ${isCompact ? 'text-sm' : 'text-xl'}`}>{playerName}</h3>
         </div>
 
         {/* Display Life Points */}
-        <div className={`font-bold text-white ${isCompact ? 'text-2xl' : 'text-4xl'}`}>
+        <div className={`font-bold text-foreground ${isCompact ? 'text-2xl' : 'text-4xl'}`}>
           {lifePoints.toLocaleString()}
         </div>
         
@@ -72,7 +58,7 @@ const LifePointsControl = ({
         <div className="grid grid-cols-3 gap-1">
           <Button 
             onClick={() => adjustLifePoints(1000)} 
-            className={`${classes.button} text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-primary text-primary-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Plus size={isCompact ? 12 : 16} />
@@ -80,7 +66,7 @@ const LifePointsControl = ({
           </Button>
           <Button 
             onClick={() => adjustLifePoints(500)} 
-            className={`${classes.button} text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-primary text-primary-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Plus size={isCompact ? 12 : 16} />
@@ -88,7 +74,7 @@ const LifePointsControl = ({
           </Button>
           <Button 
             onClick={() => adjustLifePoints(100)} 
-            className={`${classes.button} text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-primary text-primary-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Plus size={isCompact ? 12 : 16} />
@@ -97,7 +83,7 @@ const LifePointsControl = ({
           
           <Button 
             onClick={() => adjustLifePoints(-1000)} 
-            className={`bg-red-600 hover:bg-red-700 text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-destructive text-destructive-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Minus size={isCompact ? 12 : 16} />
@@ -105,7 +91,7 @@ const LifePointsControl = ({
           </Button>
           <Button 
             onClick={() => adjustLifePoints(-500)} 
-            className={`bg-red-600 hover:bg-red-700 text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-destructive text-destructive-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Minus size={isCompact ? 12 : 16} />
@@ -113,7 +99,7 @@ const LifePointsControl = ({
           </Button>
           <Button 
             onClick={() => adjustLifePoints(-100)} 
-            className={`bg-red-600 hover:bg-red-700 text-white ${isCompact ? 'text-xs h-6' : ''}`}
+            className={`bg-destructive text-destructive-foreground ${isCompact ? 'text-xs h-6' : ''}`}
             size={isCompact ? "sm" : "default"}
           >
             <Minus size={isCompact ? 12 : 16} />
@@ -129,7 +115,7 @@ const LifePointsControl = ({
               placeholder="Set LP"
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
-              className="bg-gray-800 border-gray-600 text-white"
+              className="bg-input border-border text-foreground"
               min="0"
             />
             <Button onClick={handleManualChange} variant="outline">

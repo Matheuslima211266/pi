@@ -1,0 +1,11 @@
+:root {
+    --bg-color: #2D2D2D;
+    --panel-bg-color: rgba(10, 10, 10, 0.5);
+    --text-color: #BDBDBD;
+    --accent-color: #FFB800; /* Arancione di segnalazione */
+    --accent-color-dark: #D99E00;
+    --rust-color: #7D4A2B;
+    --border-color: rgba(255, 184, 0, 0.3);
+    --font-primary: 'Orbitron', sans-serif; /* Stile terminale/stencil */
+    --font-secondary: 'Roboto Mono', monospace; /* Stile macchina da scrivere */
+} 

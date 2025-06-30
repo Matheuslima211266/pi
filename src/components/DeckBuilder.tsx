@@ -257,36 +257,36 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
   const extraDeckCount = Object.values(extraDeck).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 overflow-y-auto">
+    <div className="min-h-screen bg-background p-4 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           {onBack && (
-            <Button onClick={onBack} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={onBack} variant="secondary">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Torna al Menu
+              Back to Menu
             </Button>
           )}
-          <h1 className="text-3xl font-bold text-white">Costruttore Deck</h1>
-          <Button onClick={handleSaveDeck} className="bg-green-600 hover:bg-green-700">
+          <h1 className="text-3xl font-bold text-foreground">Deck Builder</h1>
+          <Button onClick={handleSaveDeck} variant="default">
             <Save className="w-4 h-4 mr-2" />
-            Salva per Gioco
+            Save for Game
           </Button>
         </div>
 
         {/* Deck Name */}
         <div className="mb-6">
-          <Card className="p-4 bg-slate-800/50">
+          <Card className="p-4 bg-card/50">
             <div className="flex items-center gap-4">
-              <label className="text-white font-medium">Nome Deck:</label>
+              <label className="text-foreground font-medium">Deck Name:</label>
               <Input
                 value={deckName}
                 onChange={(e) => setDeckName(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white"
+                className="bg-input border-border text-foreground"
               />
               <div className="flex gap-4">
-                <Badge className="bg-green-600">Main: {mainDeckCount}/60</Badge>
-                <Badge className="bg-purple-600">Extra: {extraDeckCount}/15</Badge>
+                <Badge variant="default">Main: {mainDeckCount}/60</Badge>
+                <Badge variant="secondary">Extra: {extraDeckCount}/15</Badge>
               </div>
             </div>
           </Card>
@@ -315,28 +315,28 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
             {/* Available Cards */}
             <div className="grid grid-cols-1 gap-4">
               {/* Filtro Archetype */}
-              <Card className="p-4 bg-slate-800/50 mb-2">
+              <Card className="p-4 bg-card/50 mb-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                   {/* Name search */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Nome</label>
+                    <label className="text-foreground text-sm">Name</label>
                     <TextInput
-                      placeholder="Cerca nome..."
+                      placeholder="Search name..."
                       value={nameFilter}
                       onChange={e=>setNameFilter(e.target.value)}
-                      className="bg-slate-700 text-white"
+                      className="bg-input text-foreground"
                     />
                   </div>
 
                   {/* Archetype */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Archetipo</label>
+                    <label className="text-foreground text-sm">Archetype</label>
                     <Select value={archetypeFilter} onValueChange={setArchetypeFilter}>
-                      <SelectTrigger className="w-full bg-slate-700 text-white">
-                        {archetypeFilter === 'all' ? 'Tutti' : archetypeFilter}
+                      <SelectTrigger className="w-full bg-input text-foreground">
+                        {archetypeFilter === 'all' ? 'All' : archetypeFilter}
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 text-white border-slate-600">
-                        <SelectItem value="all">Tutti</SelectItem>
+                      <SelectContent className="bg-popover text-popover-foreground border-border">
+                        <SelectItem value="all">All</SelectItem>
                         {archetypes.map(a => (
                           <SelectItem key={a} value={a}>{a}</SelectItem>
                         ))}
@@ -346,29 +346,29 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
 
                   {/* Card Type */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Tipo Carta</label>
+                    <label className="text-foreground text-sm">Card Type</label>
                     <Select value={cardTypeFilter} onValueChange={setCardTypeFilter}>
-                      <SelectTrigger className="w-full bg-slate-700 text-white">
-                        {cardTypeFilter === 'all' ? 'Tutti' : cardTypeFilter}
+                      <SelectTrigger className="w-full bg-input text-foreground">
+                        {cardTypeFilter === 'all' ? 'All' : cardTypeFilter}
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 text-white border-slate-600">
-                        <SelectItem value="all">Tutti</SelectItem>
-                        <SelectItem value="monster">Mostro</SelectItem>
-                        <SelectItem value="spell">Magia</SelectItem>
-                        <SelectItem value="trap">Trappola</SelectItem>
+                      <SelectContent className="bg-popover text-popover-foreground border-border">
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="monster">Monster</SelectItem>
+                        <SelectItem value="spell">Spell</SelectItem>
+                        <SelectItem value="trap">Trap</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Attribute */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Attributo</label>
+                    <label className="text-foreground text-sm">Attribute</label>
                     <Select value={attributeFilter} onValueChange={setAttributeFilter}>
-                      <SelectTrigger className="w-full bg-slate-700 text-white">
-                        {attributeFilter === 'all' ? 'Tutti' : attributeFilter}
+                      <SelectTrigger className="w-full bg-input text-foreground">
+                        {attributeFilter === 'all' ? 'All' : attributeFilter}
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 text-white border-slate-600">
-                        <SelectItem value="all">Tutti</SelectItem>
+                      <SelectContent className="bg-popover text-popover-foreground border-border">
+                        <SelectItem value="all">All</SelectItem>
                         {attributes.map(attr => (
                           <SelectItem key={attr} value={attr}>{attr}</SelectItem>
                         ))}
@@ -378,13 +378,13 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
 
                   {/* Level */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Livello</label>
+                    <label className="text-foreground text-sm">Level</label>
                     <Select value={levelFilter} onValueChange={setLevelFilter}>
-                      <SelectTrigger className="w-full bg-slate-700 text-white">
-                        {levelFilter === 'all' ? 'Tutti' : levelFilter}
+                      <SelectTrigger className="w-full bg-input text-foreground">
+                        {levelFilter === 'all' ? 'All' : levelFilter}
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 text-white border-slate-600 max-h-60 overflow-y-auto">
-                        <SelectItem value="all">Tutti</SelectItem>
+                      <SelectContent className="bg-popover text-popover-foreground border-border max-h-60 overflow-y-auto">
+                        <SelectItem value="all">All</SelectItem>
                         {levels.map(lv => (
                           <SelectItem key={lv} value={String(lv)}>{lv}</SelectItem>
                         ))}
@@ -394,13 +394,13 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
 
                   {/* Subtype */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-white text-sm">Tipo (sottotipo)</label>
+                    <label className="text-foreground text-sm">Subtype</label>
                     <Select value={subtypeFilter} onValueChange={setSubtypeFilter}>
-                      <SelectTrigger className="w-full bg-slate-700 text-white">
-                        {subtypeFilter === 'all' ? 'Tutti' : subtypeFilter}
+                      <SelectTrigger className="w-full bg-input text-foreground">
+                        {subtypeFilter === 'all' ? 'All' : subtypeFilter}
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 text-white border-slate-600 max-h-60 overflow-y-auto">
-                        <SelectItem value="all">Tutti</SelectItem>
+                      <SelectContent className="bg-popover text-popover-foreground border-border max-h-60 overflow-y-auto">
+                        <SelectItem value="all">All</SelectItem>
                         {subtypes.map(st => (
                           <SelectItem key={st} value={st}>{st}</SelectItem>
                         ))}
@@ -411,14 +411,14 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
               </Card>
               <CardList
                 cards={mainDeckCards}
-                title="Carte Main Deck"
+                title="Main Deck Cards"
                 deckCounts={allDeckCounts}
                 onAddCard={handleAddCard}
                 onCardHover={setPreviewCard}
               />
               <CardList
                 cards={extraDeckCards}
-                title="Carte Extra Deck"
+                title="Extra Deck Cards"
                 deckCounts={allDeckCounts}
                 onAddCard={handleAddCard}
                 onCardHover={setPreviewCard}

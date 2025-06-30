@@ -276,18 +276,18 @@ const ZoneExpansionModal = ({
     return (
       <div
         key={card.id || `card-${index}`}
-        className={`aspect-[2/3] bg-gray-700 border-2 rounded-lg p-2 cursor-pointer transition-all duration-200 group relative ${
+        className={`aspect-[2/3] bg-card border-2 rounded-lg p-2 cursor-pointer transition-all duration-200 group relative ${
           isSelected 
-            ? 'border-green-400 bg-green-900/30 shadow-lg shadow-green-400/50 scale-105' 
-            : 'border-gray-500 hover:border-blue-400 hover:bg-gray-600'
+            ? 'border-accent bg-accent/30 shadow-lg shadow-accent/50 scale-105' 
+            : 'border-border hover:border-primary hover:bg-card/80'
         }`}
         onClick={(event) => handleCardSelection(card, index, event)}
       >
         {/* Selection indicator */}
         {isSelected && (
           <div className="absolute -top-2 -right-2 z-10 animate-bounce">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-xs font-bold">✓</span>
+            <div className="w-6 h-6 bg-accent rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-accent-foreground text-xs font-bold">✓</span>
             </div>
           </div>
         )}
@@ -314,13 +314,13 @@ const ZoneExpansionModal = ({
           </div>
           
           {MODAL_IMAGE_ONLY ? null : (
-          <div className="text-xs text-gray-300 mb-1 text-center font-semibold truncate">
+          <div className="text-xs text-foreground mb-1 text-center font-semibold truncate">
             {card.name}
           </div>
           )}
           
           {(!MODAL_IMAGE_ONLY && card.card_type === 'monster' && card.atk !== undefined && card.def !== undefined) && (
-            <div className="text-xs text-gray-300 mb-2 text-center">
+            <div className="text-xs text-muted-foreground mb-2 text-center">
               ATK/{card.atk} DEF/{card.def}
             </div>
           )}
@@ -333,25 +333,25 @@ const ZoneExpansionModal = ({
     <div className="fixed inset-0 z-[60]">
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" 
+        className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[60]" 
         onClick={() => setExpandedZone(null)} 
       />
       
       {/* Modal */}
       <div
-        className={`fixed top-1/2 transform -translate-y-1/2 z-[70] bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden ${MODAL_POSITION === 'center' ? 'left-1/2 -translate-x-1/2' : MODAL_POSITION === 'left' ? 'left-6' : ''}`}
+        className={`fixed top-1/2 transform -translate-y-1/2 z-[70] bg-card border border-border rounded-lg shadow-2xl overflow-hidden ${MODAL_POSITION === 'center' ? 'left-1/2 -translate-x-1/2' : MODAL_POSITION === 'left' ? 'left-6' : ''}`}
         style={{ right: MODAL_POSITION === 'right' ? `${SIDEBAR_WIDTH_PX + FIELD_SIDEBAR_GAP_PX}px` : undefined, width: `${MODAL_EXPANDED_WIDTH_PERC}vw`, height: `${MODAL_EXPANDED_HEIGHT_PERC}vh`, maxWidth: `calc(100vw - ${SIDEBAR_WIDTH_PX + FIELD_SIDEBAR_GAP_PX}px)` }}
       >
         
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-600 bg-gray-700">
+        <div className="flex justify-between items-center p-4 border-b border-border bg-card/80">
           <div>
-            <h3 className="text-xl font-bold text-white">
+            <h3 className="text-xl font-bold text-foreground">
               {zoneData.displayName}
             </h3>
-            <div className="text-sm text-gray-300">
-              {zoneData.cards.length} carte totali
-              {zoneData.isHidden && <span className="ml-2 text-yellow-400">(Coperte)</span>}
+            <div className="text-sm text-muted-foreground">
+              {zoneData.cards.length} total cards
+              {zoneData.isHidden && <span className="ml-2 text-primary">(Hidden)</span>}
             </div>
           </div>
           
@@ -359,21 +359,21 @@ const ZoneExpansionModal = ({
           {zoneData.allowActions && zoneData.cards.length > 0 && (
             <div className="flex items-center gap-2 mr-4">
               {selectedCards.size === 0 ? (
-                <div className="text-gray-300 text-sm">
-                  💡 Seleziona una carta per le azioni
+                <div className="text-muted-foreground text-sm">
+                  💡 Select a card for actions
                 </div>
               ) : isFieldFull() ? (
-                <div className="text-yellow-300 text-sm">
-                  ⚠️ Campo pieno - libera degli slot prima di mandare carte in campo
+                <div className="text-accent text-sm">
+                  ⚠️ Field is full - clear slots before moving cards
                 </div>
               ) : (
                 <>
                   <button
                     onClick={() => handleBulkAction('toHand')}
-                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition-colors"
-                    title="Aggiungi alla mano"
+                    className="bg-accent text-accent-foreground px-3 py-1 rounded text-sm transition-colors"
+                    title="Add to hand"
                   >
-                    📋 Mano
+                    📋 Hand
                   </button>
                   
                   <button
@@ -381,29 +381,29 @@ const ZoneExpansionModal = ({
                     disabled={!canMoveSelectedCardsToField()}
                     className={`px-3 py-1 rounded text-sm transition-colors ${
                       canMoveSelectedCardsToField() 
-                        ? 'bg-purple-600 hover:bg-purple-500 text-white' 
-                        : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                        ? 'bg-secondary text-secondary-foreground' 
+                        : 'bg-muted text-muted-foreground cursor-not-allowed'
                     }`}
                     title={
                       canMoveSelectedCardsToField() 
-                        ? 'Manda in campo' 
-                        : 'Campo pieno o nessuna carta selezionata'
+                        ? 'Move to field' 
+                        : 'Field is full or no cards selected'
                     }
                   >
-                    ⚔️ Campo
+                    ⚔️ Field
                   </button>
                   
                   <button
                     onClick={() => handleBulkAction('toDeadZone')}
-                    className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded text-sm transition-colors"
-                    title="Invia al Cimitero"
+                    className="bg-muted text-muted-foreground px-3 py-1 rounded text-sm transition-colors"
+                    title="Send to Graveyard"
                   >
-                    💀 Cimitero
+                    💀 Graveyard
                   </button>
                   
                   <button
                     onClick={() => handleBulkAction('toBanished')}
-                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                    className="bg-destructive text-destructive-foreground px-3 py-1 rounded text-sm transition-colors"
                     title="Banish"
                   >
                     🚫 Banish
@@ -412,8 +412,8 @@ const ZoneExpansionModal = ({
                   {zoneData.zoneName !== 'deck' && (
                     <button
                       onClick={() => handleBulkAction('toDeck')}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm transition-colors"
-                      title="Rimetti nel deck"
+                      className="bg-primary text-primary-foreground px-3 py-1 rounded text-sm transition-colors"
+                      title="Return to deck"
                     >
                       📚 Deck
                     </button>
@@ -425,8 +425,8 @@ const ZoneExpansionModal = ({
           
           <button 
             onClick={() => setExpandedZone(null)}
-            className="text-white hover:text-red-400 text-2xl font-bold p-2 hover:bg-gray-600 rounded transition-colors"
-            title="Chiudi"
+            className="text-foreground hover:text-destructive text-2xl font-bold p-2 hover:bg-card/80 rounded transition-colors"
+            title="Close"
           >
             ×
           </button>
@@ -434,9 +434,9 @@ const ZoneExpansionModal = ({
 
         {/* Debug info per sviluppo */}
         {process.env.NODE_ENV === 'development' && expandedZone === 'deadZone' && (
-          <div className="p-2 bg-gray-900 text-xs text-yellow-300 border-b border-gray-600">
+          <div className="p-2 bg-background text-xs text-primary border-b border-border">
             <details>
-              <summary className="cursor-pointer hover:text-yellow-200">🐛 Debug Info (click to expand)</summary>
+              <summary className="cursor-pointer hover:text-accent">🐛 Debug Info (click to expand)</summary>
               <div className="mt-2 space-y-1">
                 <div>Field exists: {field ? '✅ YES' : '❌ NO'}</div>
                 <div>Dead Zone exists: {field?.deadZone ? '✅ YES' : '❌ NO'}</div>
@@ -452,13 +452,13 @@ const ZoneExpansionModal = ({
         {/* Contenuto principale */}
         <div className="p-4 overflow-y-auto" style={{ maxHeight: `calc(${MODAL_EXPANDED_HEIGHT_PERC}vh - ${MODAL_HEADER_FOOTER_HEIGHT_PX}px)` }}>
           {zoneData.cards.length === 0 ? (
-            <div className="text-center text-gray-400 py-12">
+            <div className="text-center text-muted-foreground py-12">
               <div className="text-4xl mb-4">📭</div>
-              <div className="text-lg">Nessuna carta in questa zona</div>
+              <div className="text-lg">No cards in this zone</div>
               <div className="text-sm mt-2">
                 {expandedZone === 'deadZone' ? 
-                  'Le carte distrutte appariranno qui' : 
-                  `La zona ${zoneData.displayName} è vuota`
+                  'Destroyed cards will appear here' : 
+                  `The ${zoneData.displayName} zone is empty`
                 }
               </div>
             </div>
@@ -469,10 +469,10 @@ const ZoneExpansionModal = ({
                 zoneData.cards.map((_, index) => (
                   <div
                     key={`hidden-${index}`}
-                    className="aspect-[2/3] bg-blue-800 border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="aspect-[2/3] bg-primary border-2 border-primary/80 rounded-lg flex items-center justify-center cursor-pointer hover:bg-primary/80 transition-colors"
                     onClick={(event) => handleCardSelection(null, index, event)}
                   >
-                    <span className="text-white text-2xl">🃏</span>
+                    <span className="text-primary-foreground text-2xl">🃏</span>
                   </div>
                 ))
               ) : (
@@ -485,7 +485,7 @@ const ZoneExpansionModal = ({
 
         {/* Footer con azioni globali */}
         {zoneData.allowActions && zoneData.cards.length > 0 && (
-          <div className="p-4 border-t border-gray-600 bg-gray-700">
+          <div className="p-4 border-t border-border bg-card/80">
             {/* Multi-selection action panel now mostrata nella header per evitare overflow */}
             {/* Zone-specific actions */}
             <div className="flex flex-wrap gap-2">
@@ -496,18 +496,23 @@ const ZoneExpansionModal = ({
                       if (zoneData.onDrawCard) zoneData.onDrawCard();
                       setExpandedZone(null);
                     }}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 transition-colors"
+                    className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/80 transition-colors"
                   >
-                    🎯 Pesca Carta
+                    Draw Card
                   </button>
                   <button
                     onClick={() => {
-                      console.log('Shuffle deck');
-                      // Implementa la logica di mescolamento
+                      if (onCardMove) {
+                        const topCard = zoneData.cards[0];
+                        if (topCard) {
+                          onCardMove(topCard, 'deck', 'hand');
+                        }
+                      }
+                      setExpandedZone(null);
                     }}
-                    className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-500 transition-colors"
+                    className="bg-secondary text-secondary-foreground px-4 py-2 rounded hover:bg-secondary/80 transition-colors"
                   >
-                    🔄 Mescola
+                    Add Top Card to Hand
                   </button>
                 </>
               )}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import PositionedGameZones from './PositionedGameZones';
@@ -8,7 +7,7 @@ const PositionedGameBoard = ({ playerField, enemyField, onAttack, onCardPlace, s
   const calculations = useScreenCalculations();
   
   return (
-    <div className="relative w-full h-full bg-slate-900" style={{ aspectRatio: '16/9' }}>
+    <div className="relative w-full h-full bg-background" style={{ aspectRatio: '16/9' }}>
       {/* Campo avversario */}
       <div 
         className="absolute"
@@ -34,7 +33,7 @@ const PositionedGameBoard = ({ playerField, enemyField, onAttack, onCardPlace, s
       
       {/* Linea di separazione centrale */}
       <div 
-        className="absolute border-t-2 border-slate-600"
+        className="absolute border-t-2 border-border"
         style={{
           left: '10%',
           top: '50%',
@@ -42,7 +41,7 @@ const PositionedGameBoard = ({ playerField, enemyField, onAttack, onCardPlace, s
           transform: 'translateY(-50%)'
         }}
       >
-        <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 bg-slate-700 text-white px-3 py-1 rounded text-sm font-semibold">
+        <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 bg-background text-foreground px-3 py-1 rounded text-sm font-semibold">
           BATTLE FIELD
         </div>
       </div>
@@ -110,8 +109,8 @@ const PositionedGameBoard = ({ playerField, enemyField, onAttack, onCardPlace, s
       
       {/* Indicatore carta selezionata */}
       {selectedCardFromHand && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-900/90 border border-blue-400 rounded px-4 py-2 z-20">
-          <p className="text-sm text-gray-300 text-center">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-primary/90 border border-primary rounded px-4 py-2 z-20">
+          <p className="text-sm text-primary-foreground text-center">
             Click anywhere to place <strong>{selectedCardFromHand.name}</strong>
           </p>
         </div>

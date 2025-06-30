@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./components/ThemeSwitcher";
 
 const App = () => {
   // Add event listener for beforeunload to clean up localStorage
@@ -24,7 +25,7 @@ const App = () => {
   }, []);
 
   return (
-    <TooltipProvider>
+    <ThemeProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -33,7 +34,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
+    </ThemeProvider>
   );
 };
 

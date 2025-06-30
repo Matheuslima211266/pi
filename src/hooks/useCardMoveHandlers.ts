@@ -30,10 +30,11 @@ export const useCardMoveHandlers = (gameState) => {
     }
 
     // Se fromZone === toZone, è solo un aggiornamento di stato (es. cambio posizione)
-    if (fromZone === toZone) {
+    if (fromZone === toZone || toZone === 'flip_in_place') {
       const fieldSetter = isPlayer ? setPlayerField : setEnemyField;
+      const targetZone = toZone === 'flip_in_place' ? fromZone : toZone;
 
-      if (fromZone === 'monsters') {
+      if (targetZone === 'monsters') {
         fieldSetter(prev => {
           const newField = { ...prev };
           const updated = [...(prev.monsters || [])];
@@ -43,7 +44,7 @@ export const useCardMoveHandlers = (gameState) => {
           newField.monsters = updated;
           return newField;
         });
-      } else if (fromZone === 'spellsTraps') {
+      } else if (targetZone === 'spellsTraps') {
         fieldSetter(prev => {
           const newField = { ...prev };
           const updated = [...(prev.spellsTraps || [])];
@@ -56,8 +57,11 @@ export const useCardMoveHandlers = (gameState) => {
       }
 
       // Log dell'azione
-      const action = `${isPlayer ? 'Player' : 'Enemy'} updated ${card.name} in ${fromZone}`;
-      setActionLog(prev => [...prev, { id: Date.now(), action, timestamp: Date.now() }]);
+      const actionMessage = toZone === 'flip_in_place' 
+        ? `${isPlayer ? 'Player' : 'Enemy'} flipped ${card.name}`
+        : `${isPlayer ? 'Player' : 'Enemy'} updated ${card.name} in ${fromZone}`;
+      
+      setActionLog(prev => [...prev, { id: Date.now(), action: actionMessage, timestamp: Date.now() }]);
       return;
     }
 

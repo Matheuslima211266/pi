@@ -63,9 +63,9 @@ const ResponsiveGameZoneSlot = ({
       className={`
         relative w-full aspect-[5/8] min-w-[80px]
         border-2 rounded-lg cursor-pointer transition-all duration-200
-        ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
-        ${isHighlighted ? 'border-blue-400 bg-blue-900/50 shadow-lg shadow-blue-400/50' : ''}
-        ${isEffectActivated ? 'ring-2 ring-purple-400' : ''}
+        ${card ? 'border-primary bg-card' : 'border-border bg-background/50 hover:bg-card/50'}
+        ${isHighlighted ? 'border-accent bg-accent/50 shadow-lg shadow-accent/50' : ''}
+        ${isEffectActivated ? 'ring-2 ring-secondary' : ''}
       `}
       onClick={handleClick}
       onMouseDown={(e) => {
@@ -115,17 +115,17 @@ const ResponsiveGameZoneSlot = ({
             </div>
             
             {isEffectActivated && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/40"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full shadow-lg shadow-primary/40"></div>
             )}
           </div>
         </FieldCardContextMenu>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center">
-          <div className="text-slate-400 text-2xl mb-2">
+          <div className="text-muted-foreground text-2xl mb-2">
             {typeof icon === 'string' ? icon : '⭐'}
           </div>
           {zoneLabel && (
-            <div className="text-xs text-slate-400 font-medium text-center px-1">
+            <div className="text-xs text-muted-foreground font-medium text-center px-1">
               {zoneLabel}
             </div>
           )}

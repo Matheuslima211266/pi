@@ -1,0 +1,11 @@
+:root {
+    --bg-color: #FBF5E8;
+    --panel-bg-color: rgba(210, 196, 170, 0.2);
+    --text-color: #4B3F30;
+    --accent-gold: #C8A868;
+    --accent-gold-dark: #A08040;
+    --border-color: rgba(75, 63, 48, 0.4);
+    --glow-color: #E8C888;
+    --font-primary: 'Cinzel', serif; /* Per titoli e bottoni */
+    --font-secondary: 'Vollkorn', serif; /* Per testo e descrizioni */
+} 

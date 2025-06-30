@@ -1,5 +1,6 @@
 import React from 'react';
 import ResponsiveGameZoneSlot from './ResponsiveGameZoneSlot';
+import { useTheme } from './ThemeSwitcher';
 
 const ZoneSlotRenderer = ({ 
   field,
@@ -15,6 +16,8 @@ const ZoneSlotRenderer = ({
   enemyField,
   onDealDamage
 }) => {
+  const { icons } = useTheme();
+
   const renderZoneSlots = () => {
     const slots = [];
     
@@ -22,10 +25,10 @@ const ZoneSlotRenderer = ({
       if (!isEnemy) {
         // Player: [Extra Deck][S/T][S/T][S/T][S/T][S/T][Dead Zone][Banished]
         slots.push(
-          <div key="extra-deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('extraDeck', e)}>
-            <div className="text-purple-400 text-xs font-bold mb-1">Extra Deck</div>
+          <div key="extra-deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-secondary bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('extraDeck', e)}>
+            <div className="text-secondary-foreground text-xs font-bold mb-1">Extra Deck</div>
             <div className="text-2xl">⭐</div>
-            <div className="text-xs text-purple-300 font-bold mt-1">{(Array.isArray(field.extraDeck) ? field.extraDeck : []).length}</div>
+            <div className="text-xs text-secondary-foreground font-bold mt-1">{(Array.isArray(field.extraDeck) ? field.extraDeck : []).length}</div>
           </div>
         );
         const spellTrapCards = Array.isArray(field.spellsTraps) ? field.spellsTraps : [];
@@ -39,7 +42,7 @@ const ZoneSlotRenderer = ({
               card={card}
               zoneName="spellsTraps"
               slotIndex={i}
-              icon="🛡️"
+              icon={icons.trap}
               isHighlighted={isHighlighted}
               onSlotClick={handleSlotClick}
               onCardPreview={onCardPreview}
@@ -54,33 +57,33 @@ const ZoneSlotRenderer = ({
           );
         }
         slots.push(
-          <div key="dead-zone" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-gray-500 bg-gray-900/50 rounded-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deadZone', e)}>
-            <div className="text-gray-400 text-xs font-bold mb-1">Dead Zone</div>
+          <div key="dead-zone" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-muted bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deadZone', e)}>
+            <div className="text-muted-foreground text-xs font-bold mb-1">Dead Zone</div>
             <div className="text-2xl">💀</div>
-            <div className="text-xs text-gray-300 font-bold mt-1">{(Array.isArray(field.deadZone) ? field.deadZone : []).length}</div>
+            <div className="text-xs text-muted-foreground font-bold mt-1">{(Array.isArray(field.deadZone) ? field.deadZone : []).length}</div>
           </div>
         );
         slots.push(
-          <div key="banished" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banished', e)}>
-            <div className="text-purple-400 text-xs font-bold mb-1">Banished</div>
+          <div key="banished" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-destructive bg-destructive/30 rounded-lg cursor-pointer hover:bg-destructive/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banished', e)}>
+            <div className="text-destructive-foreground text-xs font-bold mb-1">Banished</div>
             <div className="text-2xl">🚫</div>
-            <div className="text-xs text-purple-300 font-bold mt-1">{(Array.isArray(field.banished) ? field.banished : []).length}</div>
+            <div className="text-xs text-destructive-foreground font-bold mt-1">{(Array.isArray(field.banished) ? field.banished : []).length}</div>
           </div>
         );
       } else {
         // Enemy: [Banished][Dead Zone][S/T][S/T][S/T][S/T][S/T][Extra Deck]
         slots.push(
-          <div key="banished" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banished', e)}>
-            <div className="text-purple-400 text-xs font-bold mb-1">Banished</div>
+          <div key="banished" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-destructive bg-destructive/30 rounded-lg cursor-pointer hover:bg-destructive/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banished', e)}>
+            <div className="text-destructive-foreground text-xs font-bold mb-1">Banished</div>
             <div className="text-2xl">🚫</div>
-            <div className="text-xs text-purple-300 font-bold mt-1">{(Array.isArray(field.banished) ? field.banished : []).length}</div>
+            <div className="text-xs text-destructive-foreground font-bold mt-1">{(Array.isArray(field.banished) ? field.banished : []).length}</div>
           </div>
         );
         slots.push(
-          <div key="dead-zone" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-gray-500 bg-gray-900/50 rounded-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deadZone', e)}>
-            <div className="text-gray-400 text-xs font-bold mb-1">Dead Zone</div>
+          <div key="dead-zone" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-muted bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deadZone', e)}>
+            <div className="text-muted-foreground text-xs font-bold mb-1">Dead Zone</div>
             <div className="text-2xl">💀</div>
-            <div className="text-xs text-gray-300 font-bold mt-1">{(Array.isArray(field.deadZone) ? field.deadZone : []).length}</div>
+            <div className="text-xs text-muted-foreground font-bold mt-1">{(Array.isArray(field.deadZone) ? field.deadZone : []).length}</div>
           </div>
         );
         const spellTrapCards = Array.isArray(field.spellsTraps) ? field.spellsTraps : [];
@@ -94,7 +97,7 @@ const ZoneSlotRenderer = ({
               card={card}
               zoneName="spellsTraps"
               slotIndex={i}
-              icon="🛡️"
+              icon={icons.trap}
               isHighlighted={isHighlighted}
               onSlotClick={handleSlotClick}
               onCardPreview={onCardPreview}
@@ -109,10 +112,10 @@ const ZoneSlotRenderer = ({
           );
         }
         slots.push(
-          <div key="extra-deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-purple-500 bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('extraDeck', e)}>
-            <div className="text-purple-400 text-xs font-bold mb-1">Extra Deck</div>
+          <div key="extra-deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-secondary bg-secondary/30 rounded-lg cursor-pointer hover:bg-secondary/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('extraDeck', e)}>
+            <div className="text-secondary-foreground text-xs font-bold mb-1">Extra Deck</div>
             <div className="text-2xl">⭐</div>
-            <div className="text-xs text-purple-300 font-bold mt-1">{(Array.isArray(field.extraDeck) ? field.extraDeck : []).length}</div>
+            <div className="text-xs text-secondary-foreground font-bold mt-1">{(Array.isArray(field.extraDeck) ? field.extraDeck : []).length}</div>
           </div>
         );
       }
@@ -120,10 +123,10 @@ const ZoneSlotRenderer = ({
       if (!isEnemy) {
         // Player: [Deck][Monster][Monster][Monster][Monster][Monster][Field][Banished FD]
         slots.push(
-          <div key="deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-green-500 bg-green-900/30 rounded-lg cursor-pointer hover:bg-green-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deck', e)}>
-            <div className="text-green-400 text-xs font-bold mb-1">Deck</div>
+          <div key="deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-primary bg-primary/30 rounded-lg cursor-pointer hover:bg-primary/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deck', e)}>
+            <div className="text-primary-foreground text-xs font-bold mb-1">Deck</div>
             <div className="text-2xl">🃏</div>
-            <div className="text-xs text-green-300 font-bold mt-1">{(Array.isArray(field.deck) ? field.deck : []).length}</div>
+            <div className="text-xs text-primary-foreground font-bold mt-1">{(Array.isArray(field.deck) ? field.deck : []).length}</div>
           </div>
         );
         const monsterCards = Array.isArray(field.monsters) ? field.monsters : [];
@@ -137,7 +140,7 @@ const ZoneSlotRenderer = ({
               card={card}
               zoneName="monsters"
               slotIndex={i}
-              icon="🐉"
+              icon={icons.monster}
               isHighlighted={isHighlighted}
               onSlotClick={handleSlotClick}
               onCardPreview={onCardPreview}
@@ -160,7 +163,7 @@ const ZoneSlotRenderer = ({
             card={playerFieldCard}
             zoneName="fieldSpell"
             slotIndex={0}
-            icon="🏛️"
+            icon={icons.spell}
             isHighlighted={isFieldHighlighted}
             onSlotClick={handleSlotClick}
             onCardPreview={onCardPreview}
@@ -174,19 +177,19 @@ const ZoneSlotRenderer = ({
           />
         );
         slots.push(
-          <div key="banished-facedown" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-red-500 bg-red-900/30 rounded-lg cursor-pointer hover:bg-red-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banishedFaceDown', e)}>
-            <div className="text-red-400 text-xs font-bold mb-1">Banish FD</div>
+          <div key="banished-facedown" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-destructive bg-destructive/30 rounded-lg cursor-pointer hover:bg-destructive/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banishedFaceDown', e)}>
+            <div className="text-destructive-foreground text-xs font-bold mb-1">Banish FD</div>
             <div className="text-2xl">🔒</div>
-            <div className="text-xs text-red-300 font-bold mt-1">{(Array.isArray(field.banishedFaceDown) ? field.banishedFaceDown : []).length}</div>
+            <div className="text-xs text-destructive-foreground font-bold mt-1">{(Array.isArray(field.banishedFaceDown) ? field.banishedFaceDown : []).length}</div>
           </div>
         );
       } else {
         // Enemy: [Banished FD][Field][Monster][Monster][Monster][Monster][Monster][Deck]
         slots.push(
-          <div key="banished-facedown" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-red-500 bg-red-900/30 rounded-lg cursor-pointer hover:bg-red-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banishedFaceDown', e)}>
-            <div className="text-red-400 text-xs font-bold mb-1">Banish FD</div>
+          <div key="banished-facedown" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-destructive bg-destructive/30 rounded-lg cursor-pointer hover:bg-destructive/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('banishedFaceDown', e)}>
+            <div className="text-destructive-foreground text-xs font-bold mb-1">Banish FD</div>
             <div className="text-2xl">🔒</div>
-            <div className="text-xs text-red-300 font-bold mt-1">{(Array.isArray(field.banishedFaceDown) ? field.banishedFaceDown : []).length}</div>
+            <div className="text-xs text-destructive-foreground font-bold mt-1">{(Array.isArray(field.banishedFaceDown) ? field.banishedFaceDown : []).length}</div>
           </div>
         );
         // Field Spell slot (single card behaves like Spell/Trap)
@@ -198,7 +201,7 @@ const ZoneSlotRenderer = ({
             card={enemyFieldCard}
             zoneName="fieldSpell"
             slotIndex={0}
-            icon="🏛️"
+            icon={icons.spell}
             isHighlighted={isEnemyFieldHighlighted}
             onSlotClick={handleSlotClick}
             onCardPreview={onCardPreview}
@@ -222,7 +225,7 @@ const ZoneSlotRenderer = ({
               card={card}
               zoneName="monsters"
               slotIndex={i}
-              icon="🐉"
+              icon={icons.monster}
               isHighlighted={isHighlighted}
               onSlotClick={handleSlotClick}
               onCardPreview={onCardPreview}
@@ -237,10 +240,10 @@ const ZoneSlotRenderer = ({
           );
         }
         slots.push(
-          <div key="deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-green-500 bg-green-900/30 rounded-lg cursor-pointer hover:bg-green-800/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deck', e)}>
-            <div className="text-green-400 text-xs font-bold mb-1">Deck</div>
+          <div key="deck" className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-primary bg-primary/30 rounded-lg cursor-pointer hover:bg-primary/50 transition-all duration-200 flex flex-col items-center justify-center p-2" onClick={(e) => handleZoneClick('deck', e)}>
+            <div className="text-primary-foreground text-xs font-bold mb-1">Deck</div>
             <div className="text-2xl">🃏</div>
-            <div className="text-xs text-green-300 font-bold mt-1">{(Array.isArray(field.deck) ? field.deck : []).length}</div>
+            <div className="text-xs text-primary-foreground font-bold mt-1">{(Array.isArray(field.deck) ? field.deck : []).length}</div>
           </div>
         );
       }
@@ -250,12 +253,12 @@ const ZoneSlotRenderer = ({
       slots.push(
         <div 
           key="dead-zone" 
-          className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-gray-500 bg-gray-900/50 rounded-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-200 flex flex-col items-center justify-center p-2"
+          className="relative w-full aspect-[5/7] min-w-[80px] border-2 border-muted bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-all duration-200 flex flex-col items-center justify-center p-2"
           onClick={(e) => handleZoneClick('deadZone', e)}
         >
-          <div className="text-gray-400 text-xs font-bold mb-1">Dead Zone</div>
+          <div className="text-muted-foreground text-xs font-bold mb-1">Dead Zone</div>
           <div className="text-2xl">💀</div>
-          <div className="text-xs text-gray-300 font-bold mt-1">{deadZoneCards.length}</div>
+          <div className="text-xs text-muted-foreground font-bold mt-1">{deadZoneCards.length}</div>
         </div>
       );
     } else if (zoneType === 'fieldSpell') {
@@ -269,7 +272,7 @@ const ZoneSlotRenderer = ({
             card={fieldCard}
             zoneName="fieldSpell"
             slotIndex={0}
-            icon="🏛️"
+            icon={icons.spell}
             isHighlighted={isHighlighted}
             onSlotClick={handleSlotClick}
             onCardPreview={onCardPreview}

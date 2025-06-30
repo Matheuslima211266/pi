@@ -50,17 +50,17 @@ const GameSidebar = ({
 }: GameSidebarProps) => {
   if (type === 'left') {
     return (
-      <div className="h-full w-48 bg-slate-900/95 border-r border-slate-600 z-30 flex flex-col p-1 gap-2 mr-0.5">
+      <div className="h-full w-48 bg-background/95 border-r border-border z-30 flex flex-col p-1 gap-2 mr-0.5">
         {/* Enemy Life Points */}
         <LifePointsControl
-          playerName="Avversario"
+          playerName="Opponent"
           lifePoints={enemyLifePoints ?? 0}
           onLifePointsChange={onLifePointsChange ?? (() => {})}
-          color="red"
+          isPlayer={false}
           isCompact={true}
         />
         {/* Game Phases */}
-        <div className="bg-slate-800/95 p-2 rounded border border-slate-600">
+        <div className="bg-card/95 p-2 rounded border border-border">
           <GamePhases
             currentPhase={currentPhase ?? ''}
             onPhaseChange={onPhaseChange ?? (() => {})}
@@ -74,17 +74,17 @@ const GameSidebar = ({
   }
   if (type === 'right') {
     return (
-      <div className="h-full w-48 bg-slate-900/95 border-l border-slate-600 z-30 flex flex-col p-2 gap-2 ml-0.5">
+      <div className="h-full w-48 bg-background/95 border-l border-border z-30 flex flex-col p-2 gap-2 ml-0.5">
         {/* Player Life Points */}
         <LifePointsControl
-          playerName="Giocatore"
+          playerName="Player"
           lifePoints={playerLifePoints ?? 0}
           onLifePointsChange={onLifePointsChange ?? (() => {})}
-          color="blue"
+          isPlayer={true}
           isCompact={true}
         />
         {/* Chat + Action History */}
-        <div className="flex-1 bg-slate-800/95 p-2 rounded border border-slate-600 flex flex-col gap-2">
+        <div className="flex-1 bg-card/95 p-2 rounded border border-border flex flex-col gap-2">
           <ChatBox
             messages={chatMessages ?? []}
             onSendMessage={onSendMessage ?? (() => {})}

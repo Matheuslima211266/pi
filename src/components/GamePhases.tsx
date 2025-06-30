@@ -15,12 +15,12 @@ interface GamePhasesProps {
 }
 
 const phases = [
-  { id: 'draw', name: 'Draw', color: 'bg-green-600' },
-  { id: 'standby', name: 'Standby', color: 'bg-yellow-600' },
-  { id: 'main1', name: 'Main 1', color: 'bg-blue-600' },
-  { id: 'battle', name: 'Battle', color: 'bg-red-600' },
+  { id: 'draw', name: 'Draw', color: 'bg-primary' },
+  { id: 'standby', name: 'Standby', color: 'bg-secondary' },
+  { id: 'main1', name: 'Main 1', color: 'bg-accent' },
+  { id: 'battle', name: 'Battle', color: 'bg-destructive' },
   { id: 'main2', name: 'Main 2', color: 'bg-purple-600' },
-  { id: 'end', name: 'End', color: 'bg-gray-600' }
+  { id: 'end', name: 'End', color: 'bg-muted' }
 ];
 
 const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn, direction = 'horizontal', onCreateToken, compact=false }: GamePhasesProps) => {
@@ -37,7 +37,7 @@ const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn, dire
 
   const Wrapper: React.FC<{children:any}> = ({children})=> compact?
     <div className="p-1">{children}</div>:
-    <Card className="p-2 bg-slate-800/70 border-gold-400">{children}</Card>;
+    <Card className="p-2 bg-card/70 border-border">{children}</Card>;
 
   return (
     <Wrapper>
@@ -50,7 +50,7 @@ const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn, dire
               <Badge
                 key={phase.id}
                 className={`transition-all ${compact ? 'px-1 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'} ${clickable ? 'cursor-pointer' : 'cursor-default pointer-events-none'}
-                  ${isActive ? `${phase.color} text-white` : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}
+                  ${isActive ? `${phase.color} text-primary-foreground` : 'bg-muted text-muted-foreground hover:bg-muted/80'}
                 `}
                 onClick={() => {
                   if (!clickable) return;
@@ -88,15 +88,15 @@ const TokenCreator = ({ onCreate }: { onCreate: (token: { name: string; atk: num
 
   return (
     <div className="relative inline-block">
-      <Button size="sm" className="bg-slate-700 text-xs px-2 py-1" onClick={() => setOpen(o => !o)}>+</Button>
+      <Button size="sm" className="bg-primary text-primary-foreground text-xs px-2 py-1" onClick={() => setOpen(o => !o)}>+</Button>
       {open && (
-        <form onSubmit={handleSubmit} className="absolute z-50 top-full left-0 mt-1 bg-slate-800 p-2 rounded shadow border border-slate-600 flex flex-col gap-1 min-w-[140px]">
-          <input type="text" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="Nome" value={name} onChange={e => setName(e.target.value)} />
-          <input type="number" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="ATK" value={atk} onChange={e => setAtk(e.target.value)} />
-          <input type="number" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="DEF" value={def} onChange={e => setDef(e.target.value)} />
+        <form onSubmit={handleSubmit} className="absolute z-50 top-full left-0 mt-1 bg-popover p-2 rounded shadow border border-border flex flex-col gap-1 min-w-[140px]">
+          <input type="text" className="rounded px-1 py-0.5 text-xs bg-input text-foreground border-border" placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
+          <input type="number" className="rounded px-1 py-0.5 text-xs bg-input text-foreground border-border" placeholder="ATK" value={atk} onChange={e => setAtk(e.target.value)} />
+          <input type="number" className="rounded px-1 py-0.5 text-xs bg-input text-foreground border-border" placeholder="DEF" value={def} onChange={e => setDef(e.target.value)} />
           <div className="flex gap-1 mt-1">
-            <Button size="sm" type="submit" className="bg-green-600 text-xs px-2 py-1">Crea</Button>
-            <Button size="sm" type="button" className="bg-red-600 text-xs px-2 py-1" onClick={() => setOpen(false)}>X</Button>
+            <Button size="sm" type="submit" className="bg-accent text-accent-foreground text-xs px-2 py-1">Create</Button>
+            <Button size="sm" type="button" className="bg-destructive text-destructive-foreground text-xs px-2 py-1" onClick={() => setOpen(false)}>X</Button>
           </div>
         </form>
       )}

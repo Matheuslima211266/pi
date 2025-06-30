@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,23 +72,23 @@ const Calculator = () => {
   };
 
   return (
-    <Card className="p-4 bg-slate-800/70 border-green-400">
+    <Card className="p-4 bg-card/70 border-primary">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <CalcIcon className="text-green-400" size={20} />
-          <h3 className="text-lg font-semibold">Calcolatrice</h3>
+          <CalcIcon className="text-primary" size={20} />
+          <h3 className="text-lg font-semibold text-foreground">Calculator</h3>
         </div>
 
         {/* Display */}
-        <div className="bg-gray-900 p-3 rounded border">
-          <div className="text-right text-2xl font-mono text-green-400">
+        <div className="bg-input p-3 rounded border">
+          <div className="text-right text-2xl font-mono text-primary">
             {display}
           </div>
         </div>
 
         {/* Calculator buttons */}
         <div className="grid grid-cols-4 gap-2">
-          <Button onClick={clear} className="bg-red-600 hover:bg-red-700 col-span-2">
+          <Button onClick={clear} className="bg-destructive text-destructive-foreground col-span-2">
             Clear
           </Button>
           <Button onClick={() => inputOperation('÷')} variant="outline">
@@ -99,49 +98,49 @@ const Calculator = () => {
             ×
           </Button>
 
-          <Button onClick={() => inputNumber('7')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('7')} variant="secondary">
             7
           </Button>
-          <Button onClick={() => inputNumber('8')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('8')} variant="secondary">
             8
           </Button>
-          <Button onClick={() => inputNumber('9')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('9')} variant="secondary">
             9
           </Button>
           <Button onClick={() => inputOperation('-')} variant="outline">
             -
           </Button>
 
-          <Button onClick={() => inputNumber('4')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('4')} variant="secondary">
             4
           </Button>
-          <Button onClick={() => inputNumber('5')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('5')} variant="secondary">
             5
           </Button>
-          <Button onClick={() => inputNumber('6')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('6')} variant="secondary">
             6
           </Button>
           <Button onClick={() => inputOperation('+')} variant="outline">
             +
           </Button>
 
-          <Button onClick={() => inputNumber('1')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('1')} variant="secondary">
             1
           </Button>
-          <Button onClick={() => inputNumber('2')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('2')} variant="secondary">
             2
           </Button>
-          <Button onClick={() => inputNumber('3')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('3')} variant="secondary">
             3
           </Button>
-          <Button onClick={performCalculation} className="bg-green-600 hover:bg-green-700 row-span-2">
+          <Button onClick={performCalculation} className="bg-accent text-accent-foreground row-span-2">
             <Equal size={16} />
           </Button>
 
-          <Button onClick={() => inputNumber('0')} className="bg-gray-600 hover:bg-gray-700 col-span-2">
+          <Button onClick={() => inputNumber('0')} variant="secondary" className="col-span-2">
             0
           </Button>
-          <Button onClick={() => inputNumber('.')} className="bg-gray-600 hover:bg-gray-700">
+          <Button onClick={() => inputNumber('.')} variant="secondary">
             .
           </Button>
         </div>

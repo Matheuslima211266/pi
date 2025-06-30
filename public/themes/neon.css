@@ -1,0 +1,12 @@
+:root {
+    --bg-color: #1A1A1D;
+    --panel-bg-color: rgba(26, 26, 29, 0.6);
+    --neon-cyan: #00BFFF;
+    --neon-magenta: #DA00FF;
+    --neon-green: #ADFF2F;
+    --neon-red: #FF4747;
+    --text-color: #EAEAEA;
+    --icon-color: rgba(0, 191, 255, 0.5);
+    --font-primary: 'Rajdhani', sans-serif;
+    --font-secondary: 'Roboto', sans-serif;
+} 

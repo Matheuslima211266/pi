@@ -47,17 +47,17 @@ const GameZoneBox = ({
 
   return (
     <div 
-      className="w-16 h-20 border border-gray-600 rounded bg-gray-800/50 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-700/50 transition-colors"
+      className="w-16 h-20 border border-border rounded bg-card/50 flex flex-col items-center justify-center cursor-pointer hover:bg-card/70 transition-colors"
       onClick={handleZoneClick}
       onContextMenu={handleContextMenu}
     >
-      <div className="text-gray-400 mb-1">
+      <div className="text-muted-foreground mb-1">
         {getZoneIcon()}
       </div>
-      <div className="text-xs text-gray-300 text-center px-1 leading-tight">
+      <div className="text-xs text-foreground text-center px-1 leading-tight">
         {title}
       </div>
-      <div className="text-xs text-gray-400">
+      <div className="text-xs text-muted-foreground">
         {cards.length}
       </div>
     </div>

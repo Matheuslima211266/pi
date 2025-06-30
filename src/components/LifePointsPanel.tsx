@@ -19,20 +19,20 @@ const LifePointsPanel = ({
   };
 
   return (
-    <Card className="life-points-panel bg-slate-800/70 border-slate-600 p-5">
+    <Card className="life-points-panel bg-card/70 border-border p-5">
       {/* Opponent LP */}
       <div className="opponent-lp mb-6">
-        <div className="lp-label text-red-400 text-sm mb-2">Opponent</div>
-        <div className="lp-value text-white text-3xl font-bold">{enemyLifePoints}</div>
+        <div className="lp-label text-destructive text-sm mb-2">Opponent</div>
+        <div className="lp-value text-foreground text-3xl font-bold">{enemyLifePoints}</div>
       </div>
       
       {/* Divider */}
-      <div className="lp-divider h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent my-6"></div>
+      <div className="lp-divider h-0.5 bg-gradient-to-r from-transparent via-border to-transparent my-6"></div>
       
       {/* Player LP with controls */}
       <div className="player-lp">
-        <div className="lp-label text-blue-400 text-sm mb-2">You</div>
-        <div className="lp-value text-white text-3xl font-bold mb-4">{playerLifePoints}</div>
+        <div className="lp-label text-primary text-sm mb-2">You</div>
+        <div className="lp-value text-foreground text-3xl font-bold mb-4">{playerLifePoints}</div>
         <div className="lp-controls space-y-1">
           {LP_ADJUSTMENT_VALUES.slice(0, 4).map((value, index) => (
             index % 2 === 0 && (
@@ -41,7 +41,7 @@ const LifePointsPanel = ({
                   onClick={() => adjustLP(LP_ADJUSTMENT_VALUES[index])} 
                   size="sm" 
                   variant="outline"
-                  className="flex-1 text-xs py-1 h-8 border-red-600 text-red-400 hover:bg-red-600/20"
+                  className="flex-1 text-xs py-1 h-8 border-destructive text-destructive hover:bg-destructive/20"
                 >
                   {LP_ADJUSTMENT_VALUES[index]}
                 </Button>
@@ -49,7 +49,7 @@ const LifePointsPanel = ({
                   onClick={() => adjustLP(LP_ADJUSTMENT_VALUES[index + 1])} 
                   size="sm" 
                   variant="outline"
-                  className="flex-1 text-xs py-1 h-8 border-red-600 text-red-400 hover:bg-red-600/20"
+                  className="flex-1 text-xs py-1 h-8 border-destructive text-destructive hover:bg-destructive/20"
                 >
                   {LP_ADJUSTMENT_VALUES[index + 1]}
                 </Button>
@@ -63,7 +63,7 @@ const LifePointsPanel = ({
                   onClick={() => adjustLP(LP_ADJUSTMENT_VALUES[index + 4])} 
                   size="sm" 
                   variant="outline"
-                  className="flex-1 text-xs py-1 h-8 border-green-600 text-green-400 hover:bg-green-600/20"
+                  className="flex-1 text-xs py-1 h-8 border-primary text-primary hover:bg-primary/20"
                 >
                   +{LP_ADJUSTMENT_VALUES[index + 4]}
                 </Button>
@@ -71,7 +71,7 @@ const LifePointsPanel = ({
                   onClick={() => adjustLP(LP_ADJUSTMENT_VALUES[index + 5])} 
                   size="sm" 
                   variant="outline"
-                  className="flex-1 text-xs py-1 h-8 border-green-600 text-green-400 hover:bg-green-600/20"
+                  className="flex-1 text-xs py-1 h-8 border-primary text-primary hover:bg-primary/20"
                 >
                   +{LP_ADJUSTMENT_VALUES[index + 5]}
                 </Button>

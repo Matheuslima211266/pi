@@ -23,11 +23,11 @@ const AuthComponent = ({ onAuth }: AuthComponentProps) => {
   }, [onAuth]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400 text-center">
-        <h1 className="text-2xl font-bold text-white mb-2">SIMULATORE SUPREMO</h1>
-        <p className="text-gray-400 mb-4">Accesso anonimo in corso...</p>
-        {loading && <div className="text-gold-400">Loading...</div>}
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 bg-card/90 border-primary text-center">
+        <h1 className="text-2xl font-bold text-foreground mb-2">SIMULATORE SUPREMO</h1>
+        <p className="text-muted-foreground mb-4">Anonymous login in progress...</p>
+        {loading && <div className="text-primary">Loading...</div>}
       </Card>
     </div>
   );

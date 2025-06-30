@@ -86,7 +86,7 @@ const GameLayout = ({ gameData, gameState, handlers, firebaseHook }: GameLayoutP
   }, []);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 overflow-hidden flex flex-row relative">
+    <div className="h-screen bg-background overflow-hidden flex flex-row relative">
       {/* l'overlay principale è gestito sotto; la logica per scegliere il mini-game è affidata a un effect */}
 
       {/* Prompt disabilitato: ordine turno risolto in lobby */}

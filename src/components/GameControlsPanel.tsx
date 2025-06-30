@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,14 +25,14 @@ const GameControlsPanel = ({
   };
 
   return (
-    <Card className="sidebar-section bg-slate-800/70 border-slate-600 p-3">
-      <h3 className="text-white text-sm font-semibold text-center mb-3">Game Controls</h3>
+    <Card className="sidebar-section bg-card/70 border-border p-3">
+      <h3 className="text-foreground text-sm font-semibold text-center mb-3">Game Controls</h3>
       
       <div className="space-y-1">
         <Button
           onClick={onDrawCard}
           size="sm"
-          className="w-full bg-green-600 hover:bg-green-700 text-xs h-7"
+          className="w-full bg-primary text-primary-foreground text-xs h-7"
         >
           <ArrowDown size={12} className="mr-1" />
           Draw Card
@@ -43,7 +42,7 @@ const GameControlsPanel = ({
           onClick={rollDice}
           size="sm"
           variant="outline"
-          className="w-full border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-black text-xs h-7"
+          className="w-full border-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground text-xs h-7"
         >
           <Dice1 size={12} className="mr-1" />
           Roll Dice
@@ -53,7 +52,7 @@ const GameControlsPanel = ({
           onClick={flipCoin}
           size="sm"
           variant="outline"
-          className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black text-xs h-7"
+          className="w-full border-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground text-xs h-7"
         >
           <Coins size={12} className="mr-1" />
           Flip Coin

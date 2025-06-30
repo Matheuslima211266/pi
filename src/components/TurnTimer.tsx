@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,29 +36,29 @@ const TurnTimer = ({ isActive = false, onTimeUp, timeRemaining, onTimeChange }) 
   };
 
   return (
-    <Card className="p-4 bg-slate-800/70 border-orange-400">
+    <Card className="p-4 bg-card/70 border-primary">
       <div className="text-center space-y-3">
         <div className="flex items-center justify-center gap-2">
-          <Clock className="text-orange-400" size={20} />
-          <h3 className="text-lg font-semibold">Timer</h3>
+          <Clock className="text-primary" size={20} />
+          <h3 className="text-lg font-semibold text-foreground">Timer</h3>
         </div>
         
-        <div className="text-3xl font-bold text-white">
+        <div className="text-3xl font-bold text-foreground">
           {formatTime(timeRemaining)}
         </div>
         
         <Badge 
           variant="outline" 
-          className={`${timeRemaining < 30 ? 'border-red-400 text-red-400' : 'border-orange-400 text-orange-400'}`}
+          className={`${timeRemaining < 30 ? 'border-destructive text-destructive' : 'border-primary text-primary'}`}
         >
-          {isRunning ? 'In corso' : 'Pausa'}
+          {isRunning ? 'Running' : 'Paused'}
         </Badge>
         
         <div className="flex gap-2 justify-center">
           <Button
             onClick={() => setIsRunning(!isRunning)}
             size="sm"
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-primary text-primary-foreground"
           >
             {isRunning ? <Pause size={16} /> : <Play size={16} />}
           </Button>
@@ -67,7 +66,7 @@ const TurnTimer = ({ isActive = false, onTimeUp, timeRemaining, onTimeChange }) 
             onClick={resetTimer}
             size="sm"
             variant="outline"
-            className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
           >
             <RotateCcw size={16} />
           </Button>

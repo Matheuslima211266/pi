@@ -211,16 +211,16 @@ const Index = () => {
 
   if (firebaseHook.error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
-        <div className="bg-red-900/30 border border-red-400 rounded-lg p-6 text-center">
-          <h2 className="text-red-400 font-bold text-xl mb-2">Connection Error</h2>
-          <p className="text-white mb-4">{firebaseHook.error}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-destructive/30 border border-destructive rounded-lg p-6 text-center">
+          <h2 className="text-destructive font-bold text-xl mb-2">Connection Error</h2>
+          <p className="text-destructive-foreground mb-4">{firebaseHook.error}</p>
           <button 
             onClick={() => {
               firebaseHook.clearError();
               window.location.reload();
             }}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            className="bg-destructive hover:bg-destructive/80 text-destructive-foreground px-4 py-2 rounded"
           >
             Retry
           </button>
@@ -231,7 +231,7 @@ const Index = () => {
 
   return (
     <PlacementMenuProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
+      <div className="min-h-screen bg-background">
         {/* Debug Panel - visibile solo in modalità sviluppo */}
         <MultiplayerDebugPanel 
           gameState={gameState}

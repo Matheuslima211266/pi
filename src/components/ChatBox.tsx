@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,19 +16,19 @@ const ChatBox = ({ messages = [], onSendMessage }) => {
   };
 
   return (
-    <Card className="p-4 bg-slate-800/70 border-green-400 h-64">
+    <Card className="p-4 bg-card/70 border-primary h-full flex flex-col">
       <div className="flex items-center gap-2 mb-3">
-        <MessageCircle className="text-green-400" size={20} />
-        <h3 className="text-lg font-semibold">Chat</h3>
+        <MessageCircle className="text-primary" size={20} />
+        <h3 className="text-lg font-semibold text-foreground">Chat</h3>
       </div>
       
-      <div className="h-32 overflow-y-auto mb-3 space-y-1">
+      <div className="flex-grow overflow-y-auto mb-3 space-y-1">
         {messages.map(msg => (
           <div key={msg.id} className="text-sm">
-            <Badge variant="outline" className="text-xs mr-2">
+            <Badge variant="secondary" className="text-xs mr-2">
               {msg.player}
             </Badge>
-            <span className="text-gray-300">{msg.message}</span>
+            <span className="text-muted-foreground">{msg.message}</span>
           </div>
         ))}
       </div>
@@ -38,8 +37,8 @@ const ChatBox = ({ messages = [], onSendMessage }) => {
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Scrivi un messaggio..."
-          className="bg-gray-800 border-gray-600 text-white"
+          placeholder="Type a message..."
+          className="bg-input border-border text-foreground"
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
         />
         <Button onClick={sendMessage} size="sm">
