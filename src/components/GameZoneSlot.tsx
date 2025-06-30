@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { ArrowUp, Skull, Ban, BookOpen, Star, Eye } from 'lucide-react';
 import CardComponent from './CardComponent';
+import { EMPTY_SLOT_WIDTH_PX, EMPTY_SLOT_ICON_SIZE_PX } from '@/config/dimensions';
 
 const GameZoneSlot = ({ 
   card, 
@@ -19,13 +19,17 @@ const GameZoneSlot = ({
   if (!card) {
     return (
       <div 
-        className={`w-12 h-16 border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all text-xs
+        className={`border border-dashed rounded flex items-center justify-center bg-gray-800/30 cursor-pointer transition-all text-xs
           ${isHighlighted ? 'border-yellow-400 bg-yellow-400/20 animate-pulse' : 'border-gray-600'}
           hover:border-blue-400 hover:bg-blue-400/10`}
+        style={{ 
+          aspectRatio: 'var(--slot-aspect, 6/9)',
+          width: `${EMPTY_SLOT_WIDTH_PX}px`
+        }}
         onClick={(e) => onSlotClick(zoneName, slotIndex, e)}
       >
         <div className="text-gray-600 text-center">
-          {React.cloneElement(icon, { size: 12 })}
+          {React.cloneElement(icon, { size: EMPTY_SLOT_ICON_SIZE_PX })}
         </div>
       </div>
     );
@@ -38,9 +42,20 @@ const GameZoneSlot = ({
           <CardComponent
             card={card}
             onClick={() => onCardClick(card)}
+            onCardPreview={onCardPreview}
             isSmall={true}
             showCost={false}
             isFaceDown={card.faceDown}
+            position={card.position || 'attack'}
+            isEnemy={false}
+            zoneName={zoneName}
+            slotIndex={slotIndex}
+            onContextMenu={() => {}}
+            onDoubleClick={() => {}}
+            onFieldCardAction={onFieldCardAction}
+            enemyField={undefined}
+            onCardClick={onCardClick}
+            zoneLabel=""
           />
           {isEffectActivated(card) && (
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -58,9 +73,8 @@ const GameZoneSlot = ({
           Return to Hand
         </ContextMenuItem>
         
-        <ContextMenuItem onClick={() => onFieldCardAction(card, 'toGraveyard', 'graveyard')} className="text-white hover:bg-gray-700">
-          <Skull className="mr-2 h-4 w-4" />
-          Send to Graveyard
+        <ContextMenuItem onClick={() => onFieldCardAction(card, 'toDeadZone', 'deadZone')} className="text-white hover:bg-gray-700">
+          Send to Dead Zone
         </ContextMenuItem>
 
         <ContextMenuSub>

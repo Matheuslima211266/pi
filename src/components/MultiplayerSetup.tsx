@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import PlayerSetupForm from './multiplayer/PlayerSetupForm';
 import GameCreationSection from './multiplayer/GameCreationSection';
 import GameStatusDisplay from './multiplayer/GameStatusDisplay';
@@ -18,6 +17,7 @@ interface MultiplayerSetupProps {
   onBothPlayersReady?: () => void;
   onHostEnterWaiting?: () => void;
   gameState?: any;
+  onJoinGame: (gameData: any) => Promise<any>;
 }
 
 const MultiplayerSetup = ({ 
@@ -26,7 +26,8 @@ const MultiplayerSetup = ({
   onPlayerReady, 
   onBothPlayersReady,
   onHostEnterWaiting,
-  gameState 
+  gameState,
+  onJoinGame
 }: MultiplayerSetupProps) => {
   const [gameId, setGameId] = useState('');
   const [playerName, setPlayerName] = useState('');
@@ -40,6 +41,10 @@ const MultiplayerSetup = ({
   const [showDeckBuilder, setShowDeckBuilder] = useState(false);
   const [availableCards, setAvailableCards] = useState(sampleCardsData.cards);
   const [currentDeck, setCurrentDeck] = useState<any>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
+  const [startingLP, setStartingLP] = useState(100);
+  const [summonLimit, setSummonLimit] = useState(5);
 
   // Memoizza lo stato per evitare render loops
   const currentState = useMemo(() => ({
@@ -70,6 +75,15 @@ const MultiplayerSetup = ({
     }
   }, []); // Solo al mount
 
+  // Monitor session state changes and redirect guest to waiting room
+  useEffect(() => {
+    if (currentState.currentSession && !isHost && !currentState.gameStarted) {
+      console.log('[SETUP] Guest detected with active session, redirecting to waiting room');
+      // Il guest dovrebbe essere automaticamente reindirizzato tramite il gameState
+      // che viene aggiornato in handleGameStart
+    }
+  }, [currentState.currentSession, isHost, currentState.gameStarted]);
+
   const createGame = useCallback(async () => {
     if (!playerName.trim()) {
       alert('Please enter your name first');
@@ -94,7 +108,9 @@ const MultiplayerSetup = ({
         gameId: newGameId,
         playerName: playerName.trim(),
         isHost: true,
-        deckLoaded: true
+        deckLoaded: true,
+        startingLP,
+        summonLimit
       };
       
       const success = await onGameStart(gameData);
@@ -115,54 +131,57 @@ const MultiplayerSetup = ({
     } finally {
       setIsCreatingGame(false);
     }
-  }, [playerName, deckLoaded, isCreatingGame, onGameStart]);
+  }, [playerName, deckLoaded, isCreatingGame, onGameStart, startingLP, summonLimit]);
 
   const joinGame = useCallback(async () => {
     const targetGameId = gameId.trim().toUpperCase() || gameIdFromUrl;
-    
+    setJoinError(null);
+    setJoinSuccess(false);
     if (!targetGameId) {
-      alert('Please enter a Game ID');
+      setJoinError('Please enter a Game ID');
       return;
     }
-    
     if (!playerName.trim()) {
-      alert('Please enter your name');
+      setJoinError('Please enter your name');
       return;
     }
-    
     if (!deckLoaded) {
-      alert('Please create or upload a deck first');
+      setJoinError('Please create or upload a deck first');
       return;
     }
-
     if (isJoiningGame) return; // Prevent double calls
-
     setIsJoiningGame(true);
-    console.log('[SETUP] Attempting to join game:', targetGameId);
-    
+    console.log('[SETUP] Attempting to join game as guest:', targetGameId);
     try {
       const gameData = { 
         gameId: targetGameId,
-        playerName: playerName.trim(), 
-        isHost: false,
-        deckLoaded: true 
+        playerName,
+        deckLoaded,
+        isHost: false, // Forza guest!
+        startingLP,
+        summonLimit
       };
-      
-      const success = await onGameStart(gameData);
-      
-      if (!success) {
-        alert('Failed to join game. Please check the Game ID and try again.');
-        setIsJoiningGame(false);
-      } else {
-        console.log('[SETUP] Successfully joined game:', targetGameId);
+      const session = await onJoinGame(gameData);
+      if (session && session.id) {
+        setJoinSuccess(true);
+        setGameSessionCreated(true);
         setIsHost(false);
+        setGameId(targetGameId);
+        setTimeout(() => setJoinSuccess(false), 2000);
+        console.log('[SETUP] Join successful! Sei guest nella partita', targetGameId);
+        
+        // Il guest dovrebbe essere automaticamente reindirizzato alla waiting room
+        // tramite il gameState che viene aggiornato in handleGameStart
+      } else {
+        setJoinError('Join fallito: partita non trovata o già piena.');
       }
-    } catch (error) {
-      console.error('[SETUP] Exception during guest join:', error);
-      alert('Failed to join game. Please try again.');
+    } catch (err) {
+      console.error('[SETUP] Error during join:', err);
+      setJoinError('Errore durante il join: ' + (err?.message || err));
+    } finally {
       setIsJoiningGame(false);
     }
-  }, [gameId, gameIdFromUrl, playerName, deckLoaded, isJoiningGame, onGameStart]);
+  }, [gameId, gameIdFromUrl, playerName, deckLoaded, isJoiningGame, onJoinGame, startingLP, summonLimit]);
 
   const copyGameLink = useCallback(() => {
     const gameLink = `${window.location.origin}?game=${gameId}`;
@@ -210,30 +229,33 @@ const MultiplayerSetup = ({
     setShowDeckBuilder(false);
   }, [onDeckLoad]);
 
-  const handleSignOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
-  }, []);
-
   const handleEnterWaitingRoom = useCallback(() => {
-    console.log('[SETUP] Host entering waiting room');
+    console.log('[SETUP] Player entering waiting room', { isHost });
     if (onHostEnterWaiting) {
       onHostEnterWaiting();
     }
-  }, [onHostEnterWaiting]);
+  }, [onHostEnterWaiting, isHost]);
 
-  // Show waiting screen quando il gioco è iniziato e c'è una sessione attiva
-  if (currentState.gameStarted && currentState.currentSession && !currentState.bothPlayersReady) {
-    console.log('[SETUP] Showing waiting screen');
-    console.log('=== SHOWING WAITING SCREEN ===');
+  // Show waiting screen when session active and not both ready
+  if (currentState.currentSession && !currentState.bothPlayersReady) {
     return (
       <WaitingForPlayersScreen
         gameData={gameState.gameData}
         playerReady={currentState.playerReady || false}
         opponentReady={currentState.opponentReady || false}
         onPlayerReady={onPlayerReady}
-        onSignOut={handleSignOut}
+        onSignOut={handleEnterWaitingRoom}
         onGameStart={onBothPlayersReady}
+        isHost={isHost}
+        onCopyGameLink={copyGameLink}
+        linkCopied={linkCopied}
+        wantsFirst={gameState?.wantsFirst ?? null}
+        onSelectPreference={(val)=>{
+          if(gameState?.setWantsFirst){
+             gameState.setWantsFirst(val);
+             // sync will happen automatically shortly
+          }
+        }}
       />
     );
   }
@@ -255,25 +277,23 @@ const MultiplayerSetup = ({
           availableCards={availableCards}
           onDeckSave={handleDeckBuilderSave}
           initialDeck={currentDeck}
+          isHost={isHost}
         />
       </div>
     );
   }
 
   // Show setup screen
-  console.log('[SETUP] Showing setup screen');
-  console.log('=== SHOWING SETUP SCREEN ===');
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-6 bg-slate-800/90 border-gold-400">
         <div className="flex justify-between items-center mb-6">
           <div className="text-center">
             <Users className="w-12 h-12 text-gold-400 mx-auto mb-2" />
-            <h1 className="text-2xl font-bold text-white">Yu-Gi-Oh! Duel</h1>
+            <h1 className="text-2xl font-bold text-white">SIMULATORE SUPREMO</h1>
             <p className="text-gray-400">Multiplayer Setup</p>
           </div>
           <Button
-            onClick={handleSignOut}
             variant="ghost"
             size="sm"
             className="text-gray-400 hover:text-white"
@@ -288,6 +308,10 @@ const MultiplayerSetup = ({
             setPlayerName={setPlayerName}
             deckLoaded={deckLoaded}
             onDeckUpload={handleDeckUpload}
+            startingLP={startingLP}
+            setStartingLP={setStartingLP}
+            summonLimit={summonLimit}
+            setSummonLimit={setSummonLimit}
           />
 
           {/* Deck Builder Section */}
@@ -323,7 +347,7 @@ const MultiplayerSetup = ({
           )}
 
           {/* Sezione di creazione/join del gioco */}
-          {!currentState.gameStarted && (
+          {!gameSessionCreated && (
             <GameCreationSection
               gameId={gameId}
               setGameId={setGameId}
@@ -333,11 +357,12 @@ const MultiplayerSetup = ({
               onCreateGame={createGame}
               onJoinGame={joinGame}
               isJoiningGame={isJoiningGame}
+              currentSession={currentState.currentSession}
             />
           )}
 
           {/* Mostra il GameStatusDisplay quando il gioco è stato creato ma non è ancora iniziato */}
-          {gameId && isHost && gameSessionCreated && !currentState.gameStarted && (
+          {gameId && gameSessionCreated && !currentState.gameStarted && (
             <GameStatusDisplay
               gameId={gameId}
               isHost={isHost}
@@ -345,6 +370,10 @@ const MultiplayerSetup = ({
               linkCopied={linkCopied}
               onCopyGameLink={copyGameLink}
               onEnterWaitingRoom={handleEnterWaitingRoom}
+              hostName={gameState?.gameData?.hostName || playerName}
+              guestName={gameState?.gameData?.guestName || 'Guest'}
+              hostReady={currentState.playerReady || false}
+              guestReady={currentState.opponentReady || false}
             />
           )}
 
@@ -364,6 +393,20 @@ const MultiplayerSetup = ({
               <div className="mt-2">
                 <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto"></div>
               </div>
+            </div>
+          )}
+          {joinSuccess && (
+            <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400 mt-2">
+              <p className="text-green-400 font-semibold flex items-center justify-center gap-2">✅ Sei entrato nella partita!</p>
+            </div>
+          )}
+          {joinError && (
+            <div className="text-center p-4 bg-red-900/30 rounded-lg border border-red-400 mt-2 flex flex-col items-center">
+              <span className="text-red-400 font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {joinError}
+              </span>
+              <Button onClick={joinGame} className="mt-2 bg-red-600 hover:bg-red-700 text-white">Riprova</Button>
             </div>
           )}
         </div>

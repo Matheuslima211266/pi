@@ -1,4 +1,3 @@
-
 import React from 'react';
 import GameZoneSlot from './GameZoneSlot';
 import GameZoneBox from './GameZoneBox';
@@ -80,22 +79,6 @@ const GameZones = ({
               zoneName="deadZone"
               cards={enemyField.deadZone || []}
               title="Enemy Dead Zone"
-              onCardPreview={onCardPreview}
-              onCardMove={onCardMove}
-              isPlayer={false}
-            />
-            <GameZoneBox
-              zoneName="magia"
-              cards={enemyField.magia || []}
-              title="Enemy Magia"
-              onCardPreview={onCardPreview}
-              onCardMove={onCardMove}
-              isPlayer={false}
-            />
-            <GameZoneBox
-              zoneName="terreno"
-              cards={enemyField.terreno || []}
-              title="Enemy Terreno"
               onCardPreview={onCardPreview}
               onCardMove={onCardMove}
               isPlayer={false}
@@ -207,9 +190,9 @@ const GameZones = ({
               isPlayer={true}
             />
             <GameZoneBox
-              zoneName="graveyard"
-              cards={playerField.graveyard || []}
-              title="Player Graveyard"
+              zoneName="deadZone"
+              cards={playerField.deadZone || []}
+              title="Player Dead Zone"
               onCardPreview={onCardPreview}
               onCardMove={onCardMove}
               isPlayer={true}
@@ -229,22 +212,6 @@ const GameZones = ({
               zoneName="deadZone"
               cards={playerField.deadZone || []}
               title="Player Dead Zone"
-              onCardPreview={onCardPreview}
-              onCardMove={onCardMove}
-              isPlayer={true}
-            />
-            <GameZoneBox
-              zoneName="magia"
-              cards={playerField.magia || []}
-              title="Player Magia"
-              onCardPreview={onCardPreview}
-              onCardMove={onCardMove}
-              isPlayer={true}
-            />
-            <GameZoneBox
-              zoneName="terreno"
-              cards={playerField.terreno || []}
-              title="Player Terreno"
               onCardPreview={onCardPreview}
               onCardMove={onCardMove}
               isPlayer={true}

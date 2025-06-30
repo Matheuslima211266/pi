@@ -1,5 +1,6 @@
+import { removeCardFromZone, addCardToZone } from '@/utils/gameHelpers';
 
-export const useCardHandlers = (gameState, syncGameState) => {
+export const useCardHandlers = (gameState) => {
   const {
     gameData,
     setPlayerHand,
@@ -10,25 +11,34 @@ export const useCardHandlers = (gameState, syncGameState) => {
   } = gameState;
 
   const handleCardPlace = (card, zoneName, slotIndex, isFaceDown = false, position = null) => {
-    console.log(`Placing card ${card.name} in ${zoneName} at index ${slotIndex}`);
-
-    setPlayerHand(prev => prev.filter(c => c.id !== card.id));
+    // Rimuovi la carta dalla mano in modo sicuro
+    setPlayerHand(prev => {
+      const newHand = removeCardFromZone(card, prev, 'hand');
+      return newHand;
+    });
+    
     setSelectedCardFromHand(null);
+
+    // Prepara la carta per il campo
+    const fieldCard = {
+      ...card,
+      position: position || 'attack',
+      faceDown: isFaceDown,
+      zone: zoneName,
+      slotIndex: slotIndex
+    };
 
     setPlayerField(prev => {
       const newField = { ...prev };
 
       if (zoneName === 'monsters') {
-        newField.monsters = [...prev.monsters];
-        newField.monsters[slotIndex] = { ...card, faceDown: isFaceDown, position: position };
+        newField.monsters = addCardToZone(fieldCard, prev.monsters, 'monsters', slotIndex);
       } else if (zoneName === 'spellsTraps') {
-        newField.spellsTraps = [...prev.spellsTraps];
-        newField.spellsTraps[slotIndex] = { ...card, faceDown: isFaceDown };
+        newField.spellsTraps = addCardToZone(fieldCard, prev.spellsTraps, 'spellsTraps', slotIndex);
       } else if (zoneName === 'fieldSpell') {
-        newField.fieldSpell = [{ ...card, faceDown: isFaceDown }];
+        newField.fieldSpell = addCardToZone(fieldCard, prev.fieldSpell, 'fieldSpell');
       }
 
-      console.log('Updated field after card placement:', newField);
       return newField;
     });
 
@@ -39,16 +49,18 @@ export const useCardHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    
-    setTimeout(() => syncGameState(), 100);
   };
 
-  const handleCardClick = (card) => {
-    setPreviewCard(card);
+  const handleCardPreview = (card) => {
+    if (card && gameState.previewCard && card.id === gameState.previewCard.id) {
+      setPreviewCard(null);
+    } else {
+      setPreviewCard(card);
+    }
   };
 
   return {
     handleCardPlace,
-    handleCardClick
+    handleCardPreview
   };
 };

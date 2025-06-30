@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,9 @@ interface GamePhasesProps {
   onPhaseChange: (phase: string) => void;
   onEndTurn: () => void;
   isPlayerTurn: boolean;
+  direction?: 'horizontal' | 'vertical';
+  onCreateToken?: (token: { name: string; atk: number; def: number }) => void;
+  compact?: boolean;
 }
 
 const phases = [
@@ -21,7 +23,7 @@ const phases = [
   { id: 'end', name: 'End', color: 'bg-gray-600' }
 ];
 
-const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn }: GamePhasesProps) => {
+const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn, direction = 'horizontal', onCreateToken, compact=false }: GamePhasesProps) => {
   const currentPhaseIndex = phases.findIndex(p => p.id === currentPhase);
   
   const nextPhase = () => {
@@ -33,62 +35,72 @@ const GamePhases = ({ currentPhase, onPhaseChange, onEndTurn, isPlayerTurn }: Ga
     }
   };
 
+  const Wrapper: React.FC<{children:any}> = ({children})=> compact?
+    <div className="p-1">{children}</div>:
+    <Card className="p-2 bg-slate-800/70 border-gold-400">{children}</Card>;
+
   return (
-    <Card className="p-4 bg-slate-800/70 border-gold-400">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-center">Fasi di Gioco</h3>
-        
-        {/* Phase indicators */}
-        <div className="flex justify-center gap-1 overflow-x-auto">
-          {phases.map((phase, index) => (
-            <Badge
-              key={phase.id}
-              className={`px-2 py-1 text-xs transition-all cursor-pointer
-                ${currentPhase === phase.id 
-                  ? `${phase.color} text-white animate-pulse` 
-                  : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                }`}
-              onClick={() => isPlayerTurn && onPhaseChange(phase.id)}
-            >
-              {phase.name}
-            </Badge>
-          ))}
+    <Wrapper>
+      <div className="space-y-1">
+        <div className={`flex justify-center gap-1 ${direction === 'vertical' ? 'flex-col items-center overflow-y-auto' : 'flex-row overflow-x-auto'}`}>
+          {phases.map((phase) => {
+            const isActive = currentPhase === phase.id;
+            const clickable = isPlayerTurn;
+            return (
+              <Badge
+                key={phase.id}
+                className={`transition-all ${compact ? 'px-1 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'} ${clickable ? 'cursor-pointer' : 'cursor-default pointer-events-none'}
+                  ${isActive ? `${phase.color} text-white` : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}
+                `}
+                onClick={() => {
+                  if (!clickable) return;
+                  if (phase.id === 'end') {
+                    onEndTurn();
+                  } else {
+                    onPhaseChange(phase.id);
+                  }
+                }}
+              >
+                {phase.name}
+              </Badge>
+            );
+          })}
         </div>
-
-        {/* Current phase display */}
-        <div className="text-center">
-          <div className="text-2xl font-bold text-gold-400">
-            {phases[currentPhaseIndex]?.name} Phase
-          </div>
-          {!isPlayerTurn && (
-            <div className="text-sm text-gray-400 mt-1">
-              Turno dell'avversario
-            </div>
-          )}
-        </div>
-
-        {/* Phase control buttons */}
-        {isPlayerTurn && (
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={nextPhase}
-              className="bg-gold-600 hover:bg-gold-700 text-black"
-            >
-              <ChevronRight size={16} />
-              Prossima Fase
-            </Button>
-            <Button
-              onClick={onEndTurn}
-              variant="outline"
-              className="border-gold-400 text-gold-400 hover:bg-gold-400 hover:text-black"
-            >
-              <RotateCcw size={16} />
-              Fine Turno
-            </Button>
-          </div>
-        )}
       </div>
-    </Card>
+    </Wrapper>
+  );
+};
+
+// TokenCreator: piccolo form inline per creare token personalizzati
+const TokenCreator = ({ onCreate }: { onCreate: (token: { name: string; atk: number; def: number }) => void }) => {
+  const [open, setOpen] = React.useState(false);
+  const [name, setName] = React.useState('');
+  const [atk, setAtk] = React.useState('');
+  const [def, setDef] = React.useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const atkVal = parseInt(atk, 10) || 0;
+    const defVal = parseInt(def, 10) || 0;
+    onCreate({ name: name || 'Token', atk: atkVal, def: defVal });
+    setName(''); setAtk(''); setDef(''); setOpen(false);
+  };
+
+  return (
+    <div className="relative inline-block">
+      <Button size="sm" className="bg-slate-700 text-xs px-2 py-1" onClick={() => setOpen(o => !o)}>+</Button>
+      {open && (
+        <form onSubmit={handleSubmit} className="absolute z-50 top-full left-0 mt-1 bg-slate-800 p-2 rounded shadow border border-slate-600 flex flex-col gap-1 min-w-[140px]">
+          <input type="text" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="Nome" value={name} onChange={e => setName(e.target.value)} />
+          <input type="number" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="ATK" value={atk} onChange={e => setAtk(e.target.value)} />
+          <input type="number" className="rounded px-1 py-0.5 text-xs bg-slate-900 text-white border border-slate-600" placeholder="DEF" value={def} onChange={e => setDef(e.target.value)} />
+          <div className="flex gap-1 mt-1">
+            <Button size="sm" type="submit" className="bg-green-600 text-xs px-2 py-1">Crea</Button>
+            <Button size="sm" type="button" className="bg-red-600 text-xs px-2 py-1" onClick={() => setOpen(false)}>X</Button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 };
 

@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
+import { dbg } from '@/lib/debug';
 import ResponsiveGameZones from './ResponsiveGameZones';
 import EnemyHand from './EnemyHand';
 import PlayerHand from './PlayerHand';
 import ZoneManager from './ZoneManager';
 import ZoneActionMenu from './ZoneActionMenu';
+import CentralToolsBar from './CentralToolsBar';
 
 const ResponsiveGameBoard = ({ 
   playerField, 
@@ -20,14 +21,67 @@ const ResponsiveGameBoard = ({
   onCardMove,
   onDeckMill,
   onDrawCard,
-  setSelectedCardFromHand 
+  setSelectedCardFromHand,
+  enemyLifePoints,
+  playerLifePoints,
+  onLifePointsChange,
+  currentPhase,
+  onPhaseChange,
+  onEndTurn,
+  isPlayerTurn,
+  onCreateToken,
+  onDealDamage,
+  currentTurnPlayerId,
+  myPlayerId
 }) => {
   const [expandedZone, setExpandedZone] = useState(null);
   const [zoneActionMenu, setZoneActionMenu] = useState(null);
 
-  console.log('ResponsiveGameBoard playerField:', playerField);
-  console.log('ResponsiveGameBoard enemyField:', enemyField);
-  console.log('ResponsiveGameBoard selectedCardFromHand:', selectedCardFromHand);
+  dbg('🎮 [RGameBoard] render', {
+    playerField: JSON.parse(JSON.stringify(playerField)),
+    enemyField: JSON.parse(JSON.stringify(enemyField)),
+    playerHandSize: playerHand?.length || 0,
+    selectedCardFromHand: selectedCardFromHand,
+    playerMonsters: Array.isArray(playerField?.monsters) ? playerField.monsters.filter(c => c !== null).length : 0,
+    playerSpellsTraps: Array.isArray(playerField?.spellsTraps) ? playerField.spellsTraps.filter(c => c !== null).length : 0,
+    enemyMonsters: Array.isArray(enemyField?.monsters) ? enemyField.monsters.filter(c => c !== null).length : 0,
+    enemySpellsTraps: Array.isArray(enemyField?.spellsTraps) ? enemyField.spellsTraps.filter(c => c !== null).length : 0,
+    timestamp: Date.now()
+  });
+
+  // Debug per ogni carta nel campo player
+  if (Array.isArray(playerField?.monsters)) {
+    playerField.monsters.forEach((card, index) => {
+      if (card) {
+        dbg(`🎮 [RGameBoard] Player monster slot ${index}:`, {
+          card: card,
+          cardId: card.id,
+          cardName: card.name,
+          position: card.position,
+          faceDown: card.faceDown,
+          zone: card.zone,
+          slotIndex: card.slotIndex
+        });
+      }
+    });
+  }
+
+  // Debug per ogni carta nel campo enemy
+  if (Array.isArray(enemyField?.monsters)) {
+    enemyField.monsters.forEach((card, index) => {
+      if (card) {
+        dbg(`🎮 [RGameBoard] Enemy monster slot ${index}:`, {
+          card: card,
+          cardId: card.id,
+          cardName: card.name,
+          position: card.position,
+          faceDown: card.faceDown,
+          zone: card.zone,
+          slotIndex: card.slotIndex
+        });
+      }
+    });
+  }
 
   const handleZoneClick = (zoneName, isEnemy = false, event) => {
     event.stopPropagation();
@@ -60,7 +114,7 @@ const ResponsiveGameBoard = ({
         if (!isEnemy) onDeckMill && onDeckMill(3);
         break;
       case 'shuffle':
-        console.log(`Shuffle ${zoneName} for ${isEnemy ? 'enemy' : 'player'}`);
+        dbg(`Shuffle ${zoneName} for ${isEnemy ? 'enemy' : 'player'}`);
         break;
     }
     
@@ -69,18 +123,17 @@ const ResponsiveGameBoard = ({
 
   const getZoneCards = (zoneName, isEnemy = false) => {
     const field = isEnemy ? enemyField : playerField;
-    const cards = field[zoneName] || [];
-    console.log(`Getting cards for ${zoneName} (enemy: ${isEnemy}):`, cards);
+    const cards = Array.isArray(field?.[zoneName]) ? field[zoneName] : [];
+    dbg(`Getting cards for ${zoneName} (enemy: ${isEnemy}):`, cards);
     return cards;
   };
 
   const handleCardSelect = (card) => {
-    console.log('Card selected from hand:', card?.name);
     setSelectedCardFromHand(card);
   };
 
   return (
-    <div className="battlefield-container">
+    <div className="battlefield-container flex flex-col w-full max-w-none" style={{ gap: 'var(--field-zone-gap)' }}>
       {/* Mano Avversario (Ruotata 180°) */}
       <div className="hand-zone opponent-hand">
         <EnemyHand 
@@ -91,7 +144,7 @@ const ResponsiveGameBoard = ({
       </div>
 
       {/* Zona Avversario - Prima riga: Magie/Trappole */}
-      <div className="opponent-zone">
+      <div className="opponent-zone gap-x-[1px]">
         <ResponsiveGameZones 
           field={enemyField}
           isEnemy={true}
@@ -104,11 +157,12 @@ const ResponsiveGameBoard = ({
           onDeckMill={onDeckMill}
           zoneType="spellsTraps"
           enemyField={playerField}
+          onDealDamage={onDealDamage}
         />
       </div>
       
       {/* Zona Avversario - Seconda riga: Mostri */}
-      <div className="opponent-zone">
+      <div className="opponent-zone gap-x-[1px]">
         <ResponsiveGameZones 
           field={enemyField}
           isEnemy={true}
@@ -121,56 +175,29 @@ const ResponsiveGameBoard = ({
           onDeckMill={onDeckMill}
           zoneType="monsters"
           enemyField={playerField}
+          onDealDamage={onDealDamage}
         />
       </div>
       
-      {/* Zona Centrale con Field Spells e Dead Zones */}
-      <div className="center-zone">
-        {/* Gruppo Avversario: Dead Zone + Field Spell */}
-        <div className="center-group" style={{ transform: 'rotate(180deg)' }}>
-          <div 
-            className="card-slot dead-zone-slot dead-zone-slot-center cursor-pointer" 
-            onClick={(e) => handleZoneClick('deadZone', true, e)}
-          >
-            <div className="zone-label">Dead Zone</div>
-            <div className="text-2xl">💀</div>
-            <div className="zone-count">{(enemyField.deadZone || []).length}</div>
-          </div>
-          <div 
-            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
-            onClick={(e) => handleZoneClick('fieldSpell', true, e)}
-          >
-            <div className="zone-label">Field Spell</div>
-            <div className="text-2xl">🏔️</div>
-            <div className="zone-count">{(enemyField.fieldSpell || []).length}</div>
-          </div>
-        </div>
-        
-        <div className="battle-field-label">BATTLE FIELD</div>
-        
-        {/* Gruppo Giocatore: Field Spell + Dead Zone */}
-        <div className="center-group">
-          <div 
-            className="card-slot field-spell-zone field-spell-slot cursor-pointer" 
-            onClick={(e) => handleZoneClick('fieldSpell', false, e)}
-          >
-            <div className="zone-label">Field Spell</div>
-            <div className="text-2xl">🏔️</div>
-            <div className="zone-count">{(playerField.fieldSpell || []).length}</div>
-          </div>
-          <div 
-            className="card-slot dead-zone-slot dead-zone-slot-center cursor-pointer" 
-            onClick={(e) => handleZoneClick('deadZone', false, e)}
-          >
-            <div className="zone-label">Dead Zone</div>
-            <div className="text-2xl">💀</div>
-            <div className="zone-count">{(playerField.deadZone || []).length}</div>
-          </div>
-        </div>
-      </div>
+      {/* Barra centrale tools */}
+      <CentralToolsBar
+        enemyLifePoints={enemyLifePoints}
+        playerLifePoints={playerLifePoints}
+        onLifePointsChange={onLifePointsChange}
+        currentPhase={currentPhase}
+        onPhaseChange={onPhaseChange}
+        onEndTurn={onEndTurn}
+        isPlayerTurn={isPlayerTurn}
+        onCreateToken={onCreateToken}
+        currentTurnPlayerId={currentTurnPlayerId}
+        myPlayerId={myPlayerId}
+      />
+      
+      {/* Spazio minimo tra campo avversario e player */}
+      <div className="h-px" />
       
       {/* Zona Giocatore - Prima riga: Mostri */}
-      <div className="player-zone">
+      <div className="player-zone gap-x-[1px]">
         <ResponsiveGameZones 
           field={playerField}
           isEnemy={false}
@@ -183,11 +210,12 @@ const ResponsiveGameBoard = ({
           onDeckMill={onDeckMill}
           zoneType="monsters"
           enemyField={enemyField}
+          onDealDamage={onDealDamage}
         />
       </div>
       
       {/* Zona Giocatore - Seconda riga: Magie/Trappole */}
-      <div className="player-zone">
+      <div className="player-zone gap-x-[1px]">
         <ResponsiveGameZones 
           field={playerField}
           isEnemy={false}
@@ -200,22 +228,10 @@ const ResponsiveGameBoard = ({
           onDeckMill={onDeckMill}
           zoneType="spellsTraps"
           enemyField={enemyField}
+          onDealDamage={onDealDamage}
         />
       </div>
 
-      {/* Mano Giocatore */}
-      <div className="hand-zone">
-        <PlayerHand 
-          cards={playerHand}
-          onPlayCard={handleCardSelect}
-          isPlayerTurn={true}
-          onCardPreview={onCardPreview}
-          onCardMove={onCardMove}
-          onShowCard={() => {}}
-          onShowHand={() => {}}
-        />
-      </div>
-      
       {/* Zone Action Menu */}
       {zoneActionMenu && (
         <ZoneActionMenu
@@ -226,7 +242,7 @@ const ResponsiveGameBoard = ({
         />
       )}
       
-      {/* Zone Manager Modals - Dead Zone only */}
+      {/* Zone Manager Modals - Dead Zone and Field */}
       {expandedZone === 'deadZone' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
@@ -243,23 +259,7 @@ const ResponsiveGameBoard = ({
         </div>
       )}
       
-      {expandedZone === 'enemy_deadZone' && (
-        <div className="fixed inset-0 z-40">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-            <ZoneManager
-              cards={getZoneCards('deadZone', true)}
-              zoneName="deadZone"
-              onCardMove={onCardMove}
-              onCardPreview={onCardPreview}
-              isExpanded={true}
-              onToggleExpand={() => setExpandedZone(null)}
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* Field Spell Zones */}
+      {/* Field Spell Zone */}
       {expandedZone === 'fieldSpell' && (
         <div className="fixed inset-0 z-40">
           <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
@@ -273,37 +273,6 @@ const ResponsiveGameBoard = ({
               onToggleExpand={() => setExpandedZone(null)}
             />
           </div>
-        </div>
-      )}
-      
-      {expandedZone === 'enemy_fieldSpell' && (
-        <div className="fixed inset-0 z-40">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setExpandedZone(null)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-            <ZoneManager
-              cards={getZoneCards('fieldSpell', true)}
-              zoneName="fieldSpell"
-              onCardMove={onCardMove}
-              onCardPreview={onCardPreview}
-              isExpanded={true}
-              onToggleExpand={() => setExpandedZone(null)}
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* Indicatore carta selezionata */}
-      {selectedCardFromHand && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-900/90 border border-blue-400 rounded px-4 py-2 z-20">
-          <p className="text-sm text-gray-300 text-center">
-            Carta selezionata: <strong>{selectedCardFromHand.name}</strong> - Clicca su uno slot per evocarla
-          </p>
-          <button 
-            onClick={() => setSelectedCardFromHand(null)}
-            className="ml-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-          >
-            Annulla
-          </button>
         </div>
       )}
     </div>

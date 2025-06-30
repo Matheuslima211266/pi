@@ -1,5 +1,4 @@
-
-export const useBattleHandlers = (gameState, syncGameState) => {
+export const useBattleHandlers = (gameState) => {
   const {
     gameData,
     setActionLog
@@ -13,7 +12,6 @@ export const useBattleHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   return {

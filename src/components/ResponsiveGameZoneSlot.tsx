@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CardComponent from './CardComponent';
 import FieldCardContextMenu from './FieldCardContextMenu';
@@ -18,7 +17,9 @@ const ResponsiveGameZoneSlot = ({
   onCardClick, 
   isEffectActivated,
   zoneLabel,
-  enemyField
+  enemyField,
+  isEnemy = false,
+  onDealDamage
 }) => {
   const {
     showEditATK,
@@ -33,10 +34,15 @@ const ResponsiveGameZoneSlot = ({
     handleDirectAttack,
     handleAttackMonster,
     getEnemyMonsters
-  } = useBattleLogic(onFieldCardAction);
+  } = useBattleLogic(onFieldCardAction, (damage:number, isToEnemy:boolean)=>{
+    if (onDealDamage) {
+      onDealDamage(damage, isToEnemy);
+    }
+  });
 
   const handleClick = (e) => {
     e.stopPropagation();
+    
     if (card) {
       onCardPreview?.(card);
     } else if (onSlotClick && isHighlighted) {
@@ -45,7 +51,6 @@ const ResponsiveGameZoneSlot = ({
   };
 
   const handleFieldCardActionWrapper = (action, card, zoneName, slotIndex) => {
-    console.log('Field card action:', action, card?.name, zoneName, slotIndex);
     if (onFieldCardAction) {
       onFieldCardAction(action, card, zoneName, slotIndex);
     }
@@ -56,13 +61,17 @@ const ResponsiveGameZoneSlot = ({
   return (
     <div 
       className={`
-        relative w-full h-full min-w-[80px] min-h-[120px]
+        relative w-full aspect-[5/8] min-w-[80px]
         border-2 rounded-lg cursor-pointer transition-all duration-200
         ${card ? 'border-yellow-500 bg-slate-700' : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'}
         ${isHighlighted ? 'border-blue-400 bg-blue-900/50 shadow-lg shadow-blue-400/50' : ''}
         ${isEffectActivated ? 'ring-2 ring-purple-400' : ''}
       `}
       onClick={handleClick}
+      onMouseDown={(e) => {
+      }}
+      onMouseUp={(e) => {
+      }}
     >
       {card ? (
         <FieldCardContextMenu
@@ -87,11 +96,21 @@ const ResponsiveGameZoneSlot = ({
                 isInHand={false}
                 isFaceDown={card.faceDown}
                 position={card.position || 'attack'}
-                onPositionChange={(card, newPosition) => {
+                isDefensePosition={card.position === 'defense'}
+                onPositionChange={(card) => {
                   if (onFieldCardAction) {
-                    onFieldCardAction('changePosition', { ...card, position: newPosition }, zoneName, slotIndex);
+                    onFieldCardAction('changePosition', card, zoneName, slotIndex);
                   }
                 }}
+                isEnemy={isEnemy}
+                onContextMenu={null}
+                onDoubleClick={null}
+                zoneName={zoneName}
+                slotIndex={slotIndex}
+                onFieldCardAction={onFieldCardAction}
+                enemyField={enemyField}
+                onCardClick={onCardClick}
+                zoneLabel={zoneLabel}
               />
             </div>
             

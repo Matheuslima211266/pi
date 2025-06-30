@@ -1,5 +1,11 @@
+import { 
+  MIN_MAIN_DECK_SIZE, 
+  MAX_MAIN_DECK_SIZE, 
+  MAX_EXTRA_DECK_SIZE, 
+  MAX_CARD_COPIES 
+} from '@/config/dimensions';
 
-export const useGameSetupHandlers = (gameState, syncGameState) => {
+export const useGameSetupHandlers = (gameState) => {
   const {
     gameData,
     setGameData,
@@ -85,8 +91,6 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
       message: '✅ Ready to duel!'
     };
     setChatMessages(prev => [...prev, readyMessage]);
-    
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDeckLoad = (deckData) => {
@@ -139,14 +143,14 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
 
     // Check deck size limits with more detailed feedback
     const errors = [];
-    if (mainDeckCount < 40) {
-      errors.push(`Main Deck troppo piccolo: ${mainDeckCount}/40 minimo`);
+    if (mainDeckCount < MIN_MAIN_DECK_SIZE) {
+      errors.push(`Main Deck troppo piccolo: ${mainDeckCount}/${MIN_MAIN_DECK_SIZE} minimo`);
     }
-    if (mainDeckCount > 60) {
-      errors.push(`Main Deck troppo grande: ${mainDeckCount}/60 massimo`);
+    if (mainDeckCount > MAX_MAIN_DECK_SIZE) {
+      errors.push(`Main Deck troppo grande: ${mainDeckCount}/${MAX_MAIN_DECK_SIZE} massimo`);
     }
-    if (extraDeckCount > 15) {
-      errors.push(`Extra Deck troppo grande: ${extraDeckCount}/15 massimo`);
+    if (extraDeckCount > MAX_EXTRA_DECK_SIZE) {
+      errors.push(`Extra Deck troppo grande: ${extraDeckCount}/${MAX_EXTRA_DECK_SIZE} massimo`);
     }
 
     // Check for card limits (max 3 copies per card)
@@ -157,9 +161,9 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
     });
 
     for (const [cardId, count] of cardCounts) {
-      if (count > 3) {
+      if (count > MAX_CARD_COPIES) {
         const card = [...deckData.mainDeck, ...deckData.extraDeck].find(c => c.id === cardId);
-        errors.push(`Troppe copie di "${card?.name || cardId}": ${count}/3 massimo`);
+        errors.push(`Troppe copie di "${card?.name || cardId}": ${count}/${MAX_CARD_COPIES} massimo`);
       }
     }
 
@@ -176,7 +180,7 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
       extraDeckCount,
       totalCards: deckData.totalCards || (mainDeckCount + extraDeckCount),
       deckName: deckData.name || 'Unnamed Deck',
-      cardLimitChecks: Array.from(cardCounts.entries()).filter(([_, count]) => count > 3)
+      cardLimitChecks: Array.from(cardCounts.entries()).filter(([_, count]) => count > MAX_CARD_COPIES)
     });
 
     // Assicurati che tutte le carte del deck siano nel database personale
@@ -211,7 +215,6 @@ export const useGameSetupHandlers = (gameState, syncGameState) => {
         message: `📋 Deck "${deckData.name || 'Unnamed Deck'}" caricato (${mainDeckCount + extraDeckCount} carte)`
       };
       setChatMessages(prev => [...prev, deckChangeMessage]);
-      setTimeout(() => syncGameState(), 100);
     }
   };
 

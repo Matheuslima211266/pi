@@ -1,5 +1,4 @@
-
-export const useMultiplayerHandlers = (gameState, syncGameState) => {
+export const useMultiplayerHandlers = (gameState) => {
   const {
     gameData,
     setPlayerLifePoints,
@@ -21,7 +20,6 @@ export const useMultiplayerHandlers = (gameState, syncGameState) => {
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
-      setTimeout(() => syncGameState(), 100);
     }
   };
 
@@ -32,7 +30,6 @@ export const useMultiplayerHandlers = (gameState, syncGameState) => {
       message: message
     };
     setChatMessages(prev => [...prev, newMessage]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDiceRoll = (result) => {
@@ -42,7 +39,6 @@ export const useMultiplayerHandlers = (gameState, syncGameState) => {
       message: `🎲 Rolled dice: ${result}`
     };
     setChatMessages(prev => [...prev, newMessage]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleCoinFlip = (result) => {
@@ -52,14 +48,19 @@ export const useMultiplayerHandlers = (gameState, syncGameState) => {
       message: `🪙 Flipped coin: ${result}`
     };
     setChatMessages(prev => [...prev, newMessage]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDealDamage = (damage, isToEnemy = true) => {
     if (isToEnemy) {
-      setEnemyLifePoints(prev => Math.max(0, prev - damage));
+      setEnemyLifePoints(prev => {
+        const val = Math.max(0, prev - damage);
+        return val;
+      });
     } else {
-      setPlayerLifePoints(prev => Math.max(0, prev - damage));
+      setPlayerLifePoints(prev => {
+        const val = Math.max(0, prev - damage);
+        return val;
+      });
     }
     
     const newAction = {
@@ -69,7 +70,6 @@ export const useMultiplayerHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   return {

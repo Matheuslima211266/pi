@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -73,16 +72,16 @@ const SlotPopupMenu = ({
             To Hand
           </Button>
 
-          {/* To Graveyard */}
-          {zoneName !== 'graveyard' && (
+          {/* To Dead Zone */}
+          {zoneName !== 'deadZone' && (
             <Button 
               size="sm" 
-              onClick={() => handleAction('toGraveyard', 'graveyard')}
+              onClick={() => handleAction('toDeadZone', 'deadZone')}
               className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white"
               variant="ghost"
             >
               <Skull className="mr-2 h-4 w-4" />
-              To Graveyard
+              To Dead Zone
             </Button>
           )}
 

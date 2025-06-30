@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save } from 'lucide-react';
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
+import { Input as TextInput } from '@/components/ui/input';
 
 // Import the refactored components
 import DeckSlotManager from './deck-builder/DeckSlotManager';
@@ -13,20 +14,30 @@ import CardList from './deck-builder/CardList';
 import DeckView from './deck-builder/DeckView';
 // Import the main CardPreview for hover behavior
 import CardPreview from './CardPreview';
+import { useFirebaseCardDB } from '@/hooks/useFirebaseCardDB';
 
 interface DeckBuilderProps {
   onBack?: () => void;
   onDeckSave: (deckData: any) => void;
   availableCards?: any[];
   initialDeck?: any;
+  isHost?: boolean;
 }
 
-const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards = [], initialDeck }: DeckBuilderProps) => {
+const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards = [], initialDeck, isHost = false }: DeckBuilderProps) => {
   const [deckName, setDeckName] = useState('Nuovo Deck');
   const [mainDeck, setMainDeck] = useState<{[cardId: number]: number}>({});
   const [extraDeck, setExtraDeck] = useState<{[cardId: number]: number}>({});
   const [availableCards, setAvailableCards] = useState<any[]>(initialAvailableCards);
   const [previewCard, setPreviewCard] = useState<any>(null);
+  const [archetypeFilter, setArchetypeFilter] = useState<string>('all');
+  const [nameFilter, setNameFilter] = useState<string>('');
+  const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [attributeFilter, setAttributeFilter] = useState<string>('all');
+  const [cardTypeFilter, setCardTypeFilter] = useState<string>('all');
+  const [subtypeFilter, setSubtypeFilter] = useState<string>('all');
+
+  const { saveDeck } = useFirebaseCardDB();
 
   // Load initial deck if provided
   useEffect(() => {
@@ -40,6 +51,12 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
     mainDeck,
     extraDeck
   };
+
+  // Deriva la lista di archetipi dalle carte disponibili
+  const archetypes = Array.from(new Set(availableCards.map(c => c.archetype).filter(Boolean)));
+  const levels = Array.from(new Set(availableCards.map(c => c.star).filter((n:any)=> Number.isFinite(n) && n>0))).sort((a:any,b:any)=>a-b);
+  const attributes = Array.from(new Set(availableCards.map(c => c.attribute).filter(Boolean)));
+  const subtypes = Array.from(new Set(availableCards.flatMap(c => (c.type || '').split('/').map((s:string)=>s.trim())).filter(Boolean)));
 
   const handleCardsUpdate = (cards: any[]) => {
     setAvailableCards(cards);
@@ -125,10 +142,10 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
       
       if (newCards.length > 0) {
         // Salva le nuove carte nel database personale
-        const savedCards = localStorage.getItem('yugiduel_custom_cards');
+        const savedCards = localStorage.getItem('simsupremo_custom_cards');
         const customCards = savedCards ? JSON.parse(savedCards) : [];
         const updatedCustomCards = [...customCards, ...newCards];
-        localStorage.setItem('yugiduel_custom_cards', JSON.stringify(updatedCustomCards));
+        localStorage.setItem('simsupremo_custom_cards', JSON.stringify(updatedCustomCards));
         
         // FIXED: Aggiorna le carte disponibili immediatamente
         const updatedAvailableCards = [...availableCards, ...newCards];
@@ -178,7 +195,7 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
     }
   };
 
-  const handleSaveDeck = () => {
+  const handleSaveDeck = async () => {
     const mainDeckArray: any[] = [];
     const extraDeckArray: any[] = [];
     
@@ -205,17 +222,32 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
       name: deckName,
       mainDeck: mainDeckArray,
       extraDeck: extraDeckArray,
-      cards: [...mainDeckArray, ...extraDeckArray],
-      totalCards: mainDeckArray.length + extraDeckArray.length
+      totalCards: mainDeckArray.length + extraDeckArray.length,
+      source: 'builder'
     };
     
     onDeckSave(deckData);
+
+    // Salva su Firebase in slot "deck1" di esempio
+    await saveDeck('deck1', { id: 'deck1', name: deckName, cards: [...mainDeckArray.map(c=>c.id), ...extraDeckArray.map(c=>c.id)], updatedBy:'', updatedAt:0 } as any, isHost);
+
     alert(`Deck "${deckName}" salvato e pronto per il gioco!`);
   };
 
   // Filtri per le carte
-  const mainDeckCards = availableCards.filter(card => !card.extra_deck);
-  const extraDeckCards = availableCards.filter(card => card.extra_deck);
+  const applyFilters = (cards: any[]) => {
+    let res = cards;
+    if (archetypeFilter !== 'all') res = res.filter(c => c.archetype === archetypeFilter);
+    if (cardTypeFilter !== 'all') res = res.filter(c => c.card_type === cardTypeFilter);
+    if (attributeFilter !== 'all') res = res.filter(c => c.attribute === attributeFilter);
+    if (levelFilter !== 'all') res = res.filter(c => c.star === parseInt(levelFilter, 10));
+    if (subtypeFilter !== 'all') res = res.filter(c => (c.type || '').split('/').map((s:string)=>s.trim()).includes(subtypeFilter));
+    if (nameFilter.trim() !== '') res = res.filter(c => c.name.toLowerCase().includes(nameFilter.toLowerCase()));
+    return res;
+  };
+
+  const mainDeckCards = applyFilters(availableCards.filter(card => !card.extra_deck));
+  const extraDeckCards = applyFilters(availableCards.filter(card => card.extra_deck));
 
   // Combina i conteggi per il display
   const allDeckCounts = { ...mainDeck, ...extraDeck };
@@ -277,10 +309,106 @@ const DeckBuilder = ({ onBack, onDeckSave, availableCards: initialAvailableCards
             <CustomCardManager
               onCardsUpdate={handleCardsUpdate}
               availableCards={availableCards}
+              isHost={isHost}
             />
 
             {/* Available Cards */}
             <div className="grid grid-cols-1 gap-4">
+              {/* Filtro Archetype */}
+              <Card className="p-4 bg-slate-800/50 mb-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                  {/* Name search */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Nome</label>
+                    <TextInput
+                      placeholder="Cerca nome..."
+                      value={nameFilter}
+                      onChange={e=>setNameFilter(e.target.value)}
+                      className="bg-slate-700 text-white"
+                    />
+                  </div>
+
+                  {/* Archetype */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Archetipo</label>
+                    <Select value={archetypeFilter} onValueChange={setArchetypeFilter}>
+                      <SelectTrigger className="w-full bg-slate-700 text-white">
+                        {archetypeFilter === 'all' ? 'Tutti' : archetypeFilter}
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 text-white border-slate-600">
+                        <SelectItem value="all">Tutti</SelectItem>
+                        {archetypes.map(a => (
+                          <SelectItem key={a} value={a}>{a}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Card Type */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Tipo Carta</label>
+                    <Select value={cardTypeFilter} onValueChange={setCardTypeFilter}>
+                      <SelectTrigger className="w-full bg-slate-700 text-white">
+                        {cardTypeFilter === 'all' ? 'Tutti' : cardTypeFilter}
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 text-white border-slate-600">
+                        <SelectItem value="all">Tutti</SelectItem>
+                        <SelectItem value="monster">Mostro</SelectItem>
+                        <SelectItem value="spell">Magia</SelectItem>
+                        <SelectItem value="trap">Trappola</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Attribute */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Attributo</label>
+                    <Select value={attributeFilter} onValueChange={setAttributeFilter}>
+                      <SelectTrigger className="w-full bg-slate-700 text-white">
+                        {attributeFilter === 'all' ? 'Tutti' : attributeFilter}
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 text-white border-slate-600">
+                        <SelectItem value="all">Tutti</SelectItem>
+                        {attributes.map(attr => (
+                          <SelectItem key={attr} value={attr}>{attr}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Level */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Livello</label>
+                    <Select value={levelFilter} onValueChange={setLevelFilter}>
+                      <SelectTrigger className="w-full bg-slate-700 text-white">
+                        {levelFilter === 'all' ? 'Tutti' : levelFilter}
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 text-white border-slate-600 max-h-60 overflow-y-auto">
+                        <SelectItem value="all">Tutti</SelectItem>
+                        {levels.map(lv => (
+                          <SelectItem key={lv} value={String(lv)}>{lv}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Subtype */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm">Tipo (sottotipo)</label>
+                    <Select value={subtypeFilter} onValueChange={setSubtypeFilter}>
+                      <SelectTrigger className="w-full bg-slate-700 text-white">
+                        {subtypeFilter === 'all' ? 'Tutti' : subtypeFilter}
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 text-white border-slate-600 max-h-60 overflow-y-auto">
+                        <SelectItem value="all">Tutti</SelectItem>
+                        {subtypes.map(st => (
+                          <SelectItem key={st} value={st}>{st}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </Card>
               <CardList
                 cards={mainDeckCards}
                 title="Carte Main Deck"

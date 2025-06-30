@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import PositionedGameZoneSlot from './PositionedGameZoneSlot';
@@ -17,25 +16,43 @@ const PositionedGameZoneRenderer = ({
   isEffectActivated,
   cardStyle
 }) => {
+  const standardCardStyle = {
+    width: '100px',
+    height: '140px',
+    minWidth: '100px',
+    minHeight: '140px',
+    ...cardStyle
+  };
+
   const slots = Array.from({ length: maxCards }, (_, index) => {
     const card = cards[index];
     const isHighlighted = selectedCardFromHand && !card && !isEnemy;
     
     return (
-      <PositionedGameZoneSlot
+      <div 
         key={index}
-        card={card}
-        zoneName={zoneName}
-        slotIndex={index}
-        icon={icon}
-        isHighlighted={isHighlighted}
-        onSlotClick={onSlotClick}
-        onCardPreview={onCardPreview}
-        onFieldCardAction={onFieldCardAction}
-        onCardClick={onCardClick}
-        isEffectActivated={isEffectActivated}
-        cardStyle={cardStyle}
-      />
+        className="flex items-center justify-center"
+        style={{
+          width: standardCardStyle.width,
+          height: standardCardStyle.height,
+          minWidth: standardCardStyle.minWidth,
+          minHeight: standardCardStyle.minHeight
+        }}
+      >
+        <PositionedGameZoneSlot
+          card={card}
+          zoneName={zoneName}
+          slotIndex={index}
+          icon={icon}
+          isHighlighted={isHighlighted}
+          onSlotClick={onSlotClick}
+          onCardPreview={onCardPreview}
+          onFieldCardAction={onFieldCardAction}
+          onCardClick={onCardClick}
+          isEffectActivated={isEffectActivated}
+          cardStyle={standardCardStyle}
+        />
+      </div>
     );
   });
 
@@ -50,7 +67,7 @@ const PositionedGameZoneRenderer = ({
           {cards.filter(c => c !== null).length}/{maxCards}
         </span>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center justify-center">
         {slots}
       </div>
     </div>
@@ -74,6 +91,14 @@ export const PositionedSingleSlotZoneRenderer = ({
   const card = cards && cards.length > 0 ? cards[0] : null;
   const isHighlighted = selectedCardFromHand && !card && !isEnemy;
   
+  const standardCardStyle = {
+    width: '100px',
+    height: '140px',
+    minWidth: '100px',
+    minHeight: '140px',
+    ...cardStyle
+  };
+  
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2 mb-2">
@@ -85,19 +110,29 @@ export const PositionedSingleSlotZoneRenderer = ({
           {card ? '1/1' : '0/1'}
         </span>
       </div>
-      <PositionedGameZoneSlot
-        card={card}
-        zoneName={zoneName}
-        slotIndex={0}
-        icon={icon}
-        isHighlighted={isHighlighted}
-        onSlotClick={onSlotClick}
-        onCardPreview={onCardPreview}
-        onFieldCardAction={onFieldCardAction}
-        onCardClick={onCardClick}
-        isEffectActivated={isEffectActivated}
-        cardStyle={cardStyle}
-      />
+      <div 
+        className="flex items-center justify-center"
+        style={{
+          width: standardCardStyle.width,
+          height: standardCardStyle.height,
+          minWidth: standardCardStyle.minWidth,
+          minHeight: standardCardStyle.minHeight
+        }}
+      >
+        <PositionedGameZoneSlot
+          card={card}
+          zoneName={zoneName}
+          slotIndex={0}
+          icon={icon}
+          isHighlighted={isHighlighted}
+          onSlotClick={onSlotClick}
+          onCardPreview={onCardPreview}
+          onFieldCardAction={onFieldCardAction}
+          onCardClick={onCardClick}
+          isEffectActivated={isEffectActivated}
+          cardStyle={standardCardStyle}
+        />
+      </div>
     </div>
   );
 };

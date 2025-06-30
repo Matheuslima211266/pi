@@ -1,26 +1,70 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Download, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useFirebaseCardDB } from '@/hooks/useFirebaseCardDB';
+import { EXCEL_COLUMN_MAPPING, EXTRA_DECK_KEYWORDS } from '@/config/cardImport';
 
 interface CustomCardManagerProps {
   onCardsUpdate: (cards: any[]) => void;
   availableCards: any[];
+  isHost?: boolean;
 }
 
-const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerProps) => {
+// Helper configuration inspired by excelJson.py for robust Excel → Card mapping
+// MOVED TO a SEPARATE CONFIGURATION FILE
+
+// Keywords that identify Extra deck cards (same list of excelJson.py)
+// MOVED TO a SEPARATE CONFIGURATION FILE
+
+// Utility helpers mirroring excelJson.py behaviour
+const determineCardType = (spellTrapValue: any): 'monster' | 'spell' | 'trap' => {
+  if (spellTrapValue == null) return 'monster';
+  const str = String(spellTrapValue).toLowerCase();
+  if (str.includes('spell') || str.includes('magia')) return 'spell';
+  if (str.includes('trap') || str.includes('trappola')) return 'trap';
+  return 'monster';
+};
+
+const determineExtraDeck = (typeAbility: any): 0 | 1 => {
+  if (typeAbility == null) return 0;
+  const str = String(typeAbility).toLowerCase();
+  return EXTRA_DECK_KEYWORDS.some(keyword => str.includes(keyword)) ? 1 : 0;
+};
+
+const normalizeStat = (value: any): number => {
+  if (value == null || value === '') return 0;
+  const intVal = parseInt(value as string, 10);
+  if (isNaN(intVal)) return 0;
+  return intVal >= 100 ? Math.floor(intVal / 100) : intVal;
+};
+
+// Finds the matching column name of the sheet for each desired field
+const mapExcelColumns = (sheetHeaders: string[]): Record<string, string | undefined> => {
+  const lowerHeaders = sheetHeaders.map(h => h.toLowerCase());
+  const mapped: Record<string, string | undefined> = {};
+  Object.entries(EXCEL_COLUMN_MAPPING).forEach(([key, possible]) => {
+    const idx = lowerHeaders.findIndex(h => possible.map(p => p.toLowerCase()).includes(h));
+    if (idx !== -1) {
+      mapped[key] = sheetHeaders[idx];
+    }
+  });
+  return mapped;
+};
+
+const CustomCardManager = ({ onCardsUpdate, availableCards, isHost = false }: CustomCardManagerProps) => {
   const [customCards, setCustomCards] = useState<any[]>([]);
   const [showSampleCards, setShowSampleCards] = useState(false);
+  const { saveCard } = useFirebaseCardDB();
 
   useEffect(() => {
     loadCustomCards();
   }, []);
 
   const loadCustomCards = async () => {
-    const saved = localStorage.getItem('yugiduel_custom_cards');
+    const saved = localStorage.getItem('simsupremo_custom_cards');
     if (saved) {
       try {
         const cards = JSON.parse(saved);
@@ -58,7 +102,7 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
 
   const saveCustomCards = (cards: any[]) => {
     setCustomCards(cards);
-    localStorage.setItem('yugiduel_custom_cards', JSON.stringify(cards));
+    localStorage.setItem('simsupremo_custom_cards', JSON.stringify(cards));
     updateAvailableCards(cards, showSampleCards);
   };
 
@@ -131,6 +175,11 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
     const updatedCards = [...customCards, ...uniqueCards];
     saveCustomCards(updatedCards);
     alert(`${uniqueCards.length} ${source} importate con successo nel database!`);
+
+    // Salva anche su Firebase (ignore errors silently)
+    uniqueCards.forEach(card => {
+      saveCard(card, isHost).catch(err => console.error('saveCard error', err));
+    });
   };
 
   // Aggiornata per supportare la nuova struttura Excel
@@ -144,42 +193,59 @@ const CustomCardManager = ({ onCardsUpdate, availableCards }: CustomCardManagerP
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (jsonData.length === 0) {
+          alert('Il file Excel è vuoto o non contiene dati leggibili.');
+          return;
+        }
+
+        // Mappa le colonne del foglio usando la configurazione avanzata
+        const headers = Object.keys(jsonData[0]);
+        const mappedColumns = mapExcelColumns(headers);
+
+        // Determina l'archetipo dal nome del file (senza estensione)
+        const archetypeName = file.name.replace(/\.[^.]+$/, '');
 
         const newCards = jsonData.map((row: any, index: number) => {
-          // Gestione della nuova struttura Excel
-          const isExtraDeck = ['fusion', 'synchro', 'xyz', 'link', 'pendulum'].includes(
-            (row.Frame || row.Type || '').toLowerCase()
-          );
-          
-          // Determina il tipo di carta dalla colonna Frame o Type Ability
-          let cardType = 'Monster';
-          const frameValue = (row.Frame || '').toLowerCase();
-          const typeAbility = (row['Type Ability'] || '').toLowerCase();
-          
-          if (frameValue.includes('spell') || frameValue.includes('magic') || typeAbility.includes('magia')) {
-            cardType = 'Spell';
-          } else if (frameValue.includes('trap') || typeAbility.includes('trappola')) {
-            cardType = 'Trap';
-          } else if (frameValue === 'effect' || typeAbility.includes('effetto')) {
-            cardType = 'Effect Monster';
-          }
+          const getVal = (key: string) => {
+            const col = mappedColumns[key];
+            return col ? row[col] : '';
+          };
+
+          const rawId = getVal('id');
+          const rawName = getVal('name');
+          const rawAttribute = getVal('attribute');
+          const rawStar = getVal('star');
+          const rawSpellTrap = getVal('spell_trap');
+          const rawIcon = getVal('icon') || 'NO ICON';
+          const rawArtLink = getVal('art_link');
+          const rawFinalCardArt = getVal('final_card_art');
+          const rawTypeAbility = getVal('type_ability');
+          const rawEffect = getVal('effect');
+          const rawAtk = getVal('atk');
+          const rawDef = getVal('def');
+
+          const cardType = determineCardType(rawSpellTrap);
+          const extraDeck = determineExtraDeck(rawTypeAbility);
 
           return {
-            id: row.ID || Date.now() + index + Math.random(),
-            name: row.Name || row.Nome || `Carta ${index + 1}`,
-            type: cardType,
-            attribute: row.Attribute || row.Attributo || null,
-            star: parseInt(row.Star || row.Livello || 0) || null,
-            atk: parseInt(row.ATK || 0) || null,
-            def: parseInt(row.DEF || 0) || null,
-            effect: row.Effect || row.Effetto || null,
-            extra_deck: isExtraDeck,
-            art_link: row['Art Link'] || row.Immagine || row.Image || null,
-            // Nuovi campi dalla struttura Excel
-            frame: row.Frame || null,
-            spellTrapIcon: row['Spell/Trap Icon'] || null,
-            typeAbility: row['Type Ability'] || null
+            id: rawId !== '' ? parseInt(rawId, 10) : index + 1 + Date.now(),
+            name: rawName || `Carta ${index + 1}`,
+            attribute: rawAttribute || '',
+            star: rawStar !== '' ? (parseInt(rawStar, 10) || 0) : 0,
+            type: rawTypeAbility || cardType, // descrizione completa tipo/abilità o fallback
+            effect: rawEffect || '',
+            atk: normalizeStat(rawAtk),
+            def: normalizeStat(rawDef),
+            icon: rawIcon,
+            art_link: rawArtLink || '',
+            final_card_art: rawFinalCardArt || '',
+            card_type: cardType,
+            extra_deck: extraDeck,
+            // campo opzionale se presente
+            ...(rawSpellTrap ? { spell_trap_type: rawSpellTrap } : {}),
+            archetype: archetypeName
           };
         });
 

@@ -1,5 +1,20 @@
-
 import React from 'react';
+import { cn } from '../lib/utils';
+import { dbg } from '@/lib/debug';
+import {
+  CARD_HAND_WIDTH_PX,
+  CARD_HAND_HEIGHT_PX,
+  CARD_HAND_IMAGE_HEIGHT_PX,
+  CARD_SMALL_WIDTH_PX,
+  CARD_SMALL_HEIGHT_PX,
+  CARD_SMALL_IMAGE_HEIGHT_PX,
+  CARD_DEFENSE_ROTATION_DEG,
+  CARD_ENEMY_ROTATION_DEG,
+  CARD_BORDER_WIDTH_PX,
+  CARD_STARS_FONT_SIZE_HAND_PX,
+  CARD_STARS_FONT_SIZE_SMALL_PX,
+  CARD_STARS_FONT_SIZE_NORMAL_PX
+} from '@/config/dimensions';
 
 const CardComponent = ({ 
   card, 
@@ -10,46 +25,151 @@ const CardComponent = ({
   canAttack = false,
   isInHand = false,
   isFaceDown = false,
-  position = 'attack',
-  onPositionChange = null
+  position,
+  onPositionChange = null,
+  onCardPreview = null,
+  isEnemy = false,
+  isHighlighted = false, 
+  isSelected = false,
+  isDefensePosition = false,
+  showATK = true,
+  showDEF = true,
+  imageOnly = false,
+  className = "",
+  onContextMenu,
+  onDoubleClick,
+  isEffectActivated = false,
+  zoneName,
+  slotIndex,
+  onFieldCardAction,
+  enemyField,
+  onCardClick,
+  zoneLabel
 }) => {
+  dbg('🃏 [CardComponent] render', {
+    card: card,
+    cardId: card?.id,
+    cardName: card?.name,
+    cardType: card?.card_type,
+    cardAtk: card?.atk,
+    cardDef: card?.def,
+    isHighlighted: isHighlighted,
+    isSelected: isSelected,
+    isEnemy: isEnemy,
+    isDefensePosition: isDefensePosition,
+    isFaceDown: isFaceDown,
+    zoneName: zoneName,
+    slotIndex: slotIndex,
+    zoneLabel: zoneLabel,
+    timestamp: Date.now()
+  });
+
+  if (!card) {
+    dbg('🃏 [CardComponent] - No card to render');
+    return (
+      <div 
+        className={`w-20 h-28 sm:w-24 sm:h-36 md:w-28 md:h-40 lg:w-32 lg:h-44 border-2 border-dashed border-gray-500 bg-gray-800/30 rounded-lg flex items-center justify-center ${isHighlighted ? 'border-yellow-400 bg-yellow-900/30' : ''} ${className}`}
+        onClick={onClick}
+      >
+        <div className="text-gray-400 text-xs text-center">
+          {zoneLabel || 'Empty'}
+        </div>
+      </div>
+    );
+  }
+
+  // DEBUG: logga la posizione della carta e lo stato
   const isMonster = card.card_type === 'monster' || card.atk !== undefined;
-  const isDefensePosition = position === 'defense' || card.position === 'defense';
+  
+  dbg('CardComponent', card?.name, 'position:', card?.position, 'isDefensePosition:', isDefensePosition, {
+    isPlayable, isSmall, isInHand, isFaceDown, position, onPositionChange
+  });
 
   // Dimensioni per carte sul campo
   const getCardDimensions = () => {
     if (isInHand) {
-      return { width: 'w-20', height: 'h-28', imageHeight: 'h-16' };
+      return { 
+        width: `${CARD_HAND_WIDTH_PX}px`, 
+        height: `${CARD_HAND_HEIGHT_PX}px`, 
+        imageHeight: `${CARD_HAND_IMAGE_HEIGHT_PX}px`
+      };
     } else if (isSmall) {
-      return { width: 'w-24', height: 'h-36', imageHeight: 'h-20' };
+      return { 
+        width: `${CARD_SMALL_WIDTH_PX}px`, 
+        height: `${CARD_SMALL_HEIGHT_PX}px`, 
+        imageHeight: `${CARD_SMALL_IMAGE_HEIGHT_PX}px`
+      };
     } else {
       // Carte sul campo - dimensioni più grandi
-      return { width: 'w-full', height: 'h-full', imageHeight: 'h-[60%]' };
+      return { width: '100%', height: '100%', imageHeight: '60%' };
     }
   };
 
   const { width: cardWidth, height: cardHeight, imageHeight } = getCardDimensions();
 
+  // Simplified thumbnail (image + name) used in modals when imageOnly === true
+  if (imageOnly) {
+    return (
+      <div
+        className={cn('w-full aspect-[5/7] overflow-hidden', className)}
+        onClick={() => onClick && onClick(card)}
+      >
+        {card.art_link && card.art_link !== 'NO ICON' ? (
+          <img
+            src={card.art_link}
+            alt={card.name}
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs text-center p-1">
+            {card.name}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Se è coperta, mostra il retro della carta
   if (isFaceDown) {
+    const faceDownClassName = `
+      ${cardWidth} ${cardHeight}
+      bg-gradient-to-br from-blue-800 to-purple-800 border-2 border-blue-400
+      ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
+      ${isDefensePosition ? 'card-defense-position' : ''}
+      transition-all duration-300 relative overflow-hidden rounded-xl
+    `;
+    
+    dbg('Face-down card className:', faceDownClassName, 'isDefensePosition:', isDefensePosition);
+    
     return (
       <div 
-        className={`
-          ${cardWidth} ${cardHeight}
-          bg-gradient-to-br from-blue-800 to-purple-800 border-2 border-blue-400
-          ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
-          ${isDefensePosition ? 'transform rotate-90' : ''}
-          transition-all duration-300 relative overflow-hidden rounded-xl
-        `}
-        onClick={() => isPlayable && onClick && onClick(card)}
+        className={faceDownClassName}
+        onClick={() => {
+          if (isPlayable && onClick) {
+            onClick(card);
+          }
+          if (onCardPreview) {
+            onCardPreview(card);
+          }
+        }}
+        onMouseEnter={() => {
+          if (onCardPreview) {
+            onCardPreview(card);
+          }
+        }}
         style={{
-          boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
+          boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+          transform: isDefensePosition ? `rotate(${CARD_DEFENSE_ROTATION_DEG}deg)` : (isEnemy ? `rotate(${CARD_ENEMY_ROTATION_DEG}deg)` : 'none'),
+          transformOrigin: 'center center',
+          width: cardWidth,
+          height: cardHeight
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
         <div className="relative h-full flex items-center justify-center">
           <div className="text-center">
-            <div className="text-white font-bold text-xs mb-1">DUEL</div>
+            <div className="text-white font-bold text-xs mb-1">SIMULATORE</div>
             <div className="text-white font-bold text-xs">CARDS</div>
           </div>
         </div>
@@ -59,38 +179,60 @@ const CardComponent = ({
 
   const handlePositionClick = (e) => {
     e.stopPropagation();
+    dbg('Position click triggered:', { 
+      card: card.name, 
+      currentPosition: card.position, 
+      isDefensePosition, 
+      onPositionChange: !!onPositionChange, 
+      isMonster,
+      cardObject: card
+    });
     if (onPositionChange && isMonster) {
       const newPosition = isDefensePosition ? 'attack' : 'defense';
+      dbg('Calling onPositionChange with new position:', newPosition, 'current position was:', card.position);
       onPositionChange(card, newPosition);
+    } else {
+      dbg('Cannot change position:', { onPositionChange: !!onPositionChange, isMonster });
     }
   };
 
+  const normalCardClassName = `
+    ${cardWidth} ${cardHeight}
+    bg-gradient-to-br from-slate-700 to-slate-800 border-3 border-yellow-500
+    ${isPlayable ? 'cursor-pointer hover:scale-105 hover:shadow-xl' : 'opacity-50'} 
+    ${isDefensePosition ? 'card-defense-position' : ''}
+    transition-all duration-300 relative overflow-hidden rounded-xl
+  `;
+  
+  dbg('Normal card className:', normalCardClassName, 'isDefensePosition:', isDefensePosition);
+
   return (
-    <div 
-      className={`
-        ${cardWidth} ${cardHeight}
-        bg-gradient-to-br from-slate-700 to-slate-800 border-3 border-yellow-500
-        ${isPlayable ? 'cursor-pointer hover:-translate-y-1 hover:scale-105' : 'opacity-50'} 
-        ${canAttack ? 'ring-2 ring-red-400' : ''}
-        ${isInHand ? 'hover:-translate-y-2' : ''}
-        ${isDefensePosition ? 'transform rotate-90' : ''}
-        transition-all duration-300 relative overflow-hidden rounded-xl
-      `}
-      onClick={() => isPlayable && onClick && onClick(card)}
-      style={{
-        boxShadow: isPlayable ? '0 8px 25px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.3)',
-        background: 'linear-gradient(135deg, #2a3b5c, #1a2a3a)',
-        border: '3px solid #ffd700'
+    <div
+      className={normalCardClassName}
+      onClick={() => {
+        if (isPlayable && onClick) {
+          onClick(card);
+        }
+        if (onCardPreview) {
+          onCardPreview(card);
+        }
       }}
       onMouseEnter={(e) => {
         if (isPlayable) {
           e.currentTarget.style.boxShadow = '0 15px 35px rgba(255,215,0,0.4)';
         }
-      }}
-      onMouseLeave={(e) => {
-        if (isPlayable) {
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.5)';
+        if (onCardPreview) {
+          onCardPreview(card);
         }
+      }}
+      style={{
+        boxShadow: isPlayable ? '0 8px 25px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.3)',
+        background: 'linear-gradient(135deg, #2a3b5c, #1a2a3a)',
+        border: `${CARD_BORDER_WIDTH_PX}px solid #ffd700`,
+        transform: isDefensePosition ? `rotate(${CARD_DEFENSE_ROTATION_DEG}deg)` : (isEnemy ? `rotate(${CARD_ENEMY_ROTATION_DEG}deg)` : 'none'),
+        transformOrigin: 'center center',
+        width: cardWidth,
+        height: cardHeight
       }}
     >
       {/* Card Image */}
@@ -113,7 +255,11 @@ const CardComponent = ({
       {isMonster && card.star && (
         <div 
           className="absolute top-2 right-2 bg-black/80 text-yellow-500 px-2 py-1 rounded-xl font-bold border border-yellow-500"
-          style={{ fontSize: isInHand ? '8px' : (isSmall ? '10px' : '14px') }}
+          style={{ 
+            fontSize: isInHand 
+              ? `${CARD_STARS_FONT_SIZE_HAND_PX}px` 
+              : (isSmall ? `${CARD_STARS_FONT_SIZE_SMALL_PX}px` : `${CARD_STARS_FONT_SIZE_NORMAL_PX}px`) 
+          }}
         >
           {'★'.repeat(Math.min(card.star, 12))}
         </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,13 @@ interface PlayerSetupFormProps {
   setPlayerName: (name: string) => void;
   deckLoaded: boolean;
   onDeckUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  startingLP: number;
+  setStartingLP: (val: number) => void;
+  summonLimit: number;
+  setSummonLimit: (val: number) => void;
 }
 
-const PlayerSetupForm = ({ playerName, setPlayerName, deckLoaded, onDeckUpload }: PlayerSetupFormProps) => {
+const PlayerSetupForm = ({ playerName, setPlayerName, deckLoaded, onDeckUpload, startingLP, setStartingLP, summonLimit, setSummonLimit }: PlayerSetupFormProps) => {
   return (
     <div className="space-y-4">
       {/* Player Name */}
@@ -45,6 +48,34 @@ const PlayerSetupForm = ({ playerName, setPlayerName, deckLoaded, onDeckUpload }
           accept=".json"
           onChange={onDeckUpload}
           className="hidden"
+        />
+      </div>
+
+      {/* Starting Life Points */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Starting Life Points
+        </label>
+        <Input
+          type="number"
+          min={1}
+          value={startingLP}
+          onChange={(e) => setStartingLP(parseInt(e.target.value) || 1)}
+          className="bg-slate-700 border-slate-600 text-white"
+        />
+      </div>
+
+      {/* Summon Limit per Turn */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Monster Summon Limit / Turn
+        </label>
+        <Input
+          type="number"
+          min={1}
+          value={summonLimit}
+          onChange={(e) => setSummonLimit(parseInt(e.target.value) || 1)}
+          className="bg-slate-700 border-slate-600 text-white"
         />
       </div>
     </div>

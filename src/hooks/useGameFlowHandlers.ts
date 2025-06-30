@@ -1,5 +1,4 @@
-
-export const useGameFlowHandlers = (gameState, syncGameState) => {
+export const useGameFlowHandlers = (gameState) => {
   const {
     gameData,
     setCurrentPhase,
@@ -17,11 +16,19 @@ export const useGameFlowHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleEndTurn = () => {
-    setIsPlayerTurn(!gameState.isPlayerTurn);
+    const currentId = gameState.currentTurnPlayerId;
+    const hostId = gameData?.hostId;
+    const guestId = gameData?.guestId;
+    const nextPlayerId = currentId === hostId ? guestId : hostId;
+    
+    gameState.setCurrentTurnPlayerId(nextPlayerId);
+
+    if (gameState.setSummonsThisTurn) {
+      gameState.setSummonsThisTurn(0);
+    }
     setCurrentPhase('draw');
     setTimeRemaining(60);
     const newAction = {
@@ -31,7 +38,6 @@ export const useGameFlowHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleTimeUp = () => {

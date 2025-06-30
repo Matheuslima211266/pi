@@ -1,8 +1,6 @@
-
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Shuffle, ArrowDown, ArrowUp, Eye, Skull } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { Shuffle, ArrowUp, Eye, Skull } from 'lucide-react';
 
 const ZoneActionMenu = ({ zoneName, onAction, onClose, position }) => {
   const getMenuOptions = () => {
@@ -46,48 +44,42 @@ const ZoneActionMenu = ({ zoneName, onAction, onClose, position }) => {
   const options = getMenuOptions();
   if (options.length === 0) return null;
 
-  return (
+  const menu = (
     <>
-      <div 
-        className="fixed inset-0 bg-black/50 z-40"
+      {/* Overlay to close menu on click outside */}
+      <div
+        className="fixed inset-0 z-[90]"
         onClick={onClose}
       />
-      <Card 
-        className="fixed z-50 bg-gray-800 border-gray-600 p-3 min-w-48"
-        style={{ 
-          left: position?.x || '50%', 
-          top: position?.y || '50%',
-          transform: position ? 'none' : 'translate(-50%, -50%)'
-        }}
+
+      <div
+        className="fixed z-[100] w-48 bg-gray-800 border border-gray-600 shadow-lg rounded-md p-2"
+        style={{ left: position?.x, top: position?.y, transform: 'translate(-50%, -10px)' }}
       >
-        <div className="text-sm font-semibold mb-2 text-white capitalize">
+        <div className="text-sm font-semibold mb-2 text-white capitalize px-1">
           {zoneName} Actions
         </div>
-        <div className="space-y-1">
-          {options.map((option) => (
-            <Button 
-              key={option.key}
-              size="sm" 
-              onClick={() => onAction(option.key)}
-              className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white"
-              variant="ghost"
-            >
-              <span className="mr-2">{option.icon}</span>
-              {option.label}
-            </Button>
-          ))}
-        </div>
-        <Button 
-          size="sm" 
-          variant="outline"
+        {options.map((opt) => (
+          <div
+            key={opt.key}
+            onClick={() => onAction(opt.key)}
+            className="flex items-center gap-2 px-2 py-1.5 text-sm text-white rounded hover:bg-gray-700 cursor-pointer"
+          >
+            <span>{opt.icon}</span>
+            {opt.label}
+          </div>
+        ))}
+        <div
           onClick={onClose}
-          className="w-full mt-2 text-sm h-8 border-gray-600 text-gray-300 hover:bg-gray-700"
+          className="text-center mt-2 px-2 py-1.5 text-sm text-gray-300 rounded hover:bg-gray-700 cursor-pointer"
         >
           Cancel
-        </Button>
-      </Card>
+        </div>
+      </div>
     </>
   );
+
+  return typeof document !== 'undefined' ? ReactDOM.createPortal(menu, document.body) : null;
 };
 
 export default ZoneActionMenu;

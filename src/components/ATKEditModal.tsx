@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -20,6 +19,9 @@ const ATKEditModal: React.FC<ATKEditModalProps> = ({
   onSave,
   onClose
 }) => {
+  const [prefHost,  setPrefHost]  = useState<boolean|null>(null);
+  const [prefGuest, setPrefGuest] = useState<boolean|null>(null);
+
   if (!isOpen) return null;
 
   return (

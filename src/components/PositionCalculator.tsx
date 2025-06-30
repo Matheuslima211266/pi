@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Calcoli per schermo 16:9
@@ -61,14 +60,14 @@ export const useScreenCalculations = () => {
       // Lato sinistro
       leftSide: {
         deck: { x: Math.floor(baseWidth * 0.02), y: Math.floor(baseHeight * 0.75) },
-        graveyard: { x: Math.floor(baseWidth * 0.02), y: Math.floor(baseHeight * 0.60) },
+        deadZone: { x: Math.floor(baseWidth * 0.02), y: Math.floor(baseHeight * 0.60) },
         banished: { x: Math.floor(baseWidth * 0.02), y: Math.floor(baseHeight * 0.45) },
         extraDeck: { x: Math.floor(baseWidth * 0.02), y: Math.floor(baseHeight * 0.30) }
       },
       
       // Lato destro
       rightSide: {
-        enemyGraveyard: { x: Math.floor(baseWidth * 0.88), y: Math.floor(baseHeight * 0.30) },
+        enemyDeadZone: { x: Math.floor(baseWidth * 0.88), y: Math.floor(baseHeight * 0.30) },
         enemyBanished: { x: Math.floor(baseWidth * 0.88), y: Math.floor(baseHeight * 0.45) },
         playerBanishedFD: { x: Math.floor(baseWidth * 0.88), y: Math.floor(baseHeight * 0.60) },
         enemyBanishedFD: { x: Math.floor(baseWidth * 0.88), y: Math.floor(baseHeight * 0.15) }

@@ -82,13 +82,11 @@ export const useGameInitialization = ({
         spellsTraps: Array(5).fill(null),
         fieldSpell: [],
         deck: remainingPlayerDeck,
-        graveyard: [],
-        deadZone: [], // New zone
+        deadZone: [],
         banished: [],
         banishedFaceDown: [],
         extraDeck: playerDeckData.extraDeck || [],
-        magia: [], // New zone
-        terreno: [] // New zone
+        field: [] // Combined zone for magia and terreno
       });
 
       // Initialize enemy field with new zones (keeping decks separate)
@@ -97,13 +95,11 @@ export const useGameInitialization = ({
         spellsTraps: Array(5).fill(null),
         fieldSpell: [],
         deck: remainingEnemyDeck, // Independent enemy deck
-        graveyard: [],
-        deadZone: [], // New zone
+        deadZone: [],
         banished: [],
         banishedFaceDown: [],
         extraDeck: playerDeckData.extraDeck || [],
-        magia: [], // New zone
-        terreno: [] // New zone
+        field: [] // Combined zone for magia and terreno
       });
 
       setIsInitialized(true);

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BookOpen, Skull, Ban, Sparkles, Mountain, Heart } from 'lucide-react';
 
@@ -26,11 +25,9 @@ const GameZoneBox = ({
   const getZoneIcon = () => {
     switch (zoneName) {
       case 'deck': return <BookOpen size={16} />;
-      case 'graveyard': return <Skull size={16} />;
+      case 'deadZone': return <Skull size={16} />;
       case 'banished': return <Ban size={16} />;
-      case 'deadZone': return <Heart size={16} />;
-      case 'magia': return <Sparkles size={16} />;
-      case 'terreno': return <Mountain size={16} />;
+      case 'field': return <Mountain size={16} />;
       default: return <BookOpen size={16} />;
     }
   };

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, AlertCircle, Share2, Users } from 'lucide-react';
+import { Check, Copy, AlertCircle, Share2, Users, Crown, User } from 'lucide-react';
 
 interface GameStatusDisplayProps {
   gameId: string;
@@ -11,6 +10,10 @@ interface GameStatusDisplayProps {
   linkCopied: boolean;
   onCopyGameLink: () => void;
   onEnterWaitingRoom?: () => void;
+  hostName: string;
+  guestName: string;
+  hostReady: boolean;
+  guestReady: boolean;
 }
 
 const GameStatusDisplay = ({ 
@@ -19,10 +22,14 @@ const GameStatusDisplay = ({
   gameSessionCreated, 
   linkCopied, 
   onCopyGameLink,
-  onEnterWaitingRoom
+  onEnterWaitingRoom,
+  hostName,
+  guestName,
+  hostReady,
+  guestReady
 }: GameStatusDisplayProps) => {
   
-  console.log('GameStatusDisplay render:', { gameId, isHost, gameSessionCreated, linkCopied });
+  console.log('GameStatusDisplay render:', { gameId, isHost, gameSessionCreated, linkCopied, hostName, guestName, hostReady, guestReady });
   
   if (!gameId) {
     return null;
@@ -38,8 +45,42 @@ const GameStatusDisplay = ({
         </Badge>
         <p className="text-xs text-gray-400">Game ID</p>
       </div>
-      
-      {/* Sempre mostra il link se è host */}
+
+      {/* Waiting room status for both host and guest */}
+      <div className="bg-slate-800/80 p-4 rounded-lg border border-slate-600 mb-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-yellow-400" />
+            <span className="font-semibold text-yellow-300">{hostName || 'Host'}</span>
+            <Badge className={hostReady ? 'bg-green-600' : 'bg-gray-500'}>
+              {hostReady ? 'Ready' : 'Waiting...'}
+            </Badge>
+            {isHost && <span className="ml-2 text-xs text-green-400">(Sei l'host 👑)</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-400" />
+            <span className="font-semibold text-blue-200">{guestName || 'Guest'}</span>
+            <Badge className={guestReady ? 'bg-green-600' : 'bg-gray-500'}>
+              {guestReady ? 'Ready' : 'Waiting...'}
+            </Badge>
+            {!isHost && <span className="ml-2 text-xs text-blue-400">(Sei il guest 👤)</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Messaggio di attesa */}
+      {(!hostReady || !guestReady) && (
+        <div className="text-center p-2 bg-yellow-900/30 rounded border border-yellow-400/50 mb-2">
+          <AlertCircle className="w-4 h-4 text-yellow-400 inline-block mr-1" />
+          <span className="text-xs text-yellow-300">
+            {isHost
+              ? (!guestReady ? 'Aspetta che il guest entri e sia pronto!' : 'Premi "Ready" quando sei pronto!')
+              : (!hostReady ? 'Aspetta che l\'host sia pronto!' : 'Premi "Ready" quando sei pronto!')}
+          </span>
+        </div>
+      )}
+
+      {/* Link e pulsante solo per host */}
       {isHost && (
         <div className="space-y-3">
           <div className="bg-slate-600/80 p-3 rounded-lg">
@@ -49,7 +90,6 @@ const GameStatusDisplay = ({
             <div className="bg-slate-800 p-3 rounded-lg text-xs text-white break-all font-mono border border-gold-400/30 mb-3">
               {gameLink}
             </div>
-            
             <Button
               onClick={onCopyGameLink}
               className="w-full bg-gold-600 hover:bg-gold-700 text-black font-semibold mb-3"
@@ -68,39 +108,19 @@ const GameStatusDisplay = ({
               )}
             </Button>
           </div>
-          
-          <div className="text-center p-3 bg-green-900/40 rounded-lg border border-green-400/50">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Share2 className="w-5 h-5 text-green-400" />
-              <p className="text-green-400 font-semibold">Partita Creata!</p>
-            </div>
-            <p className="text-sm text-gray-300 mb-3">Condividi il link con il tuo avversario</p>
-            
-            <div className="mb-3 flex items-center justify-center gap-2 bg-yellow-900/30 p-2 rounded border border-yellow-400/50">
-              <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-              <p className="text-xs text-yellow-300">
-                ⚠️ Aspetta che l'avversario si unisca prima di entrare!
-              </p>
-            </div>
-
-            {/* Pulsante per entrare nella waiting room */}
-            <Button
-              onClick={onEnterWaitingRoom}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-              size="lg"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              🎮 Entra nella Sala d'Attesa
-            </Button>
-          </div>
         </div>
       )}
 
-      {/* Show joining status for guests */}
-      {!isHost && (
-        <div className="text-center p-4 bg-blue-900/40 rounded-lg border border-blue-400/50">
-          <p className="text-blue-400 font-semibold">🎮 Entrando nella partita...</p>
-          <p className="text-sm text-gray-300 mt-1">Game ID: {gameId}</p>
+      {/* Pulsante per entrare nella waiting room (per entrambi host e guest) */}
+      {onEnterWaitingRoom && (
+        <div className="space-y-3">
+          <Button
+            onClick={onEnterWaitingRoom}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+            size="lg"
+          >
+            🎮 Entra nella Waiting Room
+          </Button>
         </div>
       )}
     </div>

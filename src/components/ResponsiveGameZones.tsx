@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PlacementMenu from './PlacementMenu';
 import ZoneActionMenu from './ZoneActionMenu';
@@ -6,6 +5,7 @@ import ZoneSlotRenderer from './ZoneSlotRenderer';
 import ZoneExpansionModal from './ZoneExpansionModal';
 import { useZoneClickHandler } from './ZoneClickHandler';
 import { useGameZoneActions } from './GameZoneActions';
+import { usePlacementMenu } from '../contexts/PlacementMenuContext';
 
 const ResponsiveGameZones = ({ 
   field, 
@@ -18,18 +18,15 @@ const ResponsiveGameZones = ({
   onDrawCard,
   onDeckMill,
   zoneType,
-  enemyField 
+  enemyField,
+  onDealDamage,
+  onSlotClick = null
 }) => {
   const [activatedEffects, setActivatedEffects] = useState(new Set());
-  const [placementMenu, setPlacementMenu] = useState(null);
-
-  console.log('ResponsiveGameZones field data:', field);
-  console.log('ResponsiveGameZones deadZone:', field?.deadZone);
-  console.log('ResponsiveGameZones selectedCardFromHand:', selectedCardFromHand);
+  const { openPlacementMenu, closePlacementMenu } = usePlacementMenu();
 
   const {
-    handleSlotClick,
-    handlePlacementChoice,
+    handleSlotClick: localHandleSlotClick,
     handleFieldCardAction,
     handleCardClick,
     isEffectActivated
@@ -40,7 +37,13 @@ const ResponsiveGameZones = ({
     onCardPreview,
     onCardClick,
     selectedCardFromHand,
-    setPlacementMenu,
+    setPlacementMenu: (menuData) => {
+      if (!menuData) {
+        closePlacementMenu();
+      } else {
+        openPlacementMenu(menuData.zoneName, menuData.slotIndex, menuData.event, menuData.card);
+      }
+    },
     activatedEffects,
     setActivatedEffects
   });
@@ -58,15 +61,8 @@ const ResponsiveGameZones = ({
     onDeckMill
   });
 
-  const handlePlacementChoiceWrapper = (choice) => {
-    console.log('PlacementChoiceWrapper called:', choice, placementMenu);
-    handlePlacementChoice(choice, placementMenu);
-  };
-
-  // Enhanced zone click handler to support deadZone
-  const enhancedHandleZoneClick = (zoneName, e) => {
-    handleZoneClick(zoneName, e);
-  };
+  // Use the global onSlotClick if provided, otherwise use local
+  const handleSlotClick = onSlotClick || localHandleSlotClick;
 
   return (
     <>
@@ -80,18 +76,9 @@ const ResponsiveGameZones = ({
         handleFieldCardAction={handleFieldCardAction}
         handleCardClick={handleCardClick}
         isEffectActivated={isEffectActivated}
-        handleZoneClick={enhancedHandleZoneClick}
+        handleZoneClick={handleZoneClick}
         enemyField={enemyField}
-      />
-
-      {/* Menu di piazzamento */}
-      <PlacementMenu
-        placementMenu={placementMenu}
-        onPlacementChoice={handlePlacementChoiceWrapper}
-        onClose={() => {
-          console.log('Closing placement menu');
-          setPlacementMenu(null);
-        }}
+        onDealDamage={onDealDamage}
       />
 
       {/* Zone Action Menu */}

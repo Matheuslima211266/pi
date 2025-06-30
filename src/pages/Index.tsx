@@ -1,213 +1,223 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User } from 'firebase/auth';
 import AuthComponent from '@/components/AuthComponent';
 import MultiplayerSetup from '@/components/MultiplayerSetup';
 import GameLayout from '@/components/GameLayout';
+import MultiplayerDebugPanel from '@/components/MultiplayerDebugPanel';
 import { useGameState } from '@/hooks/useGameState';
-import { useSupabaseMultiplayer } from '@/hooks/useSupabaseMultiplayer';
+import { useFirebaseMultiplayer } from '../hooks/useFirebaseMultiplayer';
+import { useFirebaseSync } from '../hooks/useFirebaseSync';
 import { useGameHandlers } from '@/hooks/useGameHandlers';
-import { useGameSync } from '@/hooks/useGameSync';
+import { PlacementMenuProvider } from '../contexts/PlacementMenuContext';
+import DebugCaptureButton from '../components/DebugCaptureButton';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const gameState = useGameState();
-  const multiplayerHook = useSupabaseMultiplayer(user!, gameState);
-  const gameSync = useGameSync(user, multiplayerHook.currentSession?.id || null, gameState);
-  const handlers = useGameHandlers(gameState, multiplayerHook.syncGameState);
+  const firebaseHook = useFirebaseMultiplayer();
+  const firebaseSync = useFirebaseSync(gameState, firebaseHook);
+  const handlers = useGameHandlers(gameState);
 
   useEffect(() => {
-    console.log('[INDEX] Component rendered', {
-      gameStarted: gameState.gameStarted,
-      bothPlayersReady: gameState.bothPlayersReady,
-      currentSession: !!multiplayerHook.currentSession,
-      playerReady: gameState.playerReady,
-      opponentReady: multiplayerHook.opponentReady,
-      user: !!user
-    });
-  });
+    if (gameState.bothPlayersReady && !gameState.currentTurnPlayerId) {
+      const { turnOrder, hostId, guestId } = gameState.gameData;
+      const firstPlayerId = turnOrder === 'host' ? hostId : guestId;
+      if (firstPlayerId) {
+        gameState.setCurrentTurnPlayerId(firstPlayerId);
+      }
+    }
+  }, [gameState.bothPlayersReady, gameState.gameData, gameState.currentTurnPlayerId, gameState.setCurrentTurnPlayerId]);
 
-  // Enhanced handlers that also sync to database with proper player/enemy separation
+  useEffect(() => {
+    if (user && gameState.currentTurnPlayerId) {
+      gameState.setIsPlayerTurn(user.uid === gameState.currentTurnPlayerId);
+    }
+  }, [user, gameState.currentTurnPlayerId, gameState.setIsPlayerTurn]);
+
+  // Effect to enrich gameData with session details (host/guest IDs)
+  useEffect(() => {
+    const session = firebaseHook.currentSession;
+    if (session && session.hostId && session.guestId && !gameState.gameData?.hostId) {
+      gameState.setGameData(prev => ({
+        ...prev,
+        hostId: session.hostId,
+        guestId: session.guestId
+      }));
+    }
+  }, [firebaseHook.currentSession, gameState.gameData, gameState.setGameData]);
+
+  // Effect to sync opponent's state to local game state
+  useEffect(() => {
+    const opponentState = firebaseHook.opponentGameState;
+    if (opponentState) {
+      console.log('Opponent state received:', opponentState);
+      gameState.setEnemyField(opponentState.playerField);
+      gameState.setEnemyLifePoints(opponentState.playerLifePoints);
+      gameState.setEnemyHandCount(opponentState.playerHandCount);
+
+      // Sync turn state from opponent
+      if (opponentState.currentTurnPlayerId && opponentState.currentTurnPlayerId !== gameState.currentTurnPlayerId) {
+        gameState.setCurrentTurnPlayerId(opponentState.currentTurnPlayerId);
+      }
+    }
+  }, [firebaseHook.opponentGameState, gameState.setEnemyField, gameState.setEnemyLifePoints, gameState.setEnemyHandCount, gameState.setCurrentTurnPlayerId, gameState.currentTurnPlayerId]);
+
+  // Enhanced handlers that use Firebase sync
   const enhancedHandlers = {
     ...handlers,
     handleSendMessage: (message: string) => {
       handlers.handleSendMessage(message);
-      gameSync.sendGameAction('CHAT_MESSAGE', {
-        message,
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
-      multiplayerHook.sendChatMessage(message, gameState.gameData?.playerName || 'Player');
+      firebaseHook.sendChatMessage(message, gameState.gameData?.playerName || 'Player');
     },
     handleCardPlace: (card: any, zoneName: string, slotIndex: number, isFaceDown?: boolean, position?: string) => {
       handlers.handleCardPlace(card, zoneName, slotIndex, isFaceDown, position);
-      gameSync.sendGameAction('CARD_PLACED', {
-        card,
-        zoneName,
-        slotIndex,
-        isFaceDown,
-        position
-      });
-      gameSync.sendGameAction('HAND_UPDATED', {
-        handCount: gameState.playerHand.length - 1
-      });
-      multiplayerHook.logGameAction(`placed ${card.name} in ${zoneName}`, gameState.gameData?.playerName || 'Player');
+      firebaseHook.logGameAction(`placed ${card.name} in ${zoneName}`, gameState.gameData?.playerName || 'Player');
     },
     handleLifePointsChange: (newLifePoints: number, isPlayer: boolean = true) => {
       handlers.handleLifePointsChange(newLifePoints, isPlayer);
-      gameSync.sendGameAction('LIFE_POINTS_CHANGED', {
-        newLifePoints,
-        isPlayer: true // Always true for the sender
-      });
     },
     handlePhaseChange: (newPhase: string) => {
       handlers.handlePhaseChange(newPhase);
-      gameSync.sendGameAction('PHASE_CHANGED', {
-        phase: newPhase
-      });
     },
     handleDrawCard: () => {
       handlers.handleDrawCard();
-      gameSync.sendGameAction('CARD_DRAWN', {
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
-      gameSync.sendGameAction('HAND_UPDATED', {
-        handCount: gameState.playerHand.length + 1
-      });
+      firebaseHook.logGameAction('drew a card', gameState.gameData?.playerName || 'Player');
     },
     handleDeckMill: (millCount: number = 1) => {
       handlers.handleDeckMill(millCount);
-      gameSync.sendGameAction('DECK_MILLED', {
-        millCount,
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
+      firebaseHook.logGameAction(`milled ${millCount} cards`, gameState.gameData?.playerName || 'Player');
     },
     handleEndTurn: () => {
-      // Prima cambia il turno localmente
       handlers.handleEndTurn();
-      
-      // Poi invia l'evento di fine turno
-      gameSync.sendGameAction('TURN_ENDED', {
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
-      
-      multiplayerHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
+      firebaseHook.logGameAction('ended turn', gameState.gameData?.playerName || 'Player');
     },
     handleCardMove: (card: any, fromZone: string, toZone: string, slotIndex?: number) => {
-      // Local action is always for player (isPlayer = true)
       handlers.handleCardMove(card, fromZone, toZone, slotIndex, true);
-      gameSync.sendGameAction('CARD_MOVED', {
-        card,
-        fromZone,
-        toZone,
-        slotIndex
-      });
-      if (fromZone === 'hand') {
-        gameSync.sendGameAction('HAND_UPDATED', {
-          handCount: gameState.playerHand.length - 1
-        });
-      }
+      firebaseHook.logGameAction(`moved ${card.name} from ${fromZone} to ${toZone}`, gameState.gameData?.playerName || 'Player');
     },
     handleShowCard: (card: any) => {
-      gameSync.sendGameAction('SHOW_CARD', {
-        card,
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
+      firebaseHook.logGameAction(`showed ${card.name}`, gameState.gameData?.playerName || 'Player');
     },
     handleShowHand: () => {
-      gameSync.sendGameAction('SHOW_HAND', {
-        hand: gameState.playerHand,
-        playerName: gameState.gameData?.playerName || 'Player'
-      });
-    }
+      firebaseHook.logGameAction('showed hand', gameState.gameData?.playerName || 'Player');
+    },
+    handleCardPreview: (card: any) => {
+      handlers.handleCardPreview(card);
+    },
+    handleCreateToken: (tokenData: any) => {
+      handlers.handleCreateToken(tokenData);
+      firebaseHook.logGameAction(`created token ${tokenData.name}`, gameState.gameData?.playerName || 'Player');
+    },
+    handleDiceRoll: (result: number) => {
+      handlers.handleDiceRoll(result);
+    },
+    handleCoinFlip: (result: string) => {
+      handlers.handleCoinFlip(result);
+    },
   };
 
-  const handleGameStart = async (gameData: any) => {
-    try {
-      console.log('[INDEX] Starting game process', gameData);
-      console.log('=== STARTING GAME ===', gameData);
+  const handleGameStart = async (newGameData) => {
+    console.log('[DEBUG] handleGameStart called', newGameData);
+    // Crea o unisciti alla sessione Firebase
+    let session = null;
+    if (newGameData.isHost) {
+      session = await firebaseHook.createGameSession(newGameData.gameId, newGameData.playerName);
+      console.log('[DEBUG] createGameSession result:', session);
+    } else {
+      session = await firebaseHook.joinGameSession(newGameData.gameId, newGameData.playerName);
+      console.log('[DEBUG] joinGameSession result:', session);
+    }
+    
+    if (session) {
+      // Imposta sempre i dati del gioco
+      gameState.setGameData(newGameData);
+      console.log('[DEBUG] setGameData called', newGameData);
       
-      let session = null;
-      if (gameData.isHost) {
-        console.log('[INDEX] Creating game session as host');
-        console.log('Creating game session as host...');
-        session = await multiplayerHook.createGameSession(gameData.gameId, gameData.playerName);
-      } else {
-        console.log('[INDEX] Joining game session as guest');
-        console.log('Joining game session as guest...');
-        session = await multiplayerHook.joinGameSession(gameData.gameId, gameData.playerName);
+      // Apply custom settings
+      if (typeof newGameData.startingLP === 'number') {
+        gameState.setPlayerLifePoints(newGameData.startingLP);
+        gameState.setEnemyLifePoints(newGameData.startingLP);
+      }
+      if (typeof newGameData.summonLimit === 'number' && gameState.setSummonLimit) {
+        gameState.setSummonLimit(newGameData.summonLimit);
       }
       
-      console.log('[INDEX] Session creation/join result', { success: !!session, session });
+      if (newGameData.isHost) {
+        // Host: rimane nella schermata di setup, attenderà la waiting room
+        console.log('Host: Game session created, waiting for players');
+      } else {
+        // Guest: rimane nella schermata di setup, attenderà la waiting room
+        console.log('Guest: Joined game, waiting in lobby');
+      }
       
-      if (session) {
-        console.log('Session created/joined successfully, updating game state...');
-        gameState.setGameData(gameData);
-        
-        if (!gameData.isHost) {
-          console.log('[INDEX] Guest entering waiting room immediately');
-          console.log('=== GUEST ENTERING WAITING ROOM IMMEDIATELY ===');
-          gameState.setGameStarted(true);
+      if (newGameData.gameId) {
+        // Sincronizza le carte personalizzate per il multiplayer
+        if (newGameData.isHost) {
+          const hostCards = localStorage.getItem('simsupremo_custom_cards');
+          if (hostCards) {
+            const sharedKey = `simsupremo_shared_cards_${newGameData.gameId}`;
+            localStorage.setItem(sharedKey, hostCards);
+          }
+        } else {
+          const sharedCards = localStorage.getItem(`simsupremo_shared_cards_${newGameData.gameId}`);
+          if (sharedCards) {
+            try {
+              const shared = JSON.parse(sharedCards);
+              const existingCards = localStorage.getItem('simsupremo_custom_cards');
+              let guestCards = existingCards ? JSON.parse(existingCards) : [];
+              const existingIds = new Set(guestCards.map(c => c.id));
+              const uniqueShared = shared.filter(card => !existingIds.has(card.id));
+              if (uniqueShared.length > 0) {
+                guestCards = [...guestCards, ...uniqueShared];
+                localStorage.setItem('simsupremo_custom_cards', JSON.stringify(guestCards));
+              }
+            } catch (error) {
+              console.error('Error syncing shared cards:', error);
+            }
+          }
         }
-        
-        return true;
-      } else {
-        console.error('[INDEX] Failed to create/join game session');
-        console.error('Failed to create/join game session');
-        return false;
       }
-    } catch (error) {
-      console.error('[INDEX] Exception in handleGameStart', error);
-      console.error('Error in handleGameStart:', error);
-      return false;
+      
+      return true; // Indica successo
+    } else {
+      console.error('[DEBUG] Failed to create/join game session', newGameData);
+      throw new Error('Failed to create/join game session');
     }
-  };
-
-  const handleHostEnterWaiting = () => {
-    console.log('[INDEX] Host entering waiting room');
-    console.log('=== HOST ENTERING WAITING ROOM ===');
-    gameState.setGameStarted(true);
   };
 
   const handlePlayerReady = async () => {
-    console.log('[INDEX] Player ready clicked');
-    console.log('=== PLAYER READY CLICKED ===');
-    
     try {
       gameState.setPlayerReady(true);
-      await multiplayerHook.setPlayerReady(true);
-      console.log('[INDEX] Player marked as ready successfully');
-      console.log('Player marked as ready successfully');
+      await firebaseHook.setPlayerReady(true);
     } catch (error) {
-      console.error('[INDEX] Error setting player ready', error);
       console.error('Error setting player ready:', error);
     }
   };
 
   const handleBothPlayersReady = () => {
-    console.log('[INDEX] Both players ready - starting actual game');
-    console.log('=== BOTH PLAYERS READY - STARTING ACTUAL GAME ===');
-    
     gameState.setBothPlayersReady(true);
+    // Avvia il gioco per entrambi
+    gameState.setGameStarted(true);
     
     if (gameState.initializeGame) {
-      console.log('Initializing game...');
       gameState.initializeGame();
     }
-    
-    setTimeout(() => {
-      gameSync.syncCompleteGameState();
-    }, 1000);
   };
 
-  if (multiplayerHook.error) {
-    console.error('[INDEX] Multiplayer error detected', { error: multiplayerHook.error });
+  const handleHostEnterWaiting = () => {
+    console.log('Host entering waiting room');
+    // host waits in lobby; game will start when both ready
+  };
+
+  if (firebaseHook.error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
         <div className="bg-red-900/30 border border-red-400 rounded-lg p-6 text-center">
           <h2 className="text-red-400 font-bold text-xl mb-2">Connection Error</h2>
-          <p className="text-white mb-4">{multiplayerHook.error}</p>
+          <p className="text-white mb-4">{firebaseHook.error}</p>
           <button 
             onClick={() => {
-              multiplayerHook.clearError();
+              firebaseHook.clearError();
               window.location.reload();
             }}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
@@ -219,37 +229,66 @@ const Index = () => {
     );
   }
 
-  if (!user) {
-    return <AuthComponent onAuth={setUser} />;
-  }
-
-  if (gameState.gameStarted && gameState.bothPlayersReady) {
-    console.log('[INDEX] Rendering game layout');
-    console.log('=== RENDERING GAME LAYOUT ===');
-    return (
-      <GameLayout
-        gameData={gameState.gameData}
-        gameState={gameState}
-        handlers={enhancedHandlers}
-      />
-    );
-  }
-
-  console.log('[INDEX] Rendering multiplayer setup');
-  console.log('=== RENDERING MULTIPLAYER SETUP ===');
   return (
-    <MultiplayerSetup 
-      onGameStart={handleGameStart}
-      onDeckLoad={handlers.handleDeckLoad}
-      onPlayerReady={handlePlayerReady}
-      onBothPlayersReady={handleBothPlayersReady}
-      onHostEnterWaiting={handleHostEnterWaiting}
-      gameState={{
-        ...gameState,
-        opponentReady: multiplayerHook.opponentReady,
-        currentSession: multiplayerHook.currentSession
-      }}
-    />
+    <PlacementMenuProvider>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
+        {/* Debug Panel - visibile solo in modalità sviluppo */}
+        <MultiplayerDebugPanel 
+          gameState={gameState}
+          firebaseHook={firebaseHook}
+          isVisible={process.env.NODE_ENV === 'development' && !!gameState.gameData?.gameId}
+        />
+        
+        {!user ? (
+          <AuthComponent onAuth={setUser} />
+        ) : !gameState.gameStarted ? (
+          <MultiplayerSetup
+            onGameStart={async (gameData) => {
+              try {
+                await handleGameStart(gameData);
+                return true;
+              } catch (error) {
+                console.error('Error in onGameStart:', error);
+                return false;
+              }
+            }}
+            onJoinGame={async (gameData) => {
+              try {
+                console.log('[DEBUG] onJoinGame called with:', gameData);
+                const session = await firebaseHook.joinGameSession(gameData.gameId, gameData.playerName);
+                if (session) {
+                  console.log('[DEBUG] Join successful, calling handleGameStart');
+                  await handleGameStart(gameData);
+                  return session;
+                } else {
+                  throw new Error('Failed to join game session');
+                }
+              } catch (error) {
+                console.error('[DEBUG] Error in onJoinGame:', error);
+                throw error;
+              }
+            }}
+            onDeckLoad={handlers.handleDeckLoad}
+            onPlayerReady={handlePlayerReady}
+            onBothPlayersReady={handleBothPlayersReady}
+            onHostEnterWaiting={handleHostEnterWaiting}
+            gameState={{
+              ...gameState,
+              opponentReady: firebaseHook.opponentReady,
+              currentSession: firebaseHook.currentSession
+            }}
+          />
+        ) : (
+          <GameLayout
+            gameData={gameState.gameData}
+            gameState={gameState}
+            handlers={enhancedHandlers}
+            firebaseHook={firebaseHook}
+          />
+        )}
+        <DebugCaptureButton />
+      </div>
+    </PlacementMenuProvider>
   );
 };
 

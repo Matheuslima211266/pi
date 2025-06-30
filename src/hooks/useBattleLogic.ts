@@ -1,5 +1,4 @@
-
-export const useBattleLogic = (onFieldCardAction: any) => {
+export const useBattleLogic = (onFieldCardAction: any, onDealDamage?: (damage:number, isToEnemy:boolean)=>void) => {
   const handleDirectAttack = (card: any, zoneName: string, slotIndex: number) => {
     if (!card) return;
     
@@ -11,8 +10,8 @@ export const useBattleLogic = (onFieldCardAction: any) => {
     
     if (shouldDealDamage && damage > 0) {
       console.log(`Dealing ${damage} damage to opponent`);
-      if (onFieldCardAction) {
-        onFieldCardAction('dealDamage', { damage, isToEnemy: true }, zoneName, slotIndex);
+      if (onDealDamage) {
+        onDealDamage(damage, true);
       }
     }
   };
@@ -56,8 +55,8 @@ export const useBattleLogic = (onFieldCardAction: any) => {
     if (totalDamage > 0) {
       const shouldDealDamage = confirm(`${battleResult}\n\nVuoi applicare ${totalDamage} danni ai life points ${isToEnemy ? 'avversari' : 'tuoi'}?`);
       
-      if (shouldDealDamage && onFieldCardAction) {
-        onFieldCardAction('dealDamage', { damage: totalDamage, isToEnemy }, zoneName, slotIndex);
+      if (shouldDealDamage && onDealDamage) {
+        onDealDamage(totalDamage, isToEnemy);
       }
     }
   };

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { Search, ArrowDown, Shuffle, Eye, X, ArrowUp, Skull, Ban, BookOpen, Star, Zap, Sword } from 'lucide-react';
 import CardComponent from './CardComponent';
+import { MODAL_CARD_COLS, MODAL_CARD_SIZE_PX, MODAL_CARD_GAP_PX, MODAL_IMAGE_ONLY, MODAL_CARD_SCALE, MODAL_EXPANDED_WIDTH_PERC, MODAL_EXPANDED_HEIGHT_PERC, SIDEBAR_WIDTH_PX, MODAL_POSITION, FIELD_SIDEBAR_GAP_PX } from '@/config/dimensions';
 
 const ZoneManager = ({ 
   cards, 
@@ -82,7 +83,7 @@ const ZoneManager = ({
 
   const getZoneIcon = () => {
     switch (zoneName) {
-      case 'graveyard': return '💀';
+      case 'deadZone': return '💀';
       case 'banished': return '🚫';
       case 'banishedFaceDown': return '👁️‍🗨️';
       case 'deck': return '📚';
@@ -94,7 +95,7 @@ const ZoneManager = ({
 
   const getZoneColor = () => {
     switch (zoneName) {
-      case 'graveyard': return 'border-gray-400 bg-gray-900/20';
+      case 'deadZone': return 'border-gray-400 bg-gray-900/20';
       case 'banished': return 'border-red-400 bg-red-900/20';
       case 'banishedFaceDown': return 'border-purple-400 bg-purple-900/20';
       case 'deck': return 'border-blue-400 bg-blue-900/20';
@@ -111,9 +112,23 @@ const ZoneManager = ({
           <CardComponent
             card={card}
             onClick={(c) => handleCardClick(c, { ctrlKey: false })}
+            onCardPreview={onCardPreview}
             isSmall={true}
+            imageOnly={MODAL_IMAGE_ONLY}
             showCost={false}
+            showATK={false}
+            showDEF={false}
             isFaceDown={zoneName === 'extraDeck' && isHidden}
+            position={card.position || 'attack'}
+            isEnemy={false}
+            zoneName={zoneName}
+            slotIndex={null}
+            zoneLabel={undefined}
+            onContextMenu={null}
+            onDoubleClick={null}
+            onFieldCardAction={undefined}
+            enemyField={undefined}
+            onCardClick={undefined}
           />
           {selectedCards.includes(card.id) && (
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full flex items-center justify-center">
@@ -152,9 +167,9 @@ const ZoneManager = ({
           </ContextMenuSubContent>
         </ContextMenuSub>
 
-        <ContextMenuItem onClick={() => handleCardAction('move', card, 'graveyard')} className="text-white hover:bg-gray-700">
+        <ContextMenuItem onClick={() => handleCardAction('move', card, 'deadZone')} className="text-white hover:bg-gray-700">
           <Skull className="mr-2 h-4 w-4" />
-          Send to Graveyard
+          Send to Dead Zone
         </ContextMenuItem>
 
         <ContextMenuSub>
@@ -248,9 +263,22 @@ const ZoneManager = ({
               <CardComponent
                 card={topCard}
                 isSmall={true}
+                imageOnly={MODAL_IMAGE_ONLY}
                 showCost={false}
+                showATK={false}
+                showDEF={false}
                 onClick={() => !shouldShowFaceDown && onCardPreview(topCard)}
                 isFaceDown={shouldShowFaceDown || isHidden}
+                position={topCard.position || 'attack'}
+                isEnemy={false}
+                zoneName={zoneName}
+                slotIndex={null}
+                zoneLabel={undefined}
+                onContextMenu={null}
+                onDoubleClick={null}
+                onFieldCardAction={undefined}
+                enemyField={undefined}
+                onCardClick={undefined}
               />
             </div>
           )}
@@ -274,9 +302,13 @@ const ZoneManager = ({
   }
 
   // Expanded view
+  const overlayJustify = MODAL_POSITION === 'center' ? 'center' : (MODAL_POSITION === 'left' ? 'flex-start' : 'flex-end');
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <Card className={`${getZoneColor()} w-4/5 h-4/5 p-4 relative`}>
+    <div className={`fixed inset-0 bg-black/50 z-[60] flex items-center ${overlayJustify}`} style={{ paddingRight: MODAL_POSITION === 'right' || MODAL_POSITION === 'center' ? SIDEBAR_WIDTH_PX + FIELD_SIDEBAR_GAP_PX : 0, paddingLeft: MODAL_POSITION === 'left' ? 20 : 0 }}>
+      <Card
+        className={`${getZoneColor()} p-4 relative overflow-hidden`}
+        style={{ width: `${MODAL_EXPANDED_WIDTH_PERC}vw`, height: `${MODAL_EXPANDED_HEIGHT_PERC}vh`, maxWidth: `calc(100vw - ${SIDEBAR_WIDTH_PX + FIELD_SIDEBAR_GAP_PX}px)` }}
+      >
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">{getZoneIcon()}</span>
@@ -320,45 +352,161 @@ const ZoneManager = ({
             <option value="spell">Spells Only</option>
             <option value="trap">Traps Only</option>
           </select>
+
+          {/* Multi-selection mode toggle */}
+          <Button
+            size="sm"
+            variant={selectedCards.length > 0 ? "default" : "outline"}
+            onClick={() => {
+              if (selectedCards.length > 0) {
+                setSelectedCards([]);
+              }
+            }}
+            className={`${
+              selectedCards.length > 0 
+                ? 'bg-green-600 hover:bg-green-500 text-white' 
+                : 'border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white'
+            }`}
+          >
+            {selectedCards.length > 0 ? (
+              <>
+                <span className="mr-1">✓</span>
+                {selectedCards.length} Selezionate
+              </>
+            ) : (
+              <>
+                <span className="mr-1">📋</span>
+                Selezione Multipla
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Multi-selection actions */}
         {selectedCards.length > 1 && (
-          <div className="flex gap-2 mb-4 p-2 bg-blue-900/50 rounded">
-            <span className="text-sm">{selectedCards.length} cards selected:</span>
-            <Button size="sm" onClick={() => handleCardAction('move', null, 'hand')}>
-              Add All to Hand
-            </Button>
-            <Button size="sm" onClick={() => handleCardAction('move', null, 'graveyard')}>
-              Send All to Graveyard
-            </Button>
-            <Button size="sm" onClick={() => handleCardAction('move', null, 'banished')}>
-              Banish All
-            </Button>
-            <Button size="sm" onClick={() => setSelectedCards([])}>
-              Clear Selection
-            </Button>
+          <div className="flex flex-col gap-3 mb-4 p-4 bg-gradient-to-r from-blue-900/80 to-purple-900/80 rounded-lg border-2 border-blue-400 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">{selectedCards.length}</span>
+                  </div>
+                  <span className="text-white font-semibold">
+                    {selectedCards.length} carte selezionate
+                  </span>
+                </div>
+                <span className="text-blue-200 text-sm">
+                  (Ctrl+Click per selezionare/deselezionare)
+                </span>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setSelectedCards([])}
+                className="border-red-400 text-red-400 hover:bg-red-400 hover:text-white"
+              >
+                ❌ Cancella Selezione
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => handleCardAction('move', null, 'hand')}
+                className="bg-green-600 hover:bg-green-500 text-white"
+              >
+                📋 Aggiungi alla Mano
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleCardAction('move', null, 'deadZone')}
+                className="bg-gray-600 hover:bg-gray-500 text-white"
+              >
+                💀 Invia al Cimitero
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleCardAction('move', null, 'banished')}
+                className="bg-red-600 hover:bg-red-500 text-white"
+              >
+                🚫 Bandisci
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleCardAction('move', null, 'deck_shuffle')}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                🔄 Rimescola nel Deck
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleCardAction('move', null, 'extraDeck')}
+                className="bg-yellow-600 hover:bg-yellow-500 text-white"
+              >
+                ⭐ Aggiungi all'Extra Deck
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Selection instructions */}
+        {selectedCards.length === 0 && cards.length > 1 && (
+          <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-600">
+            <div className="flex items-center gap-2 text-gray-300 text-sm">
+              <span className="text-blue-400">💡 Suggerimento:</span>
+              <span>Usa <kbd className="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl</kbd> + Click per selezionare più carte e eseguire azioni multiple</span>
+            </div>
           </div>
         )}
 
         {/* Cards grid */}
-        <div className="grid grid-cols-8 gap-2 overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1" style={{display:'grid',gridTemplateColumns:`repeat(${MODAL_CARD_COLS}, minmax(${MODAL_CARD_SIZE_PX * MODAL_CARD_SCALE}px,1fr))`,gap:`${MODAL_CARD_GAP_PX}px`}}>
           {sortedCards.map((card, index) => (
             <div 
               key={card.id} 
-              className={`cursor-pointer transition-all hover:scale-110 ${
-                selectedCards.includes(card.id) ? 'ring-2 ring-green-400' : ''
+              className={`cursor-pointer transition-all duration-300 hover:scale-110 relative ${
+                selectedCards.includes(card.id) 
+                  ? 'ring-4 ring-green-400 ring-opacity-80 shadow-lg shadow-green-400/50 scale-105 animate-pulse' 
+                  : 'hover:ring-2 hover:ring-blue-400 hover:ring-opacity-50'
               }`}
               onClick={(e) => handleCardClick(card, e)}
             >
+              {/* Selection indicator */}
+              {selectedCards.includes(card.id) && (
+                <div className="absolute -top-2 -right-2 z-10 animate-bounce">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white text-xs font-bold">✓</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Hover effect for multi-selection */}
+              {selectedCards.length > 0 && !selectedCards.includes(card.id) && (
+                <div className="absolute inset-0 bg-blue-400/10 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+              )}
+              
               <ContextMenu>
                 <ContextMenuTrigger>
                   <CardComponent
                     card={card}
                     onClick={(c) => handleCardClick(c, { ctrlKey: false })}
+                    onCardPreview={onCardPreview}
                     isSmall={true}
+                    imageOnly={MODAL_IMAGE_ONLY}
                     showCost={false}
+                    showATK={false}
+                    showDEF={false}
                     isFaceDown={zoneName === 'extraDeck' && isHidden}
+                    position={card.position || 'attack'}
+                    isEnemy={false}
+                    zoneName={zoneName}
+                    slotIndex={null}
+                    zoneLabel={undefined}
+                    onContextMenu={null}
+                    onDoubleClick={null}
+                    onFieldCardAction={undefined}
+                    enemyField={undefined}
+                    onCardClick={undefined}
                   />
                 </ContextMenuTrigger>
                 <ContextMenuContent className="w-48 bg-gray-800 border-gray-600 z-50">
@@ -391,9 +539,9 @@ const ZoneManager = ({
                     </ContextMenuSubContent>
                   </ContextMenuSub>
 
-                  <ContextMenuItem onClick={() => handleCardAction('move', card, 'graveyard')} className="text-white hover:bg-gray-700">
+                  <ContextMenuItem onClick={() => handleCardAction('move', card, 'deadZone')} className="text-white hover:bg-gray-700">
                     <Skull className="mr-2 h-4 w-4" />
-                    Send to Graveyard
+                    Send to Dead Zone
                   </ContextMenuItem>
 
                   <ContextMenuSub>

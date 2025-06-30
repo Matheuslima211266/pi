@@ -1,14 +1,18 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const DiceAndCoin = ({ onDiceRoll, onCoinFlip }) => {
+const DiceAndCoin = ({ onDiceRoll, onCoinFlip, onSendMessage }) => {
   const [diceResult, setDiceResult] = useState<number | null>(null);
   const [coinResult, setCoinResult] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [rpsChoice, setRpsChoice] = useState<string | null>(null);
+  const [rpsOpp, setRpsOpp] = useState<string | null>(null);
+  const [rpsResult, setRpsResult] = useState<string | null>(null);
+
+  const beats = { rock: 'scissors', paper: 'rock', scissors: 'paper' } as const;
 
   const rollDice = () => {
     setIsRolling(true);
@@ -58,6 +62,20 @@ const DiceAndCoin = ({ onDiceRoll, onCoinFlip }) => {
     }, 150);
   };
 
+  const playRps = (move: 'rock'|'paper'|'scissors') => {
+    const opp = (['rock','paper','scissors'] as const)[Math.floor(Math.random()*3)];
+    setRpsChoice(move);
+    setRpsOpp(opp);
+    let result: string;
+    if (move === opp) result = 'pareggio';
+    else if (beats[move] === opp) result = 'vittoria';
+    else result = 'sconfitta';
+    setRpsResult(result);
+    if (onSendMessage) {
+      onSendMessage(`🎲 RPS: hai scelto ${move}, avversario (random) ${opp} ⇒ ${result}`);
+    }
+  };
+
   return (
     <Card className="p-4 bg-slate-800/70 border-purple-400">
       <div className="space-y-4">
@@ -104,6 +122,19 @@ const DiceAndCoin = ({ onDiceRoll, onCoinFlip }) => {
                 Risultato: {coinResult}
               </Badge>
             </div>
+          )}
+        </div>
+
+        {/* RPS section */}
+        <div className="text-center space-y-2 mt-4">
+          <div className="font-semibold text-white mb-1">Rock Paper Scissors</div>
+          <div className="flex gap-2 justify-center">
+            <Button size="sm" onClick={()=>playRps('rock')} className="bg-slate-700 hover:bg-slate-600">✊</Button>
+            <Button size="sm" onClick={()=>playRps('paper')} className="bg-slate-700 hover:bg-slate-600">🖐️</Button>
+            <Button size="sm" onClick={()=>playRps('scissors')} className="bg-slate-700 hover:bg-slate-600">✌️</Button>
+          </div>
+          {rpsResult && (
+            <Badge variant="outline" className="mt-1">{rpsResult} (tu {rpsChoice} vs {rpsOpp})</Badge>
           )}
         </div>
       </div>

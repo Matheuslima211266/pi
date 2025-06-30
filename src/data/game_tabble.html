@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duel Cards Simulator - Final Version</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1A1A1D;
+            --panel-bg-color: rgba(26, 26, 29, 0.6);
+            --neon-cyan: #00BFFF;
+            --neon-magenta: #DA00FF;
+            --neon-green: #ADFF2F;
+            --neon-red: #FF4747;
+            --text-color: #EAEAEA;
+            --icon-color: rgba(0, 191, 255, 0.5);
+            --font-primary: 'Rajdhani', sans-serif;
+            --font-secondary: 'Roboto', sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%232a2a2e" fill-opacity="0.4"%3E%3Cpath d="M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+            color: var(--text-color);
+            font-family: var(--font-secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 210px;
+            gap: 12px;
+            width: 100%;
+            max-width: 1140px;
+            height: 100%;
+        }
+        .side-panel {
+            background: var(--panel-bg-color);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 191, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .side-panel h2 {
+            font-family: var(--font-primary);
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--neon-cyan);
+            margin: 0 0 8px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--neon-cyan);
+            text-transform: uppercase;
+        }
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+        }
+        .player-field {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 6px;
+        }
+        .card-slot {
+            aspect-ratio: 5 / 7.2;
+            background: rgba(40, 70, 90, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            box-shadow: inset 0 0 6px rgba(0, 191, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            font-family: var(--font-primary);
+            font-weight: 500;
+            color: var(--icon-color);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            font-size: 10px;
+            padding: 4px 2px;
+        }
+        .card-slot:hover {
+            border-color: white;
+            color: white;
+        }
+        .card-slot:hover .zone-icon {
+             fill: white;
+        }
+        .card-slot.banish-fd { border-color: var(--neon-red); }
+        .card-slot.dead-zone { border-color: #888; }
+        .card-slot.deck { border-color: var(--neon-green); }
+        .zone-icon {
+            width: 45%;
+            height: 45%;
+            fill: var(--icon-color);
+            transition: all 0.2s ease;
+        }
+        .zone-info { text-align: center; }
+        .card-count { font-size: 15px; font-weight: 700; }
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+        }
+        .life-points {
+            font-family: var(--font-primary);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--neon-green);
+            text-shadow: 0 0 8px var(--neon-green);
+        }
+        .center-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phases, .game-actions { display: flex; gap: 4px; }
+        .phase {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            border-radius: 4px;
+            font-family: var(--font-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .phase:hover {
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+        }
+        .phase.active {
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.2); border-radius: 5px; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+        .chat-box::-webkit-scrollbar { width: 4px; }
+        .chat-box::-webkit-scrollbar-track { background: transparent; }
+        .chat-box::-webkit-scrollbar-thumb { background-color: var(--neon-cyan); border-radius: 2px; }
+        .chat-input { display: flex; gap: 8px; }
+        .chat-input input { flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--neon-cyan); border-radius: 4px; color: var(--text-color); padding: 6px; font-family: var(--font-secondary); }
+        .chat-input button { background: transparent; border: none; color: var(--neon-cyan); font-size: 18px; cursor: pointer; }
+        .action-history .action-item { font-size: 11px; color: #aaa; }
+        .action-history .action-item span { color: var(--text-color); }
+
+        .hand-area {
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: -15px;
+        }
+        .hand-card {
+            width: 55px;
+            height: 77px;
+            background-color: #222;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 0 6px rgba(0,0,0,0.5);
+        }
+        .hand-card:hover {
+            transform: translateY(-12px) scale(1.1);
+            z-index: 100;
+        }
+        .card-back {
+            background: #111;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="game-board">
+            <svg width="0" height="0" style="position:absolute">
+                <defs>
+                    <g id="icon-monster" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4.5 13.5c-1 0-1.5-1-1.5-2 0-2 2-4.5 5-6.5 2.29-1.5 4.5-2 6.5-1 2.25.75 3.5 2.5 4.5 5 .5 1.5 0 2.5-1.5 3.5-2.5 1.5-4.62 1.5-7 0-2.5-1.5-4-1.5-6 0Z"/>
+                        <path d="M19.5 13.5c1-1 1-2 1-3.5 0-2-1-3.5-2.5-4.5-1.5-1.5-3.5-1.5-5-1s-3.5 1-4.5 2.5c-.5 1-.5 2 0 3"/>
+                    </g>
+                    <g id="icon-spell" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </g>
+                    <g id="icon-dead-zone" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                       <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01"/>
+                    </g>
+                </defs>
+            </svg>
+
+            <div class="hand-area">
+                <div class="hand-card card-back"></div>
+                <div class="hand-card card-back"></div>
+                <div class="hand-card card-back"></div>
+                <div class="hand-card card-back"></div>
+                <div class="hand-card card-back"></div>
+            </div>
+
+            <div class="player-field">
+                <div class="card-slot deck"><div class="zone-info">Deck<span class="card-count">40</span></div></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                <div class="card-slot"><div class="zone-info">Field Spell</div></div>
+                <div class="card-slot banish-fd"><div class="zone-info">Banish FD<span class="card-count">0</span></div></div>
+
+                <div class="card-slot"><div class="zone-info">Extra<span class="card-count">15</span></div></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                <div class="card-slot dead-zone"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-dead-zone"/></svg></div>
+                <div class="card-slot"><div class="zone-info">Banished<span class="card-count">0</span></div></div>
+            </div>
+            
+            <div class="player-info">
+                <div class="life-points">8000</div>
+                <div class="center-controls">
+                    <div class="game-actions">
+                        <div class="phase">Lancia Dado</div>
+                        <div class="phase">Lancia Moneta</div>
+                        <div class="phase">Crea Token</div>
+                    </div>
+                    <div class="phases">
+                        <div class="phase">Draw</div>
+                        <div class="phase active">Standby</div>
+                        <div class="phase">Main 1</div>
+                        <div class="phase">Battle</div>
+                        <div class="phase">Main 2</div>
+                        <div class="phase">End</div>
+                    </div>
+                </div>
+                <div class="life-points">8000</div>
+            </div>
+
+            <div class="player-field">
+                 <div class="card-slot deck"><div class="zone-info">Deck<span class="card-count">40</span></div></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-monster"/></svg></div>
+                 <div class="card-slot"><div class="zone-info">Field Spell</div></div>
+                 <div class="card-slot banish-fd"><div class="zone-info">Banish FD<span class="card-count">0</span></div></div>
+ 
+                 <div class="card-slot"><div class="zone-info">Extra<span class="card-count">15</span></div></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                 <div class="card-slot"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-spell"/></svg></div>
+                 <div class="card-slot dead-zone"><svg class="zone-icon" viewBox="0 0 24 24"><use href="#icon-dead-zone"/></svg></div>
+                 <div class="card-slot"><div class="zone-info">Banished<span class="card-count">0</span></div></div>
+            </div>
+
+            <div class="hand-area">
+                 <div class="hand-card" style="background-image: url('https://images.ygoprodeck.com/images/cards_cropped/34541863.jpg');"></div>
+                 <div class="hand-card" style="background-image: url('https://images.ygoprodeck.com/images/cards_cropped/63942036.jpg');"></div>
+                 <div class="hand-card" style="background-image: url('https://images.ygoprodeck.com/images/cards_cropped/90861137.jpg');"></div>
+                 <div class="hand-card" style="background-image: url('https://images.ygoprodeck.com/images/cards_cropped/23737644.jpg');"></div>
+                 <div class="hand-card" style="background-image: url('https://images.ygoprodeck.com/images/cards_cropped/60082869.jpg');"></div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <h2>Chat</h2>
+            <div class="chat-box">
+                <div class="chat-message"><strong>Sistema:</strong> Duello Iniziato!</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Scrivi...">
+                <button>➤</button>
+            </div>
+            
+            <h2>Action History</h2>
+            <div class="action-history">
+                <div class="action-item">12:35:10 <span>changed phase to draw</span></div>
+                <div class="action-item">12:35:15 <span>changed phase to standby</span></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 export const useZoneClickHandler = ({ isEnemy, onDrawCard, onDeckMill }) => {
@@ -17,12 +16,11 @@ export const useZoneClickHandler = ({ isEnemy, onDrawCard, onDeckMill }) => {
     }
     
     // Per il giocatore locale, mostra il menu delle azioni
-    const rect = event.currentTarget.getBoundingClientRect();
     setZoneActionMenu({
       zoneName,
       position: {
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
+        x: event.clientX,
+        y: event.clientY
       }
     });
   };
@@ -107,6 +105,12 @@ export const useZoneClickHandler = ({ isEnemy, onDrawCard, onDeckMill }) => {
       case 'fieldSpell':
         actions.push(
           { id: 'view', label: 'Visualizza', icon: '👁️' }
+        );
+        break;
+      case 'field':
+        actions.push(
+          { id: 'view', label: 'Visualizza', icon: '👁️' },
+          { id: 'shuffle', label: 'Mescola', icon: '🔄' }
         );
         break;
       default:

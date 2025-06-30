@@ -1,4 +1,3 @@
-
 import React from 'react';
 import LifePointsControl from '@/components/LifePointsControl';
 import GamePhases from '@/components/GamePhases';
@@ -7,32 +6,34 @@ import ActionHistory from '@/components/ActionHistory';
 import TurnTimer from '@/components/TurnTimer';
 
 interface GameSidebarProps {
-  enemyLifePoints: number;
-  playerLifePoints: number;
-  currentPhase: string;
-  isPlayerTurn: boolean;
-  timeRemaining: number;
-  chatMessages: Array<{
+  type: 'left' | 'right';
+  enemyLifePoints?: number;
+  playerLifePoints?: number;
+  currentPhase?: string;
+  isPlayerTurn?: boolean;
+  timeRemaining?: number;
+  chatMessages?: Array<{
     id: number;
     player: string;
     message: string;
     timestamp: string;
   }>;
-  actionLog: Array<{
+  actionLog?: Array<{
     id: number | string;
     player: string;
     action: string;
     timestamp: string;
   }>;
-  onLifePointsChange: (amount: number, isEnemy: boolean) => void;
-  onPhaseChange: (phase: string) => void;
-  onEndTurn: () => void;
-  onTimeUp: () => void;
-  onTimeChange: (time: number | ((prev: number) => number)) => void;
-  onSendMessage: (message: string) => void;
+  onLifePointsChange?: (amount: number) => void;
+  onPhaseChange?: (phase: string) => void;
+  onEndTurn?: () => void;
+  onTimeUp?: () => void;
+  onTimeChange?: (time: number | ((prev: number) => number)) => void;
+  onSendMessage?: (message: string) => void;
 }
 
 const GameSidebar = ({
+  type,
   enemyLifePoints,
   playerLifePoints,
   currentPhase,
@@ -47,64 +48,53 @@ const GameSidebar = ({
   onTimeChange,
   onSendMessage
 }: GameSidebarProps) => {
-  return (
-    <>
-      {/* LEFT SIDEBAR - Enemy Life Points + Game Control */}
-      <div className="fixed left-0 top-0 h-full w-48 bg-slate-900/95 border-r border-slate-600 z-30 flex flex-col p-2 gap-2">
+  if (type === 'left') {
+    return (
+      <div className="h-full w-48 bg-slate-900/95 border-r border-slate-600 z-30 flex flex-col p-1 gap-2 mr-0.5">
         {/* Enemy Life Points */}
         <LifePointsControl
           playerName="Avversario"
-          lifePoints={enemyLifePoints}
-          onLifePointsChange={(amount) => onLifePointsChange(amount, true)}
+          lifePoints={enemyLifePoints ?? 0}
+          onLifePointsChange={onLifePointsChange ?? (() => {})}
           color="red"
           isCompact={true}
         />
-        
         {/* Game Phases */}
         <div className="bg-slate-800/95 p-2 rounded border border-slate-600">
           <GamePhases
-            currentPhase={currentPhase}
-            onPhaseChange={onPhaseChange}
-            onEndTurn={onEndTurn}
-            isPlayerTurn={isPlayerTurn}
-          />
-        </div>
-        
-        {/* Timer */}
-        <div className="bg-slate-800/95 p-2 rounded border border-slate-600">
-          <TurnTimer
-            isActive={isPlayerTurn}
-            onTimeUp={onTimeUp}
-            timeRemaining={timeRemaining}
-            onTimeChange={onTimeChange}
+            currentPhase={currentPhase ?? ''}
+            onPhaseChange={onPhaseChange ?? (() => {})}
+            onEndTurn={onEndTurn ?? (() => {})}
+            isPlayerTurn={isPlayerTurn ?? false}
+            direction="vertical"
           />
         </div>
       </div>
-
-      {/* RIGHT SIDEBAR - Player Life Points + Chat + Action History */}
-      <div className="fixed right-0 top-0 h-full w-48 bg-slate-900/95 border-l border-slate-600 z-30 flex flex-col p-2 gap-2">
+    );
+  }
+  if (type === 'right') {
+    return (
+      <div className="h-full w-48 bg-slate-900/95 border-l border-slate-600 z-30 flex flex-col p-2 gap-2 ml-0.5">
         {/* Player Life Points */}
         <LifePointsControl
           playerName="Giocatore"
-          lifePoints={playerLifePoints}
-          onLifePointsChange={(amount) => onLifePointsChange(amount, false)}
+          lifePoints={playerLifePoints ?? 0}
+          onLifePointsChange={onLifePointsChange ?? (() => {})}
           color="blue"
           isCompact={true}
         />
-        
-        {/* Chat */}
-        <div className="flex-1 bg-slate-800/95 p-2 rounded border border-slate-600">
+        {/* Chat + Action History */}
+        <div className="flex-1 bg-slate-800/95 p-2 rounded border border-slate-600 flex flex-col gap-2">
           <ChatBox
-            messages={chatMessages}
-            onSendMessage={onSendMessage}
+            messages={chatMessages ?? []}
+            onSendMessage={onSendMessage ?? (() => {})}
           />
+          <ActionHistory actions={actionLog ?? []} />
         </div>
-        
-        {/* Action History */}
-        <ActionHistory actions={actionLog} />
       </div>
-    </>
-  );
+    );
+  }
+  return null;
 };
 
 export default GameSidebar;

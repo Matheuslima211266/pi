@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { ArrowUp, Skull, Ban, BookOpen, Star, Eye, Sword, Shield, Edit } from 'lucide-react';
@@ -47,20 +46,20 @@ const FieldCardContextMenu: React.FC<FieldCardContextMenuProps> = ({
         {zoneName === 'monsters' && (
           <>
             <ContextMenuItem 
-              onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'attack' })} 
+              onClick={() => handleFieldCardAction('changePosition')} 
               className="text-white hover:bg-gray-700"
-              disabled={card.position === 'attack'}
             >
-              <Sword className="mr-2 h-4 w-4" />
-              Set Attack Position
-            </ContextMenuItem>
-            <ContextMenuItem 
-              onClick={() => handleFieldCardAction('changePosition', { ...card, position: 'defense' })} 
-              className="text-white hover:bg-gray-700"
-              disabled={card.position === 'defense'}
-            >
-              <Shield className="mr-2 h-4 w-4" />
-              Set Defense Position
+              {card.position === 'attack' ? (
+                <>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Set Defense Position
+                </>
+              ) : (
+                <>
+                  <Sword className="mr-2 h-4 w-4" />
+                  Set Attack Position
+                </>
+              )}
             </ContextMenuItem>
           </>
         )}

@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Save, Trash2, Upload, Download, FileText } from 'lucide-react';
+import { useFirebaseCardDB } from '@/hooks/useFirebaseCardDB';
+import { DECK_SLOT_COUNT } from '@/config/dimensions';
 
 interface DeckSlot {
   id: number;
@@ -26,17 +27,18 @@ interface DeckSlotManagerProps {
 
 const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotManagerProps) => {
   const [savedDecks, setSavedDecks] = React.useState<{[key: number]: DeckSlot}>({});
+  const { allDecks } = useFirebaseCardDB();
 
   React.useEffect(() => {
-    const saved = localStorage.getItem('yugiduel_saved_decks');
+    const saved = localStorage.getItem('simsupremo_saved_decks');
+    let localDecks: any = {};
     if (saved) {
-      try {
-        setSavedDecks(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading saved decks:', error);
-      }
+      try { localDecks = JSON.parse(saved); } catch {}
     }
-  }, []);
+
+    const merged = { ...localDecks, ...allDecks };
+    setSavedDecks(merged);
+  }, [allDecks]);
 
   const saveDeckToSlot = (slotId: number) => {
     const mainDeckArray = convertDeckToArray(currentDeck.mainDeck);
@@ -59,7 +61,7 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
 
     const updatedDecks = { ...savedDecks, [slotId]: deckSlot };
     setSavedDecks(updatedDecks);
-    localStorage.setItem('yugiduel_saved_decks', JSON.stringify(updatedDecks));
+    localStorage.setItem('simsupremo_saved_decks', JSON.stringify(updatedDecks));
     alert(`Deck salvato nello slot ${slotId}!`);
   };
 
@@ -85,7 +87,7 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
       const updatedDecks = { ...savedDecks };
       delete updatedDecks[slotId];
       setSavedDecks(updatedDecks);
-      localStorage.setItem('yugiduel_saved_decks', JSON.stringify(updatedDecks));
+      localStorage.setItem('simsupremo_saved_decks', JSON.stringify(updatedDecks));
       alert('Deck eliminato!');
     }
   };
@@ -184,7 +186,7 @@ const DeckSlotManager = ({ onLoadDeck, currentDeck, availableCards }: DeckSlotMa
       </div>
       
       <div className="space-y-2 max-h-96 overflow-y-auto">
-        {Array.from({ length: 10 }, (_, i) => i + 1).map(slotId => {
+        {Array.from({ length: DECK_SLOT_COUNT }, (_, i) => i + 1).map(slotId => {
           const deck = savedDecks[slotId];
           return (
             <div key={slotId} className="p-3 bg-slate-800/50 rounded border border-slate-600">

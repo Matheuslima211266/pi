@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ interface GameCreationSectionProps {
   onCreateGame: () => void;
   onJoinGame: () => void;
   isJoiningGame?: boolean;
+  currentSession: boolean;
 }
 
 const GameCreationSection = ({ 
@@ -23,9 +23,10 @@ const GameCreationSection = ({
   isCreatingGame, 
   onCreateGame, 
   onJoinGame,
-  isJoiningGame = false
+  isJoiningGame = false,
+  currentSession
 }: GameCreationSectionProps) => {
-  const canCreateGame = playerName.trim() && deckLoaded && !isCreatingGame;
+  const canCreateGame = playerName.trim() && deckLoaded && !isCreatingGame && !currentSession;
   const canJoinGame = gameId.trim() && playerName.trim() && deckLoaded && !isJoiningGame;
 
   return (

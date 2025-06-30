@@ -1,5 +1,4 @@
-
-export const useDeckHandlers = (gameState, syncGameState) => {
+export const useDeckHandlers = (gameState) => {
   const {
     gameData,
     playerField,
@@ -45,8 +44,6 @@ export const useDeckHandlers = (gameState, syncGameState) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setActionLog(prev => [...prev, newAction]);
-    
-    setTimeout(() => syncGameState(), 100);
   };
 
   const handleDrawCard = (isPlayer = true) => {
@@ -74,7 +71,6 @@ export const useDeckHandlers = (gameState, syncGameState) => {
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
-      setTimeout(() => syncGameState(), 100);
     } else {
       const newAction = {
         id: Date.now() + Math.random(),
@@ -83,7 +79,6 @@ export const useDeckHandlers = (gameState, syncGameState) => {
         timestamp: new Date().toLocaleTimeString()
       };
       setActionLog(prev => [...prev, newAction]);
-      setTimeout(() => syncGameState(), 100);
     }
   };
 

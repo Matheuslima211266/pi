@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": false,
+    "sessions": {
+      "$gameId": {
+        ".read": "root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid",
+        ".write": "root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid"
+      }
+    },
+    "gameStates": {
+      "$gameId": {
+        "$uid": {
+          ".read": "auth.uid === $uid || root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid",
+          ".write": "auth.uid === $uid",
+          ".validate": "newData.hasChildren(['playerName', 'lastUpdate'])"
+        }
+      }
+    },
+    "chat": {
+      "$gameId": {
+        ".read": "root.child('sessions').child($gameId).exists() && (root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid)",
+        ".write": "root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid"
+      }
+    },
+    "actions": {
+      "$gameId": {
+        ".read": "root.child('sessions').child($gameId).exists() && (root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid)",
+        ".write": "root.child('sessions').child($gameId).child('hostId').val() === auth.uid || root.child('sessions').child($gameId).child('guestId').val() === auth.uid"
+      }
+    }
+  }
+} 

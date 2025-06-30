@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
 const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
-  if (!placementMenu) return null;
+  if (!placementMenu) {
+    return null;
+  }
 
   const getMenuOptions = (zoneName) => {
     switch (zoneName) {
@@ -69,7 +70,9 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
     <>
       <div 
         className="fixed inset-0 z-50"
-        onClick={onClose}
+        onClick={() => {
+          onClose();
+        }}
         style={{ zIndex: 999 }}
       />
       <div 
@@ -85,7 +88,6 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
               key={option.key}
               size="sm" 
               onClick={() => {
-                console.log('Placement option clicked:', option.key, placementMenu.zoneName);
                 onPlacementChoice(option.key);
               }}
               className="w-full text-left justify-start text-sm h-8 bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500"
@@ -99,7 +101,9 @@ const PlacementMenu = ({ placementMenu, onPlacementChoice, onClose }) => {
         <Button 
           size="sm" 
           variant="outline"
-          onClick={onClose}
+          onClick={() => {
+            onClose();
+          }}
           className="w-full mt-3 text-sm h-8 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
         >
           Cancel
