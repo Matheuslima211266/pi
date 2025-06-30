@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Play, LogOut, RefreshCw } from 'lucide-react';
+import { Users, Play, LogOut, RefreshCw, Bug } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WaitingForPlayersScreenProps {
@@ -24,6 +23,7 @@ const WaitingForPlayersScreen = ({
   onGameStart 
 }: WaitingForPlayersScreenProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDebugStarting, setIsDebugStarting] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const bothReady = playerReady && opponentReady;
 
@@ -58,6 +58,40 @@ const WaitingForPlayersScreen = ({
       console.error('Error in refreshSession:', err);
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  // Debug function to start game without opponent
+  const startGameDebug = async () => {
+    if (!gameData?.gameId || !onGameStart) return;
+    
+    console.log('🔧 DEBUG: Starting game without opponent');
+    
+    // Chiedi conferma all'utente
+    const confirmed = window.confirm(
+      '🔧 Debug Mode\n\n' +
+      'This will start the game without an opponent.\n' +
+      'You will be able to test the game mechanics solo.\n\n' +
+      'Continue?'
+    );
+    
+    if (!confirmed) return;
+    
+    setIsDebugStarting(true);
+    
+    try {
+      // Bypass database update and start game directly
+      console.log('🔧 DEBUG: Bypassing database, starting game directly...');
+      
+      // Simula un breve delay per mostrare il feedback visivo
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('🔧 DEBUG: Starting game...');
+      onGameStart();
+    } catch (err) {
+      console.error('Error in startGameDebug:', err);
+      alert('Debug mode failed. Please try again.');
+      setIsDebugStarting(false);
     }
   };
 
@@ -157,12 +191,25 @@ const WaitingForPlayersScreen = ({
 
             {/* Waiting for opponent */}
             {playerReady && !opponentReady && (
-              <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
-                <p className="text-green-400 font-semibold">You are ready!</p>
-                <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
-                <div className="mt-2">
-                  <div className="animate-pulse text-yellow-400 text-lg">⏳</div>
+              <div className="space-y-3">
+                <div className="text-center p-4 bg-green-900/30 rounded-lg border border-green-400">
+                  <p className="text-green-400 font-semibold">You are ready!</p>
+                  <p className="text-sm text-gray-300 mt-1">Waiting for your opponent...</p>
+                  <div className="mt-2">
+                    <div className="animate-pulse text-yellow-400 text-lg">⏳</div>
+                  </div>
                 </div>
+                
+                {/* Debug button to start without opponent */}
+                <Button
+                  onClick={startGameDebug}
+                  variant="outline"
+                  disabled={isDebugStarting}
+                  className="w-full border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black font-semibold py-2"
+                >
+                  <Bug className={`w-4 h-4 mr-2 ${isDebugStarting ? 'animate-spin' : ''}`} />
+                  {isDebugStarting ? '🔧 Starting Solo Game...' : '🔧 Debug: Start Solo Game'}
+                </Button>
               </div>
             )}
 
