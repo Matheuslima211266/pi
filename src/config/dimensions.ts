@@ -46,7 +46,7 @@ export const TOOLBAR_MAX_W_PX  = 740;
 
 /** Aspect ratio degli slot (es. '5/7' = 5 : 7).  
  *  Non cambia direttamente il layout, ma può essere usato in CSS. */
-export const SLOT_ASPECT_RATIO = '6/8';
+export const SLOT_ASPECT_RATIO = '6/9';
 
 /** Larghezza (in px) di uno slot vuoto nel campo. */
 export const EMPTY_SLOT_WIDTH_PX = 64; // w-16 = 4rem = 64px
@@ -117,6 +117,9 @@ export const CARD_SMALL_HEIGHT_PX = 144; // h-36
 
 /** Altezza immagine carta piccola (px). */
 export const CARD_SMALL_IMAGE_HEIGHT_PX = 80; // h-20
+
+/** Altezza immagine carta sul campo (in percentuale). */
+export const CARD_FIELD_IMAGE_HEIGHT_PERC = '60%';
 
 /** Angolo di rotazione per carte in posizione di difesa (gradi). */
 export const CARD_DEFENSE_ROTATION_DEG = 90;

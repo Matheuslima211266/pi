@@ -8,6 +8,7 @@ import {
   CARD_SMALL_WIDTH_PX,
   CARD_SMALL_HEIGHT_PX,
   CARD_SMALL_IMAGE_HEIGHT_PX,
+  CARD_FIELD_IMAGE_HEIGHT_PERC,
   CARD_DEFENSE_ROTATION_DEG,
   CARD_ENEMY_ROTATION_DEG,
   CARD_BORDER_WIDTH_PX,
@@ -101,7 +102,7 @@ const CardComponent = ({
       };
     } else {
       // Carte sul campo - dimensioni più grandi
-      return { width: '100%', height: '100%', imageHeight: '60%' };
+      return { width: '100%', height: '100%', imageHeight: CARD_FIELD_IMAGE_HEIGHT_PERC };
     }
   };
 
@@ -237,8 +238,9 @@ const CardComponent = ({
     >
       {/* Card Image */}
       <div 
-        className={`w-full ${imageHeight} bg-gray-800 border-b-2 border-yellow-500 bg-cover bg-center bg-no-repeat`}
+        className="w-full bg-gray-800 border-b-2 border-yellow-500 bg-cover bg-center bg-no-repeat"
         style={{
+          height: imageHeight,
           backgroundImage: card.art_link && card.art_link !== "NO ICON" ? `url(${card.art_link})` : 'none'
         }}
       >

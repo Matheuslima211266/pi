@@ -10,6 +10,7 @@ export interface CardData {
   atk?: number;
   def?: number;
   description?: string;
+  art_link?: string;
   // ... altri campi necessari
 }
 

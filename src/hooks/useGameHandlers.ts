@@ -35,6 +35,7 @@ export const useGameHandlers = (gameState) => {
       name: token.name,
       atk: token.atk,
       def: token.def,
+      art_link: token.art_link || '',
       card_type: 'token',
       position: 'attack',
       faceDown: false
@@ -104,7 +105,8 @@ export const useGameHandlers = (gameState) => {
       position: position || 'attack',
       faceDown: isFaceDown,
       zone: zoneName,
-      slotIndex: slotIndex
+      slotIndex: slotIndex,
+      art_link: card.art_link
     };
 
     console.log('🔵 [DEBUG] handleCardPlace - Field card prepared', {
